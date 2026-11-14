@@ -1,3 +1,41 @@
+## [0.9.0](https://github.com/banter240/lumo-tamer/compare/v0.8.0...v0.9.0) (2026-11-14)
+
+### Features
+
+* feat(config): configurable coach-announce hold window
+* feat(pacing): human-like request pacing with jitter, bursts, and backoff
+
+  Space out every outgoing Proton completion (chat, title, bounces,
+  tool-result continuations) so agent tool loops don't dispatch
+  back-to-back:
+
+  - skewed jitter (mostly short, rare long waits), minimum interval
+    with its own jitter, rare long "got distracted" pauses
+  - simulated reading/typing pauses sized by the previous reply and the
+    outgoing message, with per-request speed variance and occasional
+    skips so timings don't correlate perfectly with message sizes
+  - burst-aware spacing: relaxed interval inside an active exchange,
+    resume delay after idle
+  - processing pause for machine-fed turns (bounces, tool results):
+    nobody types those, so they pay a short uniform pause instead of a
+    length-scaled typing pause
+  - night-time multiplier during quiet hours
+  - exponential backoff with jitter on retryable Proton errors (429/5xx)
+  - pacing metrics: wait histogram, paced/immediate counter, retry counter
+
+  All knobs live under a shared `pacing:` config section (overridable
+  per server/cli), surfaced in the /config editor.
+
+### Bug Fixes
+
+* fix(web-ui): hide the UI-lock button for local requests
+
+  The lock button clears the unlock cookie, but requests from this
+  machine are trusted without a key (loopback), so on localhost it was a
+  no-op carousel: lock -> /ui-login -> key -> back to a UI that was
+  never locked. htmlPage now takes localUi and serves the button (and
+  its /ui-logout binding) only to non-local requests.
+
 ## [0.8.0](https://github.com/banter240/lumo-tamer/compare/v0.7.1...v0.8.0) (2026-11-11)
 
 ### Features
