@@ -17,6 +17,7 @@ import {
   RequestEncryptionParams,
 } from "@lumo/lib/lumo-api-client/core/encryptionParams.js";
 import { logger } from "../app/logger.js";
+import { getMetrics } from "../app/metrics.js";
 import {
   Role,
   type AesGcmCryptoKey,
@@ -30,6 +31,7 @@ import {
   type LumoModelTier,
   type LumoUsage,
   type ChatResult,
+  type ProtonApiError,
 } from "./types.js";
 import {
   buildChatCompletionsBody,
@@ -38,6 +40,14 @@ import {
 } from "./v2-body.js";
 import { V2StreamProcessor } from "./v2-stream.js";
 import { selectNativeTools } from "./native-tools.js";
+import {
+  backoffSleep,
+  classifyTurnPacing,
+  computeRetryDelay,
+  noteResponseVolume,
+  paceOutgoingRequest,
+  type PacingPlan,
+} from "./pacer.js";
 import { asksForWeb } from "./web-intent.js";
 import {
   getInstructionsConfig,
@@ -48,6 +58,7 @@ import {
   getEnableWebSearch,
   getEnableImageTools,
   getServerConfig,
+  getPacingConfig,
 } from "../app/config.js";
 import {
   isAnnounceWithoutToolCall,
@@ -354,6 +365,43 @@ export class LumoClient {
     }
   }
 
+  /** POST with exponential backoff on retryable errors (429/5xx).
+   * Re-throws the last error once attempts are exhausted. */
+  private async postWithRetry(
+    endpoint: string,
+    body: unknown,
+  ): Promise<ReadableStream<Uint8Array>> {
+    const retry = getPacingConfig().retry;
+    let lastError: ProtonApiError | undefined;
+    for (let attempt = 0; ; attempt++) {
+      if (attempt > 0) {
+        const delayMs = computeRetryDelay(retry, attempt);
+        const reason = String(lastError?.status ?? "unknown");
+        logger.warn(
+          { attempt, delayMs, reason },
+          "Retryable Proton error; backing off before retry",
+        );
+        getMetrics()?.backoffRetriesTotal.inc({ reason });
+        await backoffSleep(delayMs);
+      }
+      try {
+        return (await this.protonApi({
+          url: endpoint,
+          method: "post",
+          data: body,
+          output: "stream",
+        })) as ReadableStream<Uint8Array>;
+      } catch (error) {
+        const status = (error as ProtonApiError).status;
+        const retryable =
+          status === 429 ||
+          (status !== undefined && status >= 500 && status <= 599);
+        if (!retryable || attempt >= retry.maxAttempts) throw error;
+        lastError = error as ProtonApiError;
+      }
+    }
+  }
+
   /** Encrypt (optionally), build the body, POST, and process one completion. */
   private async runCompletion(
     turns: Turn[],
@@ -367,6 +415,8 @@ export class LumoClient {
       onChunk?: (content: string) => void;
       onReasoning?: (content: string) => void;
       suppressBounce: boolean;
+      /** Classified from the RAW turns before instruction injection. */
+      plan: PacingPlan;
     },
   ): Promise<CompletionResult> {
     let processedTurns = turns;
@@ -427,18 +477,18 @@ export class LumoClient {
       getServerConfig().promptTokenEstimationFactor ?? 1.0,
     );
 
-    const stream = (await this.protonApi({
-      url: params.endpoint,
-      method: "post",
-      data: body,
-      output: "stream",
-    })) as ReadableStream<Uint8Array>;
+    // Human-like pacing; the caller classified the plan from the raw turns.
+    await paceOutgoingRequest(params.plan);
+
+    const stream = await this.postWithRetry(params.endpoint, body);
 
     const result = await this.processStream(stream, encryptionContext, {
       onChunk: params.onChunk,
       onReasoning: params.onReasoning,
       suppressBounce: params.suppressBounce,
     });
+
+    if (params.target === "message") noteResponseVolume(result.content.length);
 
     // Attach estimated prompt tokens to usage for downstream reporting.
     if (result.usage) {
@@ -560,6 +610,10 @@ export class LumoClient {
       ? injectInstructionsIntoTurns(turns, instructions, injectInstructionsInto)
       : turns;
 
+    // Classify before injection: the injected block would defeat the
+    // [Tool Result: prefix check and inflate the typing measurement.
+    const pacingPlan = classifyTurnPacing(turns, isBounce);
+
     // Title generation is a separate, concurrent, non-fatal completion.
     // Only at the top level: a bounce must not launch its own title request.
     const titlePromise =
@@ -572,6 +626,7 @@ export class LumoClient {
             enableEncryption,
             target: "title",
             suppressBounce: true,
+            plan: { kind: "aux" },
           }).catch((error) => {
             logger.warn({ error }, "Title generation failed");
             return null;
@@ -588,6 +643,7 @@ export class LumoClient {
       onChunk: mainOnChunk,
       onReasoning,
       suppressBounce: isBounce,
+      plan: pacingPlan,
     });
 
     logger.debug(

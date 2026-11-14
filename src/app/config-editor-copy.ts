@@ -82,6 +82,12 @@ export const CONFIG_CATEGORIES: ConfigCategory[] = [
     parent: "server",
     blurb: "Prometheus /metrics endpoint and runtime counters.",
   },
+  {
+    id: "pacing",
+    title: "Pacing",
+    parent: "server",
+    blurb: "Human-like request spacing: jitter, pauses, bursts, backoff.",
+  },
   // Daily use
   {
     id: "models",
@@ -595,6 +601,178 @@ const COPY: Record<string, FieldCopy> = {
     hint: "Prefix for every metric name.",
     examples: sample("lumo_"),
   },
+  "server.pacing.enabled": {
+    label: "Human-like pacing",
+    hint: "Space out requests to Proton with a minimum interval plus random jitter, so agent tool loops don't fire back-to-back.",
+    more: "Applies to every outgoing completion (chat, title, bounces). Runs in server and CLI mode; override with server.pacing in config.yaml.",
+  },
+  "server.pacing.minIntervalMs": {
+    label: "Minimum request interval (ms)",
+    hint: "Minimum gap between the dispatch of two consecutive Proton requests.",
+    examples: sample("750"),
+  },
+  "server.pacing.minJitterMs": {
+    label: "Jitter minimum (ms)",
+    hint: "Lower bound of the random extra delay before each request.",
+    examples: sample("250"),
+  },
+  "server.pacing.maxJitterMs": {
+    label: "Jitter maximum (ms)",
+    hint: "Upper bound of the random extra delay before each request.",
+    examples: sample("2000"),
+  },
+  "server.pacing.jitterSkew": {
+    label: "Jitter skew",
+    hint: "Exponent shaping the random delay: >1 gives mostly short waits with rare long ones (human-like), 1 is a uniform spread.",
+    examples: sample("1.6"),
+  },
+  "server.pacing.longPauseChance": {
+    label: "Long-pause chance",
+    hint: 'Probability that a request waits out a rare "got distracted" pause before going out.',
+    more: "0 = never, 0.05 = roughly one in twenty requests waits between Long-pause min and max. Turn down if agent sessions feel stuck.",
+    examples: sample("0.05"),
+  },
+  "server.pacing.longPauseMinMs": {
+    label: "Long-pause minimum (ms)",
+    hint: "Lower bound of the rare distraction pause.",
+    examples: sample("15000"),
+  },
+  "server.pacing.longPauseMaxMs": {
+    label: "Long-pause maximum (ms)",
+    hint: "Upper bound of the rare distraction pause.",
+    examples: sample("60000"),
+  },
+  "server.pacing.readingPause.enabled": {
+    label: "Simulated reading pause",
+    hint: "Wait as if skimming the previous Lumo reply before the next request goes out.",
+    more: "Adds a delay proportional to the length of the last reply (capped below). Makes follow-up requests look like a person who actually read the answer.",
+  },
+  "server.pacing.readingPause.charsPerSec": {
+    label: "Reading speed (chars/sec)",
+    hint: "Simulated skimming speed for the reading pause.",
+    examples: sample("120"),
+  },
+  "server.pacing.readingPause.maxMs": {
+    label: "Reading pause cap (ms)",
+    hint: "Maximum time the simulated reading pause can add.",
+    examples: sample("8000"),
+  },
+  "server.pacing.circadian.enabled": {
+    label: "Night-time slowdown",
+    hint: "Stretch all pacing waits during quiet hours (local time).",
+  },
+  "server.pacing.circadian.multiplier": {
+    label: "Night multiplier",
+    hint: "Multiplier applied to the computed wait during quiet hours.",
+    examples: sample("2.5"),
+  },
+  "server.pacing.circadian.startHour": {
+    label: "Quiet hours start",
+    hint: "Local hour at which quiet hours begin (0-23).",
+    examples: sample("23"),
+  },
+  "server.pacing.circadian.endHour": {
+    label: "Quiet hours end",
+    hint: "Local hour at which quiet hours end (0-23). Wrap-around ranges like 23-7 are allowed.",
+    examples: sample("7"),
+  },
+  "server.pacing.typingPause.enabled": {
+    label: "Simulated typing pause",
+    hint: "Wait as if typing the outgoing message before it is sent.",
+    more: "Adds a delay proportional to the outgoing message size (capped below). Makes each request look like someone actually typed that input first.",
+  },
+  "server.pacing.typingPause.charsPerSec": {
+    label: "Typing speed (chars/sec)",
+    hint: "Simulated typing speed for the typing pause.",
+    examples: sample("200"),
+  },
+  "server.pacing.processingPause.enabled": {
+    label: "Processing pause",
+    hint: "Machine-fed turns (bounces, tool-result continuations) get a short random pause instead of a typing pause.",
+    more: 'Nobody types a bounce instruction or a tool-result blob, so a typing pause would correlate wait time perfectly with tool-output size. These turns still pay a short uniform "glance and react" pause so their gaps are not unpaced.',
+  },
+  "server.pacing.processingPause.minMs": {
+    label: "Processing pause min (ms)",
+    hint: "Lower bound of the pause before bounce/tool-continuation requests.",
+    examples: sample("500"),
+  },
+  "server.pacing.processingPause.maxMs": {
+    label: "Processing pause max (ms)",
+    hint: "Upper bound of the pause before bounce/tool-continuation requests.",
+    examples: sample("2500"),
+  },
+  "server.pacing.typingPause.maxMs": {
+    label: "Typing pause cap (ms)",
+    hint: "Maximum time the simulated typing pause can add.",
+    examples: sample("10000"),
+  },
+  "server.pacing.burst.enabled": {
+    label: "Burst-aware spacing",
+    hint: "Quicker replies inside an active back-and-forth, a longer wait when a fresh exchange starts after idle.",
+    more: "Humans chat in bursts: while replies flow quickly the minimum interval is relaxed; after a quiet gap the next request pays a resume delay and full spacing again.",
+  },
+  "server.pacing.burst.gapMs": {
+    label: "Burst gap (ms)",
+    hint: "Idle time after which the current burst counts as ended.",
+    examples: sample("180000"),
+  },
+  "server.pacing.burst.activeIntervalMs": {
+    label: "Active-burst interval (ms)",
+    hint: "Relaxed minimum interval used while a burst is active.",
+    examples: sample("400"),
+  },
+  "server.pacing.burst.resumeDelayMs": {
+    label: "Burst resume delay (ms)",
+    hint: "Extra wait before the first request after a burst ended.",
+    examples: sample("4000"),
+  },
+  "server.pacing.retry.maxAttempts": {
+    label: "Retry attempts",
+    hint: "How often a 429/5xx answer is retried with exponential backoff before the error surfaces.",
+    examples: sample("3"),
+  },
+  "server.pacing.retry.initialDelayMs": {
+    label: "Backoff start (ms)",
+    hint: "First backoff delay after a retryable error; doubles per attempt.",
+    examples: sample("1000"),
+  },
+  "server.pacing.retry.maxDelayMs": {
+    label: "Backoff cap (ms)",
+    hint: "Upper bound for the doubled backoff delay.",
+    examples: sample("30000"),
+  },
+  "server.pacing.retry.jitterFraction": {
+    label: "Backoff jitter",
+    hint: "Random +- fraction on each backoff delay so retries don't align across restarts.",
+    examples: sample("0.25"),
+  },
+  "server.pacing.noise.speedJitterFraction": {
+    label: "Speed variation",
+    hint: "Random +- fraction on the simulated reading/typing speed of each request.",
+    more: "Without this, wait time correlates perfectly with message size — a statistical giveaway. With it, the length/delay relation is noisy like a real person's.",
+    examples: sample("0.4"),
+  },
+  "server.pacing.noise.skipReadingChance": {
+    label: "Skip-reading chance",
+    hint: "Chance the reading pause is skipped entirely (a glance instead of a read).",
+    examples: sample("0.2"),
+  },
+  "server.pacing.noise.skipTypingChance": {
+    label: "Skip-typing chance",
+    hint: "Chance the typing pause is skipped (message pasted instead of typed).",
+    examples: sample("0.1"),
+  },
+  "server.pacing.noise.sigma": {
+    label: "Overall wobble",
+    hint: "Multiplicative triangular noise on the total computed wait.",
+    more: "Applies +- sigma around the composed delay of every layer, so identical situations never produce identical timings.",
+    examples: sample("0.12"),
+  },
+  "server.pacing.noise.intervalJitterFraction": {
+    label: "Interval variation",
+    hint: "Random +- fraction on the enforced minimum interval, so gaps under sustained load don't pile up on one value.",
+    examples: sample("0.35"),
+  },
   "server.enableWebSearch": {
     label: "Native web search",
     hint: "Lumo native web_search, weather, stock, crypto. Off so Lumo does not search unless you turn it on. On matches the Lumo website.",
@@ -985,6 +1163,7 @@ export function fieldCategory(path: string): string {
     return "sync";
   if (path.startsWith("conversations.")) return "chatStorage";
   if (path.startsWith("auth.autoRefresh.")) return "refresh";
+  if (path.startsWith("server.pacing.")) return "pacing";
 
   // Expert internals — things a normal user should never need to touch.
   if (path.startsWith("auth.vault.")) return "expertVault";

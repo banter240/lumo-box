@@ -8,7 +8,7 @@
 │  Your favorite  │◄───►│   Encryption    │◄───►│  Open WebUI     │
 │  private AI     │     │   Tooling       │     └─────────────────┘
 │                 │     │                 │     ┌─────────────────┐
-└─────────────────┘     │                 │◄───►│   CLI           │ 
+└─────────────────┘     │                 │◄───►│   CLI           │
                         └─────────────────┘     └─────────────────┘
 ```
 
@@ -16,8 +16,6 @@ Use [Proton Lumo](https://lumo.proton.me/) in your favorite AI-enabled app or on
 
 > **Official API support [is coming](https://www.reddit.com/r/lumo/comments/1qsa8xq/comment/o304ez3/) to Lumo!**  
 > lumo-tamer will be ported to use the new API when it becomes available, and obsolete parts will be stripped out (depending on API features such as OpenAI compatibility, tools, conversation support). If you can't wait, give lumo-tamer a go!
-
-
 
 [Lumo](https://lumo.proton.me/about) is Proton's privacy-first AI assistant, powered by open-source LLMs running exclusively on Proton-controlled servers. Your prompts and responses are never logged, stored, or used for training. See Proton's [security model](https://proton.me/blog/lumo-security-model) and [privacy policy](https://proton.me/support/lumo-privacy) for details.
 
@@ -36,11 +34,17 @@ This tree is a fork of [ZeroTricks/lumo-tamer](https://github.com/ZeroTricks/lum
 - Interactive CLI, let Lumo help you execute commands, read, create and edit files.
 - Optional conversation sync to https://lumo.proton.me (needs a Lumo-scoped browser session, not `/auth`).
 - U2L encryption on every real (non-mock) completion. Mock mode is the only path that turns it off.
-
+- Human-like request pacing: a configurable minimum interval plus random jitter between outgoing Proton requests, so agent tool loops don't hammer the API back-to-back. On by default.
 
 ## Project Status
 
-This is an unofficial, personal project in early stages of development, not affiliated with or endorsed by Proton. Rough edges are to be expected. Only tested on Linux. Use of this software may violate Proton's terms of service; use at your own risk. See [Full Disclaimer](#full-disclaimer) below.
+This is an unofficial, personal project in early stages of development, not affiliated with or endorsed by Proton. Rough edges are to be expected. Only tested on Linux.
+
+In a Reddit thread about lumo-tamer, a member of Proton's support team [stated](https://www.reddit.com/r/lumo/comments/1siwz4c/comment/og3upqf/):
+
+> "As long as you keep in mind that this is unofficial and not supported or endorsed by Proton in any way, it should be fine to use."
+
+Note that this is an informal statement by support staff, not an amendment to Proton's Terms of Service, and it does not exempt anyone from rate limiting or automated abuse detection. See [Full Disclaimer](#full-disclaimer) below.
 
 ## Prerequisites
 
@@ -114,15 +118,14 @@ chmod 600 /path/to/your/lumo-vault-key
 ```
 
 And add to `config.yaml`:
+
 ```yaml
 auth:
   vault:
     keyFilePath: "/path/to/your/lumo-vault-key"
 ```
+
 </details>
-
-
-
 
 ### 3. Run
 
@@ -137,21 +140,22 @@ tamer
 tamer server
 ```
 
-
 ## Usage
 
 ### Server
 
 Set an API key in `config.yaml`:
+
 ```yaml
 server:
   apiKey: my-super-secret-key
-  host: "127.0.0.1"     #Optional, default. "0.0.0.0" to accept other devices
-  port: 3003            #Optional, change listening port
-  bodyLimit: "10mb"     #Optional, default is 10mb (large contexts and base64 image input)
+  host: "127.0.0.1" #Optional, default. "0.0.0.0" to accept other devices
+  port: 3003 #Optional, change listening port
+  bodyLimit: "10mb" #Optional, default is 10mb (large contexts and base64 image input)
 ```
 
 Then run:
+
 ```bash
 tamer server
 ```
@@ -176,6 +180,7 @@ See [API clients](#api-clients) for some inspiration.
 ### CLI
 
 Talk to Lumo from the command line like you would via the web interface:
+
 ```bash
 tamer                   # use Lumo interactively
 tamer "make me laugh"   # one-time prompt
@@ -188,28 +193,29 @@ You can ask Lumo to give you a demo of its capabilities, or see this [demo chat]
 
 Both CLI and API accept slash commands (or the `commands.wakeword` prefix, default `tamer`).
 
-| Command | Description |
-|---------|-------------|
-| `/help` | Show available commands |
-| `/title <text>` | Set conversation title |
-| `/save [title]` | Save / create a conversation on Proton (needs sync) |
-| `/load <id>` | Load a conversation from Proton by ID (needs sync) |
-| `/private` | Keep this conversation local; do not sync |
-| `/refreshtokens` | Manually refresh auth tokens (usually unnecessary) |
-| `/update` | Check GitHub for a newer release (`/update apply` pulls and recreates, needs docker.sock) |
-| `/logout` | Revoke session, delete tokens, then exit the process |
-| `/quit` | Exit the app (CLI only; runs `/save` if sync is on) |
+| Command          | Description                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| `/help`          | Show available commands                                                                   |
+| `/title <text>`  | Set conversation title                                                                    |
+| `/save [title]`  | Save / create a conversation on Proton (needs sync)                                       |
+| `/load <id>`     | Load a conversation from Proton by ID (needs sync)                                        |
+| `/private`       | Keep this conversation local; do not sync                                                 |
+| `/refreshtokens` | Manually refresh auth tokens (usually unnecessary)                                        |
+| `/update`        | Check GitHub for a newer release (`/update apply` pulls and recreates, needs docker.sock) |
+| `/logout`        | Revoke session, delete tokens, then exit the process                                      |
+| `/quit`          | Exit the app (CLI only; runs `/save` if sync is on)                                       |
 
 ## Configuration
 
 Add configuration options to `config.yaml`. Find all options in [`config.defaults.yaml`](config.defaults.yaml), but don't edit this file directly.
 
-Below is a non-exhaustive overview of the most common config sections and their options. Except for some auth settings (which are set by `tamer auth`), all settings are optional. Sync, native web search, and native image tools stay off until you turn them on. Client `tools[]` are honored by default (`customTools.enabled: true`). 
+Below is a non-exhaustive overview of the most common config sections and their options. Except for some auth settings (which are set by `tamer auth`), all settings are optional. Sync, native web search, and native image tools stay off until you turn them on. Client `tools[]` are honored by default (`customTools.enabled: true`).
 
 ### Global options
 
 Options in sections `log`, `conversations` and `commands` can be set globally (used by server and CLI), and can optionally be overwritten within `cli` and `server`.  
 For example: set the default log output to your terminal at the `info` level, while the CLI logs to a file instead.
+
 ```yaml
 log:
   # Levels: trace, debug, info, warn, error, fatal
@@ -229,10 +235,11 @@ Lumo can generate, edit and describe images. Enable the native image tools (off 
 ```yaml
 server:
   enableImageTools: true
-  bodyLimit: "10mb"   # images travel base64-encoded; follow-ups resend them
+  bodyLimit: "10mb" # images travel base64-encoded; follow-ups resend them
 ```
 
 Only the image tools the latest user message calls for are offered:
+
 - `generate_image` when it asks for a picture ("draw a cat", "generate an image of…", "create an app icon");
 - `describe_image` when it attaches an image, plus `edit_image` only if it asks to change that picture ("change the shirt colour in this photo"). A screenshot attached for context is never edited;
 - `edit_image` + `describe_image` when it directly answers an assistant message that showed an image and asks for a change ("make it blue").
@@ -241,6 +248,60 @@ None are offered on agent background requests (OpenCode title generation, compac
 
 Inbound (vision): OpenAI `image_url` / `input_image` parts with base64 `data:` URLs (jpeg, png, gif, webp) are forwarded as Lumo images. With encryption on (the default), image bytes are U2L-encrypted with the per-request key exactly like the web client; plaintext images are never sent. Remote http(s) URLs are not fetched (no SSRF from the proxy). Like the web client, only the 10 most recent images of a conversation are sent. Images are not persisted or synced. The default `server.bodyLimit` of `10mb` covers typical screenshots; raise it for batches of large photos.  
 Outbound: generated images are streamed as markdown data URLs (`![lumo:<id>](data:image/jpeg;base64,...)`), decrypted in the proxy with the per-request key. The `lumo:<id>` alt text is the Proton image id: when the client sends that assistant message back, the proxy replays it like the web client (a `<lumo-image source="assistant">` marker plus the encrypted bytes), so a later `edit_image` / `describe_image` can find it. The stored conversation keeps only the marker, not the bytes.
+
+### Request Pacing
+
+To be gentle on Proton's servers, lumo-tamer spaces out every outgoing completion (chat, title, bounces) with human-like timing instead of firing them back-to-back. All knobs live under `server.pacing`:
+
+```yaml
+server:
+  pacing:
+    enabled: true
+    minIntervalMs: 750 # minimum gap between two consecutive requests (ms)
+    minJitterMs: 250 # random extra delay before each request (ms),
+    maxJitterMs: 2000 # drawn between min and max
+    jitterSkew: 1.6 # >1: mostly short waits, occasional longer ones
+    longPauseChance: 0.05 # rare "got distracted" pause ...
+    longPauseMinMs: 15000 # ... lasting somewhere between min and max
+    longPauseMaxMs: 60000
+    readingPause:
+      enabled: true # wait as if skimming the previous reply first
+      charsPerSec: 120 # simulated reading speed
+      maxMs: 8000 # cap on that wait
+    circadian:
+      enabled: true # slow down at night (local time)
+      multiplier: 2.5 # wait multiplier during quiet hours
+      startHour: 23
+      endHour: 7
+    typingPause:
+      enabled: true # wait as if typing the outgoing message first
+      charsPerSec: 200 # simulated typing speed
+      maxMs: 10000 # cap on that wait
+    processingPause:
+      enabled: true # short random pause for machine-fed turns
+      minMs: 500 # bounces and tool-result continuations pay this
+      maxMs: 2500 # instead of a (wrong) typing pause
+    burst:
+      enabled: true # quicker replies mid-conversation, longer after idle
+      gapMs: 180000 # idle time that ends a burst
+      activeIntervalMs: 400 # relaxed minimum interval inside a burst
+      resumeDelayMs: 4000 # extra wait when a burst resumes
+    retry:
+      maxAttempts: 3 # retries with exponential backoff on 429/5xx answers
+      initialDelayMs: 1000 # first backoff delay, doubles per attempt
+      maxDelayMs: 30000 # cap on the doubled delay
+      jitterFraction: 0.25 # +- jitter on each backoff delay
+    noise:
+      speedJitterFraction: 0.4 # +- on the simulated reading/typing speed
+      skipReadingChance: 0.2 # chance the reading pause is skipped (a glance)
+      skipTypingChance: 0.1 # chance the typing pause is skipped (a paste)
+      sigma: 0.12 # multiplicative wobble on the total wait
+      intervalJitterFraction: 0.35 # +- on the enforced minimum interval itself
+```
+
+The pieces stack: skewed jitter keeps most waits short with occasional dawdles, a small chance of a long distraction pause, a reading wait that scales with the previous reply, a typing wait that scales with the outgoing message, burst-aware spacing that mirrors a real back-and-forth, and a night-time multiplier. When Proton still answers with 429 or a 5xx error, the request is retried with exponential backoff instead of failing straight through, so an agent loop cannot hammer the API with immediate re-dispatches. A noise layer randomizes every otherwise-fixed component — reading and typing speed, occasional skipped pauses, even the enforced minimum interval — so observed timings neither correlate perfectly with message sizes nor repeat across sessions. The typing simulation only applies to genuine user input: bounces, title requests and tool-result continuations are machine-fed turns nobody types, so they get no typing pause at all. t-time multiplier during quiet hours.
+
+Like `log` and `conversations`, pacing can be overridden per mode with `server.pacing:` / `cli.pacing:` in config.yaml.
 
 ### Web Search
 
@@ -276,8 +337,9 @@ server:
     # Default none = compact/fast. lumo-max still thinks when effort is omitted.
     default: "none"
     # Forward Lumo's thinking tokens as delta.reasoning_content (streaming)
-    # or message.reasoning_content (non-streaming)
-    surfaceThinking: false
+    # or message.reasoning_content (non-streaming). On by default; thinking
+    # itself stays off (reasoning.default: "none").
+    surfaceThinking: true
 ```
 
 Add your own names that pick a real Lumo tier and a thinking default. They show up on `/v1/models`. A request `reasoning_effort` still wins, unless the entry sets `pinned: true` — pinned models force their mode and ignore the client's effort.
@@ -301,6 +363,7 @@ server:
 > **Note:** Availability of `lumo-max` and thinking mode depends on your Proton plan. Requests are end-to-end encrypted the same way as the rest of lumo-tamer.
 
 **Known limitations:**
+
 - `low`/`medium`/`high` effort values are equivalent: Lumo only has binary thinking on/off.
 - `"none"` is a lumo-tamer extension; standard OpenAI clients don't send it. Default is compact (no think). `lumo-max` still thinks when effort is omitted; send `reasoning_effort: "none"` to turn that off.
 - `reasoning_content` follows Deepseek's convention, not the OpenAI spec. It works with clients that support it (Cursor, Open WebUI with Deepseek config). With `server.reasoning.surfaceThinking: true`, the Responses API emits `reasoning_text` parts.
@@ -315,13 +378,13 @@ Lumo's own copy:
 
 Example from the app:
 
-| | |
-|---|---|
-| **99.0K / 128.0K tokens (77%)** | |
-| Conversation | 99.0K |
-| Files | 0 |
-| Reserved, to keep chatting | 12.8K |
-| Free space | 16.2K |
+|                                 |       |
+| ------------------------------- | ----- |
+| **99.0K / 128.0K tokens (77%)** |       |
+| Conversation                    | 99.0K |
+| Files                           | 0     |
+| Reserved, to keep chatting      | 12.8K |
+| Free space                      | 16.2K |
 
 12.8K reserved + conversation + files + free = 128.0K. The reserve is 10% of the window, so chatting can continue; when the bar is full, Lumo summarizes older messages. lumo-tamer does not run that summarizer.
 
@@ -333,7 +396,6 @@ Customize instructions with `server.instructions.template` and `cli.instructions
 
 Instructions from API clients will be inserted in the main template. If you can, put instructions on personal preferences within your API client and only use `server.instructions` to define the internal interaction between Lumo and lumo-tamer.
 
-
 > **Note:** Under the hood, lumo-tamer injects instructions into normal messages (the same way it is done in Lumo's webclient). Instructions set in the webclient's personal or project settings will be ignored and left unchanged.
 
 ### Custom Tools (Server)
@@ -343,13 +405,12 @@ Let Lumo use tools provided by your OpenAI-compatible client. On by default.
 ```yaml
 server:
   customTools:
-    enabled: true   # default; set false to ignore client tools[]
+    enabled: true # default; set false to ignore client tools[]
 ```
 
 `tool_choice` (`auto` / `none` / `required` / named function) is honored via extra instructions. Lumo must emit one raw JSON line (`{"name":"user:…","arguments":{…}}`). See [Custom Tools](docs/custom-tools.md).
 
-> **Warning:** Custom tool support is experimental and can fail in various ways. Experiment with `server.instructions` settings to improve results. 
-
+> **Warning:** Custom tool support is experimental and can fail in various ways. Experiment with `server.instructions` settings to improve results.
 
 ### Local Actions (CLI)
 
@@ -377,38 +438,38 @@ conversations:
   enableSync: true
   projectName: "lumo-tamer" # project conversations will belong to
 ```
+
 > **Note:** Sync needs a Lumo-scoped session: browser cookies, or password/`/auth` login that got Lumo scope (not the CAPTCHA Drive fallback).
 
 > **Warning:** Projects in Lumo have a limit on the number of conversations per project. When hit, sync will fail. Deleting conversations won't help. Use a new `projectName` as a workaround. See [#16](https://github.com/banter240/lumo-tamer/issues/16).
-
 
 ## API clients
 
 The server implements a subset of OpenAI-compatible endpoints and has so far been tested with a handful of clients only.
 
-| Endpoint | Description |
-|----------|-------------|
-| `POST /v1/chat/completions` | [OpenAI chat completions](https://platform.openai.com/docs/api-reference/chat/create) (`response_format` json_schema / json_object is emulated) |
-| `POST /v1/responses` | [OpenAI responses API](https://platform.openai.com/docs/api-reference/responses/create) |
-| `GET /v1/models` | List available models (`lumo`, `lumo-lite`, `lumo-max`, `apertus-15`; `-thinking` variants appear automatically when `reasoning.autoVariants` is on). Each entry includes `context_window` (131072) and `max_tokens` (13107) |
-| `GET /v1/models/:id` | Single model |
-| `GET /health` | Health check (`status`, version, queue, auth, update) |
-| `GET /v1/update` | GitHub update check (`?refresh=1` to bypass cache) |
-| `POST /v1/update` | Pull GHCR and recreate this container (needs docker.sock) |
-| `GET /auth` | Proton login page (Docker / Portainer) |
-| `POST /auth/login` | Same login, JSON body |
-| `POST /auth/logout` | Sign out (no API key; server stays up) |
-| `GET /config` | Edit `config.yaml` (toggles / text; API key is write-only) |
-| `GET /v1/config` | Config fields as JSON (`server.apiKey` is never returned) |
-| `PUT /v1/config` | Save selected keys or `{ resetAll: true }` (keeps apiKey); hot-reloads in-memory settings (restart only needed for the listen port) |
-| `GET /v1/config/export` | JSON snapshot of every override (`?secrets=true` to include them) |
-| `POST /v1/config/import` | Merge a snapshot (`{ snapshot, dryRun }` — dryRun validates and reports without writing) |
-| `GET /logs` | Live log viewer page (level filter, search, auto-scroll) |
-| `GET /v1/logs` | Log stream (SSE, `?level=` filter; redacted ring buffer) |
-| `GET /v1/auth/status` | Session / sync-capability |
-| `POST /v1/auth/refresh` | Force token refresh |
-| `POST /v1/auth/logout` | Revoke session and exit the process |
-| `GET /metrics` | [Prometheus metrics](docs/development.md#metrics) (off by default) |
+| Endpoint                    | Description                                                                                                                                                                                                                  |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /v1/chat/completions` | [OpenAI chat completions](https://platform.openai.com/docs/api-reference/chat/create) (`response_format` json_schema / json_object is emulated)                                                                              |
+| `POST /v1/responses`        | [OpenAI responses API](https://platform.openai.com/docs/api-reference/responses/create)                                                                                                                                      |
+| `GET /v1/models`            | List available models (`lumo`, `lumo-lite`, `lumo-max`, `apertus-15`; `-thinking` variants appear automatically when `reasoning.autoVariants` is on). Each entry includes `context_window` (131072) and `max_tokens` (13107) |
+| `GET /v1/models/:id`        | Single model                                                                                                                                                                                                                 |
+| `GET /health`               | Health check (`status`, version, queue, auth, update)                                                                                                                                                                        |
+| `GET /v1/update`            | GitHub update check (`?refresh=1` to bypass cache)                                                                                                                                                                           |
+| `POST /v1/update`           | Pull GHCR and recreate this container (needs docker.sock)                                                                                                                                                                    |
+| `GET /auth`                 | Proton login page (Docker / Portainer)                                                                                                                                                                                       |
+| `POST /auth/login`          | Same login, JSON body                                                                                                                                                                                                        |
+| `POST /auth/logout`         | Sign out (no API key; server stays up)                                                                                                                                                                                       |
+| `GET /config`               | Edit `config.yaml` (toggles / text; API key is write-only)                                                                                                                                                                   |
+| `GET /v1/config`            | Config fields as JSON (`server.apiKey` is never returned)                                                                                                                                                                    |
+| `PUT /v1/config`            | Save selected keys or `{ resetAll: true }` (keeps apiKey); hot-reloads in-memory settings (restart only needed for the listen port)                                                                                          |
+| `GET /v1/config/export`     | JSON snapshot of every override (`?secrets=true` to include them)                                                                                                                                                            |
+| `POST /v1/config/import`    | Merge a snapshot (`{ snapshot, dryRun }` — dryRun validates and reports without writing)                                                                                                                                     |
+| `GET /logs`                 | Live log viewer page (level filter, search, auto-scroll)                                                                                                                                                                     |
+| `GET /v1/logs`              | Log stream (SSE, `?level=` filter; redacted ring buffer)                                                                                                                                                                     |
+| `GET /v1/auth/status`       | Session / sync-capability                                                                                                                                                                                                    |
+| `POST /v1/auth/refresh`     | Force token refresh                                                                                                                                                                                                          |
+| `POST /v1/auth/logout`      | Revoke session and exit the process                                                                                                                                                                                          |
+| `GET /metrics`              | [Prometheus metrics](docs/development.md#metrics) (off by default)                                                                                                                                                           |
 
 Following API clients have been tested and are known to work.
 
@@ -423,12 +484,15 @@ See the [full guide](docs/howto-home-assistant.md). TLDR:
 - Open HA Assist in your dashboard or phone and chat away.
 
 ### OpenClaw
+
 Add Lumo to `models.providers` in your OpenClaw config. Window is 128.0K (`contextWindow` 131072). [Example](docs/openclaw.md).
 
 ### OpenCode
+
 Add Lumo to your `opencode.json` / `opencode.jsonc`. Set each model `limit.context` to 131072 (128.0K; required for auto-compaction) and `limit.output` to 13107 (12.8K reserved). [Example](docs/opencode.md). [Context window](#context-window).
 
 ### Nanocoder
+
 Status: very experimental.
 
 Nanocoder sends many instructions and relies on Lumo calling **a lot** of tools. Lumo will misroute many tool calls and will retry by calling tools with wrong parameters. Basic usage works, but don't expect a fully working coding assistant experience.
@@ -458,7 +522,6 @@ Many clients are untested with lumo-tamer but should work if they only use the `
 To test an API client, increase log levels on both the client and lumo-tamer: `server.log.level: debug` and check for errors.
 
 Please share your experiences with new API clients (both issues and successes) in [the project discussions](https://github.com/banter240/lumo-tamer/discussions/new?category=general)!
-
 
 ## Docker
 
@@ -556,20 +619,23 @@ Portainer: start/stop/remove `lumo-tamer-browser` only. Console on `lumo-tamer` 
 </details>
 
 ### Run
+
 Server:
+
 ```bash
 docker compose up -d tamer
 ```
+
 CLI:
+
 ```bash
 docker compose run --rm -it -v ./some-dir:/dir/ tamer cli
 ```
 
 > **Note:** Running the CLI within Docker may not be very useful:
+>
 > - Lumo will not have access to your files unless you mount a directory.
 > - The image is Alpine-based, so your system may not have the commands Lumo tries to run. You can change config options `cli.localActions.executors` and `cli.instructions.forLocalActions` to be more explicit what commands Lumo should use, or you can rebase the `Dockerfile`.
-
-
 
 ## Further Reading
 
@@ -595,7 +661,7 @@ See [docs/](docs/) for detailed documentation:
 ## Full Disclaimer
 
 - **Unofficial project.** This project is not affiliated with, endorsed by, or related to Proton AG in any way.
-- **Terms of service.** Use of this software may violate Proton's terms of service.
+- **Terms of service.** A Proton support team member stated on Reddit that lumo-tamer-style clients are "fine to use" as unofficial, unsupported tools ([link](https://www.reddit.com/r/lumo/comments/1siwz4c/comment/og3upqf/)), but this is an informal remark, not an official policy or ToS amendment, and it does not protect against automated abuse detection or rate limiting. Use at your own risk.
 - **Rate limiting and token usage.** Although care was put into making the app behave, it may make many API calls, potentially getting you rate-limited, or burn through your allowed tokens quickly. I have not experienced either of these issues on Lumo Plus.
 - **Security.** This app handles Proton user secrets. Although the code is vetted to the best of my knowledge and follows best practices, this is not my area of expertise. Please verify for yourself.
 - **AI-assisted development.** This code was written with the extensive use of Claude Code.

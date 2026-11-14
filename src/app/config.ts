@@ -28,7 +28,7 @@ const configDefaults = loadDefaultsYaml();
 export type ConfigMode = "server" | "cli";
 
 // Shared keys that can be overridden per mode
-const SHARED_KEYS = ["log", "conversations", "commands"] as const;
+const SHARED_KEYS = ["log", "conversations", "commands", "pacing"] as const;
 
 // ============================================
 // Schemas (validation only, no defaults)
@@ -176,6 +176,77 @@ const commandsConfigSchema = z.object({
   wakeword: z.string(),
 });
 
+// Outgoing-request pacing: minimum interval + human-like jitter so agent
+// tool loops don't hammer Proton back-to-back. Shared between server and CLI.
+const pacingConfigSchema = z
+  .object({
+    enabled: z.boolean(),
+    minIntervalMs: z.number().int().min(0),
+    minJitterMs: z.number().int().min(0),
+    maxJitterMs: z.number().int().min(0),
+    // Exponent shaping the jitter draw: >1 = mostly short, rare long waits
+    jitterSkew: z.number().min(0.1).max(10),
+    // Probability of a rare "got distracted" long pause
+    longPauseChance: z.number().min(0).max(1),
+    longPauseMinMs: z.number().int().min(0),
+    longPauseMaxMs: z.number().int().min(0),
+    readingPause: z.object({
+      enabled: z.boolean(),
+      charsPerSec: z.number().positive(),
+      maxMs: z.number().int().min(0),
+    }),
+    circadian: z.object({
+      enabled: z.boolean(),
+      multiplier: z.number().min(1),
+      startHour: z.number().int().min(0).max(23),
+      endHour: z.number().int().min(0).max(23),
+    }),
+    typingPause: z.object({
+      enabled: z.boolean(),
+      charsPerSec: z.number().positive(),
+      maxMs: z.number().int().min(0),
+    }),
+    processingPause: z.object({
+      enabled: z.boolean(),
+      minMs: z.number().int().min(0),
+      maxMs: z.number().int().min(0),
+    }),
+    burst: z.object({
+      enabled: z.boolean(),
+      gapMs: z.number().int().min(0),
+      activeIntervalMs: z.number().int().min(0),
+      resumeDelayMs: z.number().int().min(0),
+    }),
+    retry: z.object({
+      maxAttempts: z.number().int().min(0).max(10),
+      initialDelayMs: z.number().int().min(0),
+      maxDelayMs: z.number().int().min(0),
+      jitterFraction: z.number().min(0).max(1),
+    }),
+    noise: z.object({
+      speedJitterFraction: z.number().min(0).max(1),
+      skipReadingChance: z.number().min(0).max(1),
+      skipTypingChance: z.number().min(0).max(1),
+      sigma: z.number().min(0).max(1),
+      intervalJitterFraction: z.number().min(0).max(1),
+    }),
+  })
+  .refine((cfg) => cfg.maxJitterMs >= cfg.minJitterMs, {
+    message:
+      "pacing.maxJitterMs must be greater than or equal to pacing.minJitterMs",
+    path: ["maxJitterMs"],
+  })
+  .refine((cfg) => cfg.longPauseMaxMs >= cfg.longPauseMinMs, {
+    message:
+      "pacing.longPauseMaxMs must be greater than or equal to pacing.longPauseMinMs",
+    path: ["longPauseMaxMs"],
+  })
+  .refine((cfg) => cfg.processingPause.maxMs >= cfg.processingPause.minMs, {
+    message:
+      "pacing.processingPause.maxMs must be greater than or equal to pacing.processingPause.minMs",
+    path: ["processingPause.maxMs"],
+  });
+
 const updatesConfigSchema = z.object({
   enabled: z.boolean(),
   channel: z.enum(["stable", "dev"]),
@@ -196,6 +267,7 @@ const sharedMergedFields = {
   conversations: conversationsConfigSchema,
   commands: commandsConfigSchema,
   updates: updatesConfigSchema,
+  pacing: pacingConfigSchema,
   enableWebSearch: z.boolean(),
   enableImageTools: z.boolean(),
 };
@@ -284,6 +356,16 @@ function loadMergedConfig(mode: ConfigMode): MergedConfig {
       userModeConfig,
     );
 
+    // Pacing defaults live in the server section of the YAML; lift them to
+    // the shared level so server and CLI both validate (CLI inherits them).
+    const mergedRecord = merged as Record<string, unknown>;
+    const serverSection = mergedRecord.server as
+      Record<string, unknown> | undefined;
+    mergedRecord.pacing = mergeConfigLayers(
+      (serverSection?.pacing as Record<string, unknown> | undefined) ?? {},
+      (mergedRecord.pacing as Record<string, unknown> | undefined) ?? {},
+    );
+
     // Stage 2: apply user mode overrides for shared keys only
     for (const key of SHARED_KEYS) {
       if (userModeConfig?.[key]) {
@@ -338,6 +420,13 @@ export function parseServerUserConfig(
     defaultModeConfig,
     userConfig,
     userModeConfig,
+  );
+  const mergedRecord = merged as Record<string, unknown>;
+  const serverSection = mergedRecord.server as
+    Record<string, unknown> | undefined;
+  mergedRecord.pacing = mergeConfigLayers(
+    (serverSection?.pacing as Record<string, unknown> | undefined) ?? {},
+    (mergedRecord.pacing as Record<string, unknown> | undefined) ?? {},
   );
   for (const key of SHARED_KEYS) {
     if (userModeConfig?.[key]) {
@@ -404,6 +493,8 @@ export const getUpdatesConfig = () => getConfig().updates;
 export const getEnableWebSearch = () => getConfig().enableWebSearch;
 export const getEnableImageTools = () => getConfig().enableImageTools;
 export type UpdatesConfig = z.infer<typeof updatesConfigSchema>;
+export type PacingConfig = z.infer<typeof pacingConfigSchema>;
+export const getPacingConfig = (): PacingConfig => getConfig().pacing;
 
 // Server-specific getters
 export function getServerConfig(): ServerMergedConfig {

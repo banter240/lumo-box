@@ -165,13 +165,93 @@ server:
     # Turn off if you want /v1/models to list only what you configured.
     autoVariants: true
     # Forward Lumo's thinking tokens to the client as delta.reasoning_content
-    # (streaming) or message.reasoning_content (non-streaming).
-    surfaceThinking: false
+    # (streaming) or message.reasoning_content (non-streaming). Default on:
+    # thinking tokens reach the client whenever thinking runs. Thinking
+    # itself stays off by default (default: "none" above).
+    surfaceThinking: true
 
   # Max request body size
   # Covers large coding contexts and base64-encoded image input (vision;
   # 1mb ≈ ~60k tokens of ASCII, 360kb ≈ Lumo's 22.5K context warning level).
   bodyLimit: "10mb"
+
+  # Human-like pacing: space out outgoing Proton requests so agent tool
+  # loops don't fire completions back-to-back like a machine gun.
+  pacing:
+    enabled: true
+    # Minimum time between the dispatch of two consecutive requests (ms)
+    minIntervalMs: 750
+    # Random extra delay before each request (ms). jitterSkew > 1 biases the
+    # draw toward the minimum: mostly short waits, occasional longer ones.
+    minJitterMs: 250
+    maxJitterMs: 2000
+    # 1 = uniform spread; 1.5-2 feels human (mostly quick, rare dawdle)
+    jitterSkew: 1.6
+    # Chance that a request waits out a rare "got distracted" pause,
+    # drawn uniformly from [longPauseMinMs, longPauseMaxMs]
+    longPauseChance: 0.05
+    longPauseMinMs: 15000
+    longPauseMaxMs: 60000
+    readingPause:
+      # Wait as if skimming the previous reply before sending the next request
+      enabled: true
+      # Simulated reading speed (chars per second)
+      charsPerSec: 120
+      # Cap for the reading wait (ms)
+      maxMs: 8000
+    circadian:
+      # Slow down during quiet hours (local time)
+      enabled: true
+      # Multiplier applied to the wait during quiet hours
+      multiplier: 2.5
+      startHour: 23
+      endHour: 7
+    typingPause:
+      # Wait as if typing the outgoing message before it is sent
+      enabled: true
+      # Simulated typing speed (chars per second)
+      charsPerSec: 200
+      # Cap for the typing wait (ms)
+      maxMs: 10000
+    processingPause:
+      # Machine-fed turns (bounces, tool-result continuations) get no typing
+      # pause — nobody types those. They still pay a short uniform "glance at
+      # the result and react" pause so their gaps are not unpaced either.
+      enabled: true
+      minMs: 500
+      maxMs: 2500
+    burst:
+      # Humans chat in bursts: quick replies in an active exchange, a longer
+      # wait when a fresh exchange starts after idle time.
+      enabled: true
+      # Idle time that ends a burst (ms)
+      gapMs: 180000
+      # Reduced minimum interval inside an active burst (ms)
+      activeIntervalMs: 400
+      # Extra "sat back down" delay when a burst resumes after idle (ms)
+      resumeDelayMs: 4000
+    retry:
+      # Back off and retry when Proton answers with 429/5xx, instead of
+      # letting an agent loop re-dispatch immediately.
+      maxAttempts: 3
+      initialDelayMs: 1000
+      maxDelayMs: 30000
+      # +/- fraction applied to each backoff delay (0.25 = +-25%)
+      jitterFraction: 0.25
+    noise:
+      # Randomize every otherwise-fixed component, so timings never correlate
+      # perfectly with observable inputs (reply sizes, intervals, hours).
+      # +/- fraction on the simulated reading/typing speed per request
+      speedJitterFraction: 0.4
+      # Chance the reading pause is skipped entirely (a glance, not a read)
+      skipReadingChance: 0.2
+      # Chance the typing pause is skipped (pasted instead of typed)
+      skipTypingChance: 0.1
+      # Multiplicative triangular wobble on the total computed wait
+      sigma: 0.12
+      # +/- fraction on the enforced minimum interval itself, so gaps under
+      # sustained load don't pile up on one exact value
+      intervalJitterFraction: 0.35
 
   # Prometheus metrics endpoint
   metrics:
@@ -254,9 +334,7 @@ server:
   # Fine-tune relative to auto (x0.435 calibration). 1.0 = auto, 0.9 = 90% of auto, 1.1 = 110%.
   promptTokenEstimationFactor: 1.0
 
-
   instructions:
-
     # Template for assembling instructions.
     # Uses Handlebars-like syntax: {{varName}}, {{#if varName}}...{{/if}}, {{#if}}...{{else}}...{{/if}}
     # Available variables:
@@ -292,7 +370,6 @@ server:
       # external tool) are left untouched.
       - pattern: "(?<![\\w.:-])(?<!native\\s)(?<!custom\\s)(?<!internal\\s)(?<!external\\s)\\btools?\\b(?![\\w[(.])"
         replacement: "custom $&"
-
 
     # Fallback when the client sends no system prompt (Home Assistant voice, etc.).
     # Keep this spoken-friendly: Assist reads the reply aloud.
@@ -344,13 +421,11 @@ server:
       [Tool Result: name]. Emit the code block directly, without announcing it.
       Isolated work: prefer the task tool (see its schema).
 
-
     # Where to inject instructions when the request has no client tools.
     # With tools the proxy always uses "last" so long sessions do not drop the protocol.
     # - first: inject once into first user message (fewer tokens, may be forgotten)
     # - last: inject into last user message each request (WebClient behaviour, more tokens)
     injectInto: "first"
-
 
     # Injected when the client sends response_format json_object / json_schema.
     # {{schema}} is the JSON Schema or "a JSON object".
@@ -381,7 +456,6 @@ server:
       announced the action, narrated it in prose, or contained no message text at all).
       Output the tool call now as JSON text in a fenced json code block.
       Copy "name" exactly from your tool list (keep the prefix), and emit the code block directly.
-
 
 # CLI Configuration
 cli:
