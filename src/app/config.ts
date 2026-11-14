@@ -72,6 +72,7 @@ const customToolsConfigSchema = z.object({
     bounceBlankReply: z.boolean(),
     danglingColonMaxLength: z.number().int().positive(),
     danglingColonLastLineMaxLength: z.number().int().positive(),
+    holdWindowChars: z.number().int().nonnegative(),
   }),
   routing: z.object({
     nativeTools: z.enum(["auto", "always", "never"]),

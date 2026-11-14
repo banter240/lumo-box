@@ -534,10 +534,32 @@ export class LumoClient {
           ? false
           : (options.useNativeTools ?? true);
     const coachAnnounce = coachAnnounceWithoutTool && !isBounce;
+    // Coach-announce holds back bounce-worthy openings (blank reply, dangling
+    // colon, narrated tool call) so the client never sees them. Those calls
+    // settle within the hold window; past it the reply can no longer bounce,
+    // so the rest streams live instead of arriving as a lump. 0 disables the
+    // hold entirely.
+    const holdWindowChars =
+      getServerConfig().customTools.recovery.holdWindowChars;
     const bufferedChunks: string[] = [];
+    let holding = coachAnnounce && holdWindowChars > 0;
+    const flushHeld = () => {
+      if (!holding) return;
+      holding = false;
+      if (bufferedChunks.length > 0) onChunk?.(bufferedChunks.join(""));
+      bufferedChunks.length = 0;
+    };
     const mainOnChunk = coachAnnounce
       ? (chunk: string) => {
+          if (!holding) {
+            onChunk?.(chunk);
+            return;
+          }
           bufferedChunks.push(chunk);
+          const held = bufferedChunks.join("");
+          if (held.length > holdWindowChars && !isToolCallNarration(held)) {
+            flushHeld();
+          }
         }
       : onChunk;
 
@@ -719,9 +741,7 @@ export class LumoClient {
       return { ...bounced, title };
     }
 
-    if (coachAnnounce && onChunk && bufferedChunks.length > 0) {
-      onChunk(bufferedChunks.join(""));
-    }
+    flushHeld();
 
     // Build message data for persistence.
     const message: AssistantMessageData = { content: main.content };

@@ -316,6 +316,9 @@ server:
       danglingColonMaxLength: 2000
       # Max last-line length (chars) still eligible for a dangling-colon bounce.
       danglingColonLastLineMaxLength: 500
+      # Chars a coached reply is held back before streaming resumes; 0 streams
+      # everything live (bounce-worthy openings may reach the client first).
+      holdWindowChars: 2000
 
     # Tool routing: how native Proton tools and custom (JSON) tools coexist.
     routing:

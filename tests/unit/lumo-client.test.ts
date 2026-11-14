@@ -266,4 +266,67 @@ describe("LumoClient (Lumo 2.0 chat/completions)", () => {
     expect(body.model).toBe("lumo-max");
     expect(body.reasoning_effort).toBe("high");
   });
+
+  it("streams live once a coached reply outgrows the hold window", async () => {
+    const part = "x".repeat(600);
+    const { client } = makeClient(() => [
+      cc({ content: part }),
+      cc({ content: part }),
+      cc({ content: part }),
+      cc({ content: part }),
+      cc({ content: part }),
+    ]);
+    client.defaultOptions = {
+      enableEncryption: false,
+      coachAnnounceWithoutTool: true,
+    };
+    const emissions: string[] = [];
+    const res = await client.chatWithHistory(
+      [{ role: Role.User, content: "hi" }],
+      (c) => emissions.push(c),
+    );
+    // Past the hold window the buffer drains and the rest streams per chunk.
+    expect(emissions.length).toBeGreaterThanOrEqual(2);
+    expect(emissions.join("")).toBe(part.repeat(5));
+    expect(res.message.content).toBe(part.repeat(5));
+  });
+
+  it("holds a short coached reply back as one lump until it completes", async () => {
+    const { client } = makeClient(() => [
+      cc({ content: "Hel" }),
+      cc({ content: "lo!" }),
+    ]);
+    client.defaultOptions = {
+      enableEncryption: false,
+      coachAnnounceWithoutTool: true,
+    };
+    const emissions: string[] = [];
+    await client.chatWithHistory([{ role: Role.User, content: "hi" }], (c) =>
+      emissions.push(c),
+    );
+    expect(emissions).toEqual(["Hello!"]);
+  });
+
+  it("streams every chunk live when holdWindowChars is 0", async () => {
+    const { getServerConfig } = await import("../../src/app/config.js");
+    const original = structuredClone(getServerConfig());
+    getServerConfig().customTools.recovery.holdWindowChars = 0;
+    try {
+      const { client } = makeClient(() => [
+        cc({ content: "Hel" }),
+        cc({ content: "lo!" }),
+      ]);
+      client.defaultOptions = {
+        enableEncryption: false,
+        coachAnnounceWithoutTool: true,
+      };
+      const emissions: string[] = [];
+      await client.chatWithHistory([{ role: Role.User, content: "hi" }], (c) =>
+        emissions.push(c),
+      );
+      expect(emissions).toEqual(["Hel", "lo!"]);
+    } finally {
+      Object.assign(getServerConfig(), original);
+    }
+  });
 });
