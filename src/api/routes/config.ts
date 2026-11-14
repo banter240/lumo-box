@@ -45,6 +45,7 @@ import {
   withoutHostOnlyChanges,
 } from "../../app/host-only-config.js";
 import { htmlPage } from "../web-ui.js";
+import { isLocalRequest } from "../access.js";
 import { VERSION } from "../../app/version.js";
 import { clientIp, createAttemptGate } from "../attempt-limit.js";
 import { AUTH } from "../../app/const.js";
@@ -56,7 +57,7 @@ export interface ConfigRouterHooks {
   onSaved?: () => void;
 }
 
-function renderConfigPage(isAuthenticated: boolean): string {
+function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
   const extraCss = `
     .row.hidden-field {
       display: none !important;
@@ -1033,6 +1034,7 @@ function renderConfigPage(isAuthenticated: boolean): string {
     extraCss,
     page: "config",
     version: VERSION,
+    localUi,
   });
 }
 
@@ -1042,9 +1044,11 @@ export function createConfigRouter(
 ): Router {
   const router = Router();
 
-  router.get("/config", (_req: Request, res: Response) => {
+  router.get("/config", (req: Request, res: Response) => {
     const isAuthenticated = app.isAuthenticated();
-    res.type("html").send(renderConfigPage(isAuthenticated));
+    res
+      .type("html")
+      .send(renderConfigPage(isAuthenticated, isLocalRequest(req)));
   });
 
   router.get("/v1/config", (_req: Request, res: Response) => {

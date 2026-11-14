@@ -5,26 +5,34 @@
  * GET  /v1/logs   - SSE stream (text/event-stream)
  */
 
-import { Router } from 'express';
-import { subscribe, recentEntries, type LogEntry, LOG_LEVELS } from '../../app/log-broadcast.js';
-import { htmlPage } from '../web-ui.js';
-import { VERSION } from '../../app/version.js';
-import { redactString } from '../../app/log-redact.js';
+import { Router } from "express";
+import {
+  subscribe,
+  recentEntries,
+  type LogEntry,
+  LOG_LEVELS,
+} from "../../app/log-broadcast.js";
+import { htmlPage } from "../web-ui.js";
+import { isLocalRequest } from "../access.js";
+import { VERSION } from "../../app/version.js";
+import { redactString } from "../../app/log-redact.js";
 
 export function createLogsRouter() {
   const router = Router();
 
   // SSE endpoint: /v1/logs
-  router.get('/v1/logs', (req, res) => {
+  router.get("/v1/logs", (req, res) => {
     const levelFilter = (req.query.level as string)?.toLowerCase();
     if (levelFilter && !LOG_LEVELS.includes(levelFilter as any)) {
-      return res.status(400).send('Invalid level. Allowed: ' + LOG_LEVELS.join(', '));
+      return res
+        .status(400)
+        .send("Invalid level. Allowed: " + LOG_LEVELS.join(", "));
     }
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
 
     // Send recent entries first
     for (const entry of recentEntries()) {
@@ -34,7 +42,7 @@ export function createLogsRouter() {
 
     // Keep alive ping every 25s
     const ping = setInterval(() => {
-      res.write(': ping\n\n');
+      res.write(": ping\n\n");
     }, 25000);
 
     const cleanup = (entry: LogEntry) => {
@@ -44,19 +52,19 @@ export function createLogsRouter() {
 
     const unsubscribe = subscribe(cleanup);
 
-    req.on('close', () => {
+    req.on("close", () => {
       clearInterval(ping);
       unsubscribe();
     });
 
-    req.on('error', () => {
+    req.on("error", () => {
       clearInterval(ping);
       unsubscribe();
     });
   });
 
   // HTML page: /logs
-  router.get('/logs', (_req, res) => {
+  router.get("/logs", (req, res) => {
     const extraCss = `
       .log-pane {
         display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.75rem;
@@ -108,7 +116,7 @@ export function createLogsRouter() {
         <div class="log-toolbar">
           <select id="levelFilter">
             <option value="">All levels</option>
-            ${LOG_LEVELS.map(l => `<option value="${l}">${l.toUpperCase()}</option>`).join('')}
+            ${LOG_LEVELS.map((l) => `<option value="${l}">${l.toUpperCase()}</option>`).join("")}
           </select>
           <input type="text" id="searchBox" placeholder="Search text…" style="min-width: 12rem;">
           <button id="pauseBtn">Pause</button>
@@ -208,14 +216,17 @@ export function createLogsRouter() {
       </script>
     `;
 
-    res.send(htmlPage({
-      title: 'Live Logs — lumo-tamer',
-      body,
-      page: 'logs',
-      wide: true,
-      version: VERSION,
-      extraCss,
-    }));
+    res.send(
+      htmlPage({
+        title: "Live Logs — lumo-tamer",
+        body,
+        page: "logs",
+        wide: true,
+        version: VERSION,
+        extraCss,
+        localUi: isLocalRequest(req),
+      }),
+    );
   });
 
   return router;

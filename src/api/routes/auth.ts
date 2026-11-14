@@ -34,6 +34,7 @@ import {
 } from "../../auth/desktop-login.js";
 import { sendAuthRequired } from "../error-handler.js";
 import { htmlPage } from "../web-ui.js";
+import { isLocalRequest } from "../access.js";
 import { VERSION } from "../../app/version.js";
 import { getConversationsConfig } from "../../app/config.js";
 import { clientIp, createAttemptGate } from "../attempt-limit.js";
@@ -138,6 +139,7 @@ function renderAuthPage(state: {
   sync?: boolean;
   method?: string;
   sessionNotice?: string;
+  localUi: boolean;
 }): string {
   const extraCss = `
     .fail { margin: 1.15rem 0 0; border-top: 1px solid var(--line); padding-top: 0.95rem; }
@@ -369,6 +371,7 @@ function renderAuthPage(state: {
     extraCss,
     page: "auth",
     version: VERSION,
+    localUi: state.localUi,
   });
 }
 
@@ -378,7 +381,7 @@ export function createAuthRouter(
 ): Router {
   const router = Router();
 
-  router.get("/auth", async (_req: Request, res: Response) => {
+  router.get("/auth", async (req: Request, res: Response) => {
     if (deps.authManager && !deps.authManager.getProvider().isValid()) {
       try {
         await deps.authManager.refreshNow();
@@ -410,6 +413,7 @@ export function createAuthRouter(
           loggedIn: true,
           sync: provider.supportsFullApi(),
           method: provider.method,
+          localUi: isLocalRequest(req),
         }),
       );
       return;
@@ -419,6 +423,7 @@ export function createAuthRouter(
       renderAuthPage({
         loggedIn: false,
         sessionNotice: hooks.getSessionNotice?.() ?? undefined,
+        localUi: isLocalRequest(req),
       }),
     );
   });

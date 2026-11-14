@@ -326,6 +326,9 @@ export function htmlPage(options: {
   extraCss?: string;
   page: "auth" | "config" | "logs";
   version?: string;
+  /** Served to this machine: the UI-lock button is meaningless (loopback
+   *  is trusted without a key), so it is not rendered at all. */
+  localUi?: boolean;
 }): string {
   const width = options.wide ? "74rem" : "26rem";
   const verTag = options.version
@@ -372,7 +375,7 @@ export function htmlPage(options: {
         ${iconBtn(REPO_URL, "GitHub", ICON_GITHUB, ' target="_blank" rel="noopener noreferrer"')}
         <button type="button" class="theme-btn" id="themeToggle" aria-label="Toggle theme"></button>
         <button type="button" class="icon-btn" id="uiRestartBtn" aria-label="Restart server" title="Restart server">${ICON_RESTART}</button>
-        <button type="button" class="icon-btn" id="uiLockBtn" aria-label="Lock web UI" title="Lock web UI (clear the unlock cookie)">${ICON_LOCK}</button>
+        ${options.localUi ? "" : `<button type="button" class="icon-btn" id="uiLockBtn" aria-label="Lock web UI" title="Lock web UI (clear the unlock cookie)">${ICON_LOCK}</button>`}
         ${navBtn}
       </div>
     </div>
@@ -381,7 +384,7 @@ export function htmlPage(options: {
     </div>
   </div>
   <div id="toast-container" aria-live="polite"></div>
-  <script>${WEB_HELPERS}${THEME_BIND}${UPDATE_BIND}${options.page === "auth" ? "" : AUTH_STATUS_BIND}${LOGOUT_BIND}${RESTART_BIND}${UI_LOCK_BIND}</script>
+  <script>${WEB_HELPERS}${THEME_BIND}${UPDATE_BIND}${options.page === "auth" ? "" : AUTH_STATUS_BIND}${LOGOUT_BIND}${RESTART_BIND}${options.localUi ? "" : UI_LOCK_BIND}</script>
 </body>
 </html>`;
 }
