@@ -65,6 +65,17 @@ describe("parseImageUrl", () => {
     const r = parseImageUrl("data:image/svg+xml;base64,PHN2Zz4=");
     expect(r.ok).toBe(false);
   });
+
+  it("rejects a payload whose magic bytes contradict the declared MIME type", () => {
+    const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0]).toString("base64");
+    const r = parseImageUrl(`data:image/png;base64,${jpeg}`);
+    expect(r.ok).toBe(false);
+  });
+
+  it("rejects a declared image type that is not a real image payload", () => {
+    const r = parseImageUrl("data:image/png;base64,aGVsbG8gd29ybGQ="); // "hello world"
+    expect(r.ok).toBe(false);
+  });
 });
 
 describe("generated images", () => {
@@ -132,7 +143,9 @@ describe("shouldOfferImageTools", () => {
         user(skills),
       ]),
     ).toEqual([]);
-    expect(selectImageTools([user("Today's date is now: Fri Nov 13 2026")])).toEqual([]);
+    expect(
+      selectImageTools([user("Today's date is now: Fri Nov 13 2026")]),
+    ).toEqual([]);
   });
 
   it("ignores OpenCode's post-compaction checkpoint and shell notices", () => {

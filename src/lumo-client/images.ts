@@ -62,6 +62,17 @@ export function parseImageUrl(url: unknown): ParsedImage {
   if (!isStrictBase64(data)) {
     return { ok: false, reason: "invalid base64 image data" };
   }
+  // Bytes win over declaration: a wrong or lying MIME type is rejected.
+  const sniffed = sniffImageMimeType(data);
+  if (sniffed !== mimeType) {
+    return {
+      ok: false,
+      reason:
+        sniffed === undefined
+          ? `payload is not a supported image format (declared ${mimeType})`
+          : `declared ${mimeType} but payload is ${sniffed}`,
+    };
+  }
   return {
     ok: true,
     mimeType,
@@ -106,13 +117,18 @@ export function lumoImageMarker(
   return `<lumo-image id="${encodeURIComponent(id)}" source="${encodeURIComponent(source)}"${nameAttr} />`;
 }
 
-/** MIME type from the magic bytes of a base64 payload (same table as v2-body). */
-export function inferImageMimeType(base64: string): string {
+/** MIME type sniffed from base64 magic bytes; undefined when not a supported format. */
+export function sniffImageMimeType(base64: string): string | undefined {
   if (base64.startsWith("iVBORw0KGgo")) return "image/png";
   if (base64.startsWith("/9j/")) return "image/jpeg";
   if (base64.startsWith("R0lGOD")) return "image/gif";
   if (base64.startsWith("UklGR")) return "image/webp";
-  return "image/png";
+  return undefined;
+}
+
+/** MIME type from the magic bytes of a base64 payload (same table as v2-body). */
+export function inferImageMimeType(base64: string): string {
+  return sniffImageMimeType(base64) ?? "image/png";
 }
 
 /** Markdown for a generated image sent to the client (format documented in the README). */
