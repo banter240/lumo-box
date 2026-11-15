@@ -269,6 +269,28 @@ describe("MetricsService", () => {
     });
   });
 
+  describe("allowance metrics", () => {
+    it("sets remaining limits per bucket", async () => {
+      metrics.lumoRemainingLimits.set({ bucket: "lite" }, 42);
+      metrics.lumoRemainingLimits.set({ bucket: "max" }, 7);
+      metrics.lumoRemainingLimits.set({ bucket: "images" }, 3);
+
+      const output = await metrics.getMetrics();
+      expect(output).toContain("test_lumo_remaining_limits");
+      expect(output).toContain('bucket="lite"');
+      expect(output).toContain('bucket="max"');
+      expect(output).toContain('bucket="images"');
+    });
+
+    it("sets the applied limit category gauge", async () => {
+      metrics.lumoAppliedLimitCategory.set(2);
+
+      const output = await metrics.getMetrics();
+      expect(output).toContain("test_lumo_applied_limit_category");
+      expect(output).toContain(" 2");
+    });
+  });
+
   describe("getContentType", () => {
     it("returns prometheus content type", () => {
       const contentType = metrics.getContentType();

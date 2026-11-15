@@ -59,6 +59,10 @@ export class MetricsService {
   readonly pacingWaitMs: Histogram;
   readonly backoffRetriesTotal: Counter;
 
+  // Allowance metrics (from the final usage SSE chunk)
+  readonly lumoRemainingLimits: Gauge;
+  readonly lumoAppliedLimitCategory: Gauge;
+
   constructor(config: MetricsConfig) {
     this.registry = new Registry();
     const prefix = config.prefix;
@@ -199,6 +203,19 @@ export class MetricsService {
       name: `${prefix}backoff_retries_total`,
       help: "Retries after retryable Proton API errors (429/5xx)",
       labelNames: ["reason"],
+      registers: [this.registry],
+    });
+
+    // Allowance metrics
+    this.lumoRemainingLimits = new Gauge({
+      name: `${prefix}lumo_remaining_limits`,
+      help: "Remaining Lumo allowance per bucket (lite/max/images), null on unlimited plans",
+      labelNames: ["bucket"],
+      registers: [this.registry],
+    });
+    this.lumoAppliedLimitCategory = new Gauge({
+      name: `${prefix}lumo_applied_limit_category`,
+      help: "Which bucket the last completion was billed against (1 = lite, 2 = max, 3 = images, 0 = other)",
       registers: [this.registry],
     });
   }

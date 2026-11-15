@@ -329,6 +329,26 @@ export class LumoClient {
         }
         case "usage":
           usage = msg.usage;
+          if (usage?.remaining_limits) {
+            const gauges = getMetrics()?.lumoRemainingLimits;
+            for (const [bucket, remaining] of Object.entries(
+              usage.remaining_limits,
+            )) {
+              if (remaining !== null && remaining !== undefined) {
+                gauges?.set({ bucket }, remaining);
+              }
+            }
+          }
+          if (usage?.applied_limit_category) {
+            const categories: Record<string, number> = {
+              lite: 1,
+              max: 2,
+              images: 3,
+            };
+            getMetrics()?.lumoAppliedLimitCategory.set(
+              categories[usage.applied_limit_category] ?? 0,
+            );
+          }
           break;
         case "harmful":
           throw new Error("API returned harmful");
