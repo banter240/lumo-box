@@ -1,3 +1,69 @@
+## [0.10.0](https://github.com/banter240/lumo-tamer/compare/v0.9.0...v0.10.0) (2026-11-15)
+
+### Features
+
+* feat(compaction): stub old tool results before sending
+
+  Agent clients re-send the whole conversation on every request, and
+  old tool results dominate the prompt. compactTurns stubs those
+  outside the recent window to a one-line "[output of N chars omitted]";
+  the recent window stays byte-identical and nothing persisted moves.
+  Off by default; server.compaction in config.yaml, shared like pacing.
+* feat(images): OpenAI-compatible /v1/images endpoints
+
+  POST /v1/images/generations and /v1/images/edits, for OpenAI-style
+  clients. Both run the native generate_image / edit_image tools over a
+  synthetic single-turn chat; the b64_json is taken from the streamed
+  generated-image markdown, because the persisted reply keeps only
+  <lumo-image> markers. Gated on enableImageTools, base64 data URLs
+  only, completions counted in lumoCompletionsTotal.
+* feat(metrics): expose remaining Lumo allowance as gauges
+
+  The final usage chunk carries the remaining allowance per bucket and
+  the billed category; both were logged and dropped. They are now
+  gauges on /metrics: lumo_remaining_limits{bucket} and
+  lumo_applied_limit_category (1=lite, 2=max, 3=images), set as each
+  stream completes.
+
+### Bug Fixes
+
+* fix(client): retry transient stream errors and stop mid-task stalls
+
+  Proton can answer 200 and still fail inside the stream with "timed
+  out waiting for capacity" — the whole agent task died with it.
+  Completions now retry those through the pacing backoff, re-slotted
+  through the scheduler like any other request, and never once anything
+  was streamed to the client. Around it, three stall patterns: image
+  tool arguments written as text bounce once with the tools re-offered,
+  French announcements with the pre-colon space ("Je vérifie :") are
+  caught, and agent-made user turns (compaction checkpoints, shell
+  notices, instruction banners) no longer pass as real requests. The
+  three bounce paths share one helper.
+* fix(images): offer attachment tools only on the direct reply to the image
+
+  Tool-loop steps re-send the same history, so after a screenshot
+  arrived describe_image stayed advertised and Lumo kept re-describing
+  it instead of continuing the task. Attachment tools are now offered
+  only on the direct reply to an image turn.
+* fix(images): validate magic bytes against the declared MIME type
+
+  parseImageUrl took the declared MIME type at face value; a payload
+  claiming to be a PNG travelled as one. The sniffed magic bytes must
+  now agree with the declaration, and payloads that are no supported
+  image format are rejected outright.
+* fix(tools): run tool calls written under markdown headers or bare blocks
+
+  In those turns Lumo did write its tool call, but as prose: under a
+  markdown title like **user:shell**, or as a bare arguments object
+  with no tool name at all. Neither shape executed, so agent loops
+  stalled until the user said continue. The detector now picks up both,
+  infers the missing name from the declared tool signatures, and
+  unpacks JSON arrays of parallel calls.
+
+### Documentation
+
+* docs(readme): centered header with live Discord and Fluxer badges
+
 ## [0.9.0](https://github.com/banter240/lumo-tamer/compare/v0.8.0...v0.9.0) (2026-11-14)
 
 ### Features
