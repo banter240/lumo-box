@@ -1,4 +1,20 @@
+<div align="center">
+
 # lumo-tamer
+
+[![Latest Release](https://img.shields.io/github/v/release/banter240/lumo-tamer?style=for-the-badge&color=6d4aff&logo=github)](https://github.com/banter240/lumo-tamer/releases/latest)
+[![License](https://img.shields.io/github/license/banter240/lumo-tamer?style=for-the-badge&color=blue)](LICENSE)
+[![Dev Process](https://img.shields.io/badge/Dev_Process-AI_Assisted-8957e5?style=for-the-badge)](#project-status)
+[![Discord](https://img.shields.io/discord/1460909918482858060?logo=discord&logoColor=white&style=for-the-badge&color=5865F2)](https://discord.gg/kxUsjHyxfT)
+[![Fluxer Members](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Ffluxer.com%2Fapi%2Fv1%2Finvites%2Ft5LNln9X&query=%24.member_count&label=Fluxer%20Members&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI%2BPHBhdGggZD0iTTIxIDExLjVhOC4zOCA4LjM4IDAgMCAwLS45LTMuNzQgOC4zNyA4LjM3IDAgMCAxLTkuNDIgMS42MiA4LjM4IDguMzggMCAwIDAtLjkuMTNiIi8%2BPHBhdGggZD0iTTQuMjQgMi4yNmMuNS0xLjM2IDEuODUtMi4xNyAzLjM4LTIuMTcgMi4wOS4wMyAzLjc1IDEuMjUgNC4zNyAyLjQ4LjU0IDEuMDkgMi4zNyAxLjMxIDMuLjM5LjI5YTEuNSAxLjUgMCAwIDEgMi4yIDIuMmMtLjQyLjQyLS45Mi44LTEuNTMgMS4xMi0yLjM5IDEuMi0zLjk5IDEuOC01LjczIDEuOTRhMTAgMTAgMCAwIDEtMi4yNS0uMTYgMTIgMTIgMCAwIDEtMi4wMy0uNThjLTMuMTQtMS4yMy00LjktMi4yMi00LjkzLTMuMDZhMTMuMDUgMTMuMDUgMCAwIDEgMy40OS0zLjVaIi8%2BPC9zdmc%2B&style=for-the-badge&color=ff7a00)](https://fluxer.gg/t5LNln9X)
+
+[![Open Issues](https://img.shields.io/github/issues/banter240/lumo-tamer?style=for-the-badge&color=red&logo=github)](https://github.com/banter240/lumo-tamer/issues)
+[![Discussions](https://img.shields.io/github/discussions/banter240/lumo-tamer?style=for-the-badge&logo=github&color=7289DA)](https://github.com/banter240/lumo-tamer/discussions)
+[![Stars](https://img.shields.io/github/stars/banter240/lumo-tamer?style=for-the-badge&color=yellow&logo=github)](https://github.com/banter240/lumo-tamer/stargazers)
+
+<a href="https://buymeacoffee.com/banter240" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 50px !important;width: 181px !important;"></a>
+
+</div>
 
 ```
                         ┌─────────────────┐     ┌─────────────────┐
@@ -21,9 +37,9 @@ Use [Proton Lumo](https://lumo.proton.me/) in your favorite AI-enabled app or on
 
 lumo-tamer is a lightweight local proxy that talks to Proton's Lumo API using the same protocol as the official web client. Chat is U2L-encrypted on the wire (same as the official client). Tokens sit in an AES-256-GCM vault. Think "proton-bridge for Lumo".
 
-This tree is a fork of [ZeroTricks/lumo-tamer](https://github.com/ZeroTricks/lumo-tamer). Credit for the original project belongs there.
+Need help, want to share a setup, or report something quickly? Join the [Discord](https://discord.gg/kxUsjHyxfT). If you like the project, you can support it on [Fluxer](https://fluxer.gg/t5LNln9X).
 
-<a href="https://buymeacoffee.com/banter240" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50" width="181"></a>
+This tree is a fork of [ZeroTricks/lumo-tamer](https://github.com/ZeroTricks/lumo-tamer). Credit for the original project belongs there.
 
 ## Features
 
