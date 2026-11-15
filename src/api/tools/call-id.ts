@@ -12,6 +12,7 @@ import { randomUUID } from "crypto";
 import { getCustomToolsConfig } from "../../app/config.js";
 import { logger } from "../../app/logger.js";
 import { getMetrics } from "../../app/metrics.js";
+import { TOOL_RESULT_PREFIX } from "../../lumo-client/types.js";
 
 /** Marker baked into call_ids that lumo-tamer invented (not issued by Lumo). */
 const SYNTHETIC_TAG = "synth";
@@ -57,7 +58,7 @@ export function formatSyntheticToolResult(
   toolName: string,
   output: string,
 ): string {
-  return `[Tool Result: ${toolName}]\n${output}`;
+  return `${TOOL_RESULT_PREFIX} ${toolName}]\n${output}`;
 }
 
 /** Past tool call as Lumo should emit it: a ```json fence with prefixed name. */

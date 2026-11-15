@@ -14,6 +14,8 @@ export type {
 } from "@lumo/lib/lumo-api-client/core/types.js";
 
 export { Role } from "@lumo/types-api.js";
+
+export const TOOL_RESULT_PREFIX = "[Tool Result:";
 import type { ToolName } from "@lumo/lib/lumo-api-client/core/types.js";
 // Local-only types
 

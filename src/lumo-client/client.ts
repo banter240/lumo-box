@@ -84,6 +84,7 @@ import {
   stripImages,
   selectImageTools,
 } from "./images.js";
+import { compactTurns } from "./compaction.js";
 
 /** Native image tool arguments (describe/edit take an image_id) written as text. */
 const IMAGE_ARGS_AS_TEXT_RE = /"image_id"\s*:\s*"/;
@@ -747,8 +748,12 @@ export class LumoClient {
 
     // Inject instructions at the last moment (kept out of persisted turns).
     const turnsWithInstructions = instructions
-      ? injectInstructionsIntoTurns(turns, instructions, injectInstructionsInto)
-      : turns;
+      ? injectInstructionsIntoTurns(
+          compactTurns(turns),
+          instructions,
+          injectInstructionsInto,
+        )
+      : compactTurns(turns);
 
     // Classify before injection: the injected block would defeat the
     // [Tool Result: prefix check and inflate the typing measurement.

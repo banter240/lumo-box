@@ -28,7 +28,27 @@ const configDefaults = loadDefaultsYaml();
 export type ConfigMode = "server" | "cli";
 
 // Shared keys that can be overridden per mode
-const SHARED_KEYS = ["log", "conversations", "commands", "pacing"] as const;
+const SHARED_KEYS = [
+  "log",
+  "conversations",
+  "commands",
+  "pacing",
+  "compaction",
+] as const;
+
+// Sections whose defaults live under `server:` in the YAML but validate at the
+// shared level (CLI inherits them). Lift in BOTH merge stages.
+const LIFTED_SECTIONS = ["pacing", "compaction"] as const;
+
+const liftServerSections = (merged: Record<string, unknown>): void => {
+  const serverSection = merged.server as Record<string, unknown> | undefined;
+  for (const key of LIFTED_SECTIONS) {
+    merged[key] = mergeConfigLayers(
+      (serverSection?.[key] as Record<string, unknown> | undefined) ?? {},
+      (merged[key] as Record<string, unknown> | undefined) ?? {},
+    );
+  }
+};
 
 // ============================================
 // Schemas (validation only, no defaults)
@@ -248,6 +268,16 @@ const pacingConfigSchema = z
     path: ["processingPause.maxMs"],
   });
 
+// Turn compaction: shrink what goes UP to Lumo without touching what is
+// persisted. Shared between server and CLI.
+const compactionConfigSchema = z.object({
+  enabled: z.boolean(),
+  // Turns at the end of the history that stay byte-identical
+  keepRecentTurns: z.number().int().min(1).max(200),
+  // Tool results shorter than this are left alone (a stub would save nothing)
+  minToolResultChars: z.number().int().min(0),
+});
+
 const updatesConfigSchema = z.object({
   enabled: z.boolean(),
   channel: z.enum(["stable", "dev"]),
@@ -269,6 +299,7 @@ const sharedMergedFields = {
   commands: commandsConfigSchema,
   updates: updatesConfigSchema,
   pacing: pacingConfigSchema,
+  compaction: compactionConfigSchema,
   enableWebSearch: z.boolean(),
   enableImageTools: z.boolean(),
 };
@@ -357,15 +388,10 @@ function loadMergedConfig(mode: ConfigMode): MergedConfig {
       userModeConfig,
     );
 
-    // Pacing defaults live in the server section of the YAML; lift them to
-    // the shared level so server and CLI both validate (CLI inherits them).
+    // Pacing/compaction defaults live in the server section of the YAML; lift
+    // them to the shared level so server and CLI both validate (CLI inherits).
     const mergedRecord = merged as Record<string, unknown>;
-    const serverSection = mergedRecord.server as
-      Record<string, unknown> | undefined;
-    mergedRecord.pacing = mergeConfigLayers(
-      (serverSection?.pacing as Record<string, unknown> | undefined) ?? {},
-      (mergedRecord.pacing as Record<string, unknown> | undefined) ?? {},
-    );
+    liftServerSections(mergedRecord);
 
     // Stage 2: apply user mode overrides for shared keys only
     for (const key of SHARED_KEYS) {
@@ -423,12 +449,7 @@ export function parseServerUserConfig(
     userModeConfig,
   );
   const mergedRecord = merged as Record<string, unknown>;
-  const serverSection = mergedRecord.server as
-    Record<string, unknown> | undefined;
-  mergedRecord.pacing = mergeConfigLayers(
-    (serverSection?.pacing as Record<string, unknown> | undefined) ?? {},
-    (mergedRecord.pacing as Record<string, unknown> | undefined) ?? {},
-  );
+  liftServerSections(mergedRecord);
   for (const key of SHARED_KEYS) {
     if (userModeConfig?.[key]) {
       merged[key] = mergeConfigLayers(merged[key], userModeConfig[key]);
@@ -495,7 +516,10 @@ export const getEnableWebSearch = () => getConfig().enableWebSearch;
 export const getEnableImageTools = () => getConfig().enableImageTools;
 export type UpdatesConfig = z.infer<typeof updatesConfigSchema>;
 export type PacingConfig = z.infer<typeof pacingConfigSchema>;
+export type CompactionConfig = z.infer<typeof compactionConfigSchema>;
 export const getPacingConfig = (): PacingConfig => getConfig().pacing;
+export const getCompactionConfig = (): CompactionConfig =>
+  getConfig().compaction;
 
 // Server-specific getters
 export function getServerConfig(): ServerMergedConfig {

@@ -8,7 +8,7 @@
 import { logger } from "../app/logger.js";
 import { getMetrics } from "../app/metrics.js";
 import { getPacingConfig, type PacingConfig } from "../app/config.js";
-import { Role, type Turn } from "./types.js";
+import { Role, type Turn, TOOL_RESULT_PREFIX } from "./types.js";
 
 /** Earliest allowed dispatch time for the next request. */
 let nextSlot = 0;
@@ -36,7 +36,7 @@ export function isToolResultTurn(turns: Turn[]): boolean {
   return (
     !!last &&
     last.role === Role.User &&
-    (last.content ?? "").trimStart().startsWith("[Tool Result:")
+    (last.content ?? "").trimStart().startsWith(TOOL_RESULT_PREFIX)
   );
 }
 

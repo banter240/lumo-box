@@ -253,6 +253,18 @@ server:
       # sustained load don't pile up on one exact value
       intervalJitterFraction: 0.35
 
+  # Context compaction: shrink what goes UP to Lumo. Long agent sessions
+  # re-send the full history every request; old tool outputs dominate the
+  # prompt. Compaction stubs old tool results to a one-line header once they
+  # are further back than keepRecentTurns. The recent window stays
+  # byte-identical; nothing persisted or synced is touched.
+  compaction:
+    enabled: false
+    # Turns at the end of the history that are never stubbed
+    keepRecentTurns: 30
+    # Tool results shorter than this are left alone (a stub saves nothing)
+    minToolResultChars: 1000
+
   # Prometheus metrics endpoint
   metrics:
     # Enable /metrics endpoint

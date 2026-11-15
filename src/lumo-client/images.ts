@@ -15,7 +15,7 @@
 import { createHash } from "node:crypto";
 import type { WireImage } from "@lumo/types-api.js";
 import type { RequestEncryptionParams } from "@lumo/lib/lumo-api-client/core/encryptionParams.js";
-import { Role, type ToolName, type Turn } from "./types.js";
+import { Role, type ToolName, type Turn, TOOL_RESULT_PREFIX } from "./types.js";
 
 /** Upstream MAX_IMAGES_PER_REQUEST: older images beyond this are dropped. */
 export const MAX_IMAGES_PER_REQUEST = 10;
@@ -361,7 +361,6 @@ const HELPER_REQUEST_RE =
   /title generator|thread title|generate a (?:short )?title|summari[sz]e the conversation|structured summary|existing checkpoint/i;
 
 const MARKER_RE = /<lumo-image\b[^>]*\/>|\[Image omitted:[^\]]*\]/g;
-const TOOL_RESULT_PREFIX = "[Tool Result:";
 
 /**
  * Agent-made user turns: OpenCode's post-compaction checkpoint (its summary
