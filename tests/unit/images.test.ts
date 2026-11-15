@@ -249,6 +249,27 @@ describe("shouldOfferImageTools", () => {
     ).toEqual([]);
   });
 
+  it("offers attachment tools only on the direct reply to the image", () => {
+    const withImg = user("explore ce code pour trouver le bug", [img("1")]);
+    expect(selectImageTools([withImg])).toEqual(["describe_image"]);
+    // Tool-loop step: the image turn is re-sent with a tool result after it.
+    expect(
+      selectImageTools([
+        withImg,
+        { role: Role.Assistant, content: "checking" },
+        toolResult,
+      ]),
+    ).toEqual([]);
+    // Assistant already replied; a later turn without an image gets nothing.
+    expect(
+      selectImageTools([
+        withImg,
+        { role: Role.Assistant, content: "je vois le serveur" },
+        user("ok"),
+      ]),
+    ).toEqual([]);
+  });
+
   it("ignores image markers when looking for intent", () => {
     expect(
       shouldOfferImageTools([user('<lumo-image id="1" source="user" /> ok')]),

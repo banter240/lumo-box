@@ -497,7 +497,12 @@ export function selectImageTools(
 
   const tools = new Set<ToolName>();
   if (asksForImage(text)) tools.add("generate_image");
-  if (hasImages(user)) {
+  // Attachment tools only on the direct reply to the image. Tool-loop steps
+  // re-send the same history; without this the detector keeps re-describing
+  // the same screenshot instead of continuing the task. A model that still
+  // needs an image tool mid-loop writes its args as text, which the client
+  // bounce catches and re-offers via imageToolsOverride.
+  if (hasImages(user) && g === turns.length - 1) {
     tools.add("describe_image");
     if (asksForImageEdit(text, true)) tools.add("edit_image");
   }
