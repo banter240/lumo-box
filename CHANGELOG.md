@@ -1,3 +1,23 @@
+## [0.10.1](https://github.com/banter240/lumo-tamer/compare/v0.10.0...v0.10.1) (2026-11-15)
+
+### Bug Fixes
+
+* fix(config-editor): describe every field and gate children behind their toggles
+
+  Fields the /config page could not describe fell back to "See
+  config.defaults.yaml and docs/config.md.": the three new compaction
+  keys and recovery's holdWindowChars had no copy entry at all. Every
+  one of the 126 fields now carries a real hint in the pacing/metrics
+  house style, and compaction got its own sidebar category instead of
+  spilling into Server > General.
+
+  Dependency chains were equally inconsistent: metrics and updates hid
+  their children behind their master toggle, but pacing, autoRefresh,
+  wakeword, mock, and the localActions tree showed every knob
+  unconditionally. All conditional fields are registered now, and the
+  visibility rule cascades — turning a group off collapses its
+  sub-groups too, instead of leaving orphaned grandchildren behind.
+
 ## [0.10.0](https://github.com/banter240/lumo-tamer/compare/v0.9.0...v0.10.0) (2026-11-15)
 
 ### Features
