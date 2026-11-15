@@ -88,6 +88,12 @@ export const CONFIG_CATEGORIES: ConfigCategory[] = [
     parent: "server",
     blurb: "Human-like request spacing: jitter, pauses, bursts, backoff.",
   },
+  {
+    id: "compaction",
+    title: "Compaction",
+    parent: "server",
+    blurb: "Stub old tool results in re-sent histories. Off by default.",
+  },
   // Daily use
   {
     id: "models",
@@ -317,6 +323,11 @@ const COPY: Record<string, FieldCopy> = {
     label: "Dangling-colon max last-line length",
     hint: "Chars for the final line. Default 500.",
     more: `Same idea as the total-length cap, but for the last line of the reply. A very long final line before a colon suggests prose (e.g. pasted output), not an announcement about to emit a tool call.`,
+  },
+  "server.customTools.recovery.holdWindowChars": {
+    label: "Coaching hold window (chars)",
+    hint: "Chars of a coached reply held back before streaming resumes. 0 streams everything live; bounce-worthy openings may reach the client first.",
+    examples: sample("2000"),
   },
   "server.customTools.routing.nativeTools": {
     label: "Native tool routing",
@@ -773,6 +784,21 @@ const COPY: Record<string, FieldCopy> = {
     hint: "Random +- fraction on the enforced minimum interval, so gaps under sustained load don't pile up on one value.",
     examples: sample("0.35"),
   },
+  "server.compaction.enabled": {
+    label: "Context compaction",
+    hint: "Stub old tool results in re-sent histories to a one-line header.",
+    more: "Agent sessions re-send the whole conversation on every request, and old tool outputs dominate the prompt. Once stubbed, older results stop costing input tokens. The recent window stays byte-identical; nothing persisted or synced is touched. Off by default.",
+  },
+  "server.compaction.keepRecentTurns": {
+    label: "Recent window (turns)",
+    hint: "Turns at the end of the history that are never stubbed.",
+    examples: sample("30"),
+  },
+  "server.compaction.minToolResultChars": {
+    label: "Minimum stub size (chars)",
+    hint: "Tool results shorter than this are left alone; a stub saves nothing there.",
+    examples: sample("1000"),
+  },
   "server.enableWebSearch": {
     label: "Native web search",
     hint: "Lumo native web_search, weather, stock, crypto. Off so Lumo does not search unless you turn it on. On matches the Lumo website.",
@@ -1012,8 +1038,20 @@ export const FIELD_DEPENDENCIES: Record<string, FieldDependency> = {
     parent: "server.customTools.enabled",
     showValues: [true],
   },
+  "server.customTools.modules.homeAssistant.enabled": {
+    parent: "server.customTools.enabled",
+    showValues: [true],
+  },
   "server.customTools.modules.homeAssistant.prompt": {
     parent: "server.customTools.modules.homeAssistant.enabled",
+    showValues: [true],
+  },
+  "server.compaction.keepRecentTurns": {
+    parent: "server.compaction.enabled",
+    showValues: [true],
+  },
+  "server.compaction.minToolResultChars": {
+    parent: "server.compaction.enabled",
     showValues: [true],
   },
   "server.metrics.collectDefaultMetrics": {
@@ -1027,6 +1065,136 @@ export const FIELD_DEPENDENCIES: Record<string, FieldDependency> = {
   "server.promptTokenEstimationFactor": {
     parent: "server.promptTokenEstimation",
     showValues: ["auto"],
+  },
+  "commands.wakeword": { parent: "commands.enabled", showValues: [true] },
+  "test.mock.scenario": { parent: "test.mock.enabled", showValues: [true] },
+  "auth.autoRefresh.intervalHours": {
+    parent: "auth.autoRefresh.enabled",
+    showValues: [true],
+  },
+  "auth.autoRefresh.onError": {
+    parent: "auth.autoRefresh.enabled",
+    showValues: [true],
+  },
+  "server.pacing.minIntervalMs": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.minJitterMs": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.maxJitterMs": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.jitterSkew": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.longPauseChance": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.longPauseMinMs": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.longPauseMaxMs": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.readingPause.charsPerSec": {
+    parent: "server.pacing.readingPause.enabled",
+    showValues: [true],
+  },
+  "server.pacing.readingPause.maxMs": {
+    parent: "server.pacing.readingPause.enabled",
+    showValues: [true],
+  },
+  "server.pacing.circadian.multiplier": {
+    parent: "server.pacing.circadian.enabled",
+    showValues: [true],
+  },
+  "server.pacing.circadian.startHour": {
+    parent: "server.pacing.circadian.enabled",
+    showValues: [true],
+  },
+  "server.pacing.circadian.endHour": {
+    parent: "server.pacing.circadian.enabled",
+    showValues: [true],
+  },
+  "server.pacing.typingPause.charsPerSec": {
+    parent: "server.pacing.typingPause.enabled",
+    showValues: [true],
+  },
+  "server.pacing.typingPause.maxMs": {
+    parent: "server.pacing.typingPause.enabled",
+    showValues: [true],
+  },
+  "server.pacing.processingPause.minMs": {
+    parent: "server.pacing.processingPause.enabled",
+    showValues: [true],
+  },
+  "server.pacing.processingPause.maxMs": {
+    parent: "server.pacing.processingPause.enabled",
+    showValues: [true],
+  },
+  "server.pacing.burst.gapMs": {
+    parent: "server.pacing.burst.enabled",
+    showValues: [true],
+  },
+  "server.pacing.burst.activeIntervalMs": {
+    parent: "server.pacing.burst.enabled",
+    showValues: [true],
+  },
+  "server.pacing.burst.resumeDelayMs": {
+    parent: "server.pacing.burst.enabled",
+    showValues: [true],
+  },
+  "server.pacing.retry.maxAttempts": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.retry.initialDelayMs": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.retry.maxDelayMs": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.retry.jitterFraction": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.noise.speedJitterFraction": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.noise.skipReadingChance": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.noise.skipTypingChance": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.noise.sigma": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "server.pacing.noise.intervalJitterFraction": {
+    parent: "server.pacing.enabled",
+    showValues: [true],
+  },
+  "cli.localActions.fileReads.enabled": {
+    parent: "cli.localActions.enabled",
+    showValues: [true],
+  },
+  "cli.localActions.fileReads.maxFileSize": {
+    parent: "cli.localActions.fileReads.enabled",
+    showValues: [true],
   },
   "updates.channel": { parent: "updates.enabled", showValues: [true] },
   "updates.repository": { parent: "updates.enabled", showValues: [true] },
@@ -1147,6 +1315,7 @@ export function fieldCategory(path: string): string {
   if (path === "server.enableWebSearch" || path === "server.enableImageTools")
     return "toolsGeneral";
   if (path.startsWith("server.metrics.")) return "metrics";
+  if (path.startsWith("server.compaction.")) return "compaction";
   if (path.startsWith("server.reasoning.")) return "reasoning";
   if (
     path === "server.apiModelName" ||

@@ -630,21 +630,32 @@ function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
           setTimeout(() => { el.textContent = prev; }, 1200);
         });
       });
-      // Conditional field visibility: watch parent toggles
+      // Visibility cascades: a child only shows when its parent row is
+      // visible too, so enable-chains (pacing > circadian > multiplier)
+      // collapse together instead of leaving orphaned grandchildren.
+      const updateChild = (childPath) => {
+        const depInfo = DEPS[childPath];
+        const parentEl = formEl.querySelector('[data-path="' + depInfo.parent + '"]');
+        if (!parentEl) return;
+        const parentField = fields.find(f => f.path === depInfo.parent);
+        if (!parentField) return;
+        const parentRow = parentEl.closest('.row');
+        const parentShown = !parentRow || parentRow.style.display !== 'none';
+        const isVisible = parentShown && depInfo.showValues.includes(parseCurrent(parentField, parentEl));
+        const childRow = formEl.querySelector('[data-row="' + childPath + '"]');
+        if (childRow) childRow.style.display = isVisible ? '' : 'none';
+        for (const grandPath of Object.keys(DEPS)) {
+          if (DEPS[grandPath].parent === childPath) updateChild(grandPath);
+        }
+      };
       for (const [childPath, depInfo] of Object.entries(DEPS)) {
         const parentEl = formEl.querySelector('[data-path="' + depInfo.parent + '"]');
         if (!parentEl) continue;
-        const updateChildren = () => {
-          const parentField = fields.find(f => f.path === depInfo.parent);
-          if (!parentField) return;
-          const isVisible = depInfo.showValues.includes(parseCurrent(parentField, parentEl));
-          const childRow = formEl.querySelector('[data-row="' + childPath + '"]');
-          if (childRow) childRow.style.display = isVisible ? '' : 'none';
-        };
-        parentEl.addEventListener('change', updateChildren);
-        parentEl.addEventListener('input', updateChildren);
-        updateChildren();
+        const onChange = () => updateChild(childPath);
+        parentEl.addEventListener('change', onChange);
+        parentEl.addEventListener('input', onChange);
       }
+      Object.keys(DEPS).forEach(updateChild);
       markAllRows();
     }
 
