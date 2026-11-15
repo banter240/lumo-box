@@ -28,6 +28,7 @@ import { createHealthRouter } from "./routes/health.js";
 import { createModelsRouter } from "./routes/models.js";
 import { createChatCompletionsRouter } from "./routes/chat-completions/index.js";
 import { createResponsesRouter } from "./routes/responses/index.js";
+import { createImagesRouter } from "./routes/images.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createConfigRouter } from "./routes/config.js";
 import { createUpdatesRouter } from "./routes/updates.js";
@@ -92,6 +93,7 @@ export class APIServer {
     this.expressApp.use(createModelsRouter());
     this.expressApp.use(createChatCompletionsRouter(this.deps));
     this.expressApp.use(createResponsesRouter(this.deps));
+    this.expressApp.use(createImagesRouter(this.deps));
     this.expressApp.use(
       createAuthRouter(this.deps, {
         onAuthenticated: async () => {

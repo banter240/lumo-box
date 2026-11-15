@@ -5,25 +5,26 @@
  * Each test gets a fresh server with its own ConversationStore and mock API.
  */
 
-import express from 'express';
-import type { Server } from 'http';
-import type { AddressInfo } from 'net';
-import { createResponsesRouter } from '../../src/api/routes/responses/index.js';
-import { createChatCompletionsRouter } from '../../src/api/routes/chat-completions/index.js';
-import { createHealthRouter } from '../../src/api/routes/health.js';
-import { createModelsRouter } from '../../src/api/routes/models.js';
-import { RequestQueue } from '../../src/api/queue.js';
-import { LumoClient } from '../../src/lumo-client/index.js';
-import { createMockProtonApi } from '../../src/mock/mock-api.js';
-import { FallbackStore } from '../../src/conversations/fallback/store.js';
-import { MetricsService, setMetrics } from '../../src/app/metrics.js';
-import { setupMetricsMiddleware } from '../../src/api/middleware.js';
-import { createMetricsRouter } from '../../src/api/routes/metrics.js';
-import type { EndpointDependencies } from '../../src/api/types.js';
-import type { MockConfig } from '../../src/app/config.js';
-import { ConversationStore } from '../../src/conversations/store.js';
+import express from "express";
+import type { Server } from "http";
+import type { AddressInfo } from "net";
+import { createResponsesRouter } from "../../src/api/routes/responses/index.js";
+import { createChatCompletionsRouter } from "../../src/api/routes/chat-completions/index.js";
+import { createHealthRouter } from "../../src/api/routes/health.js";
+import { createModelsRouter } from "../../src/api/routes/models.js";
+import { createImagesRouter } from "../../src/api/routes/images.js";
+import { RequestQueue } from "../../src/api/queue.js";
+import { LumoClient } from "../../src/lumo-client/index.js";
+import { createMockProtonApi } from "../../src/mock/mock-api.js";
+import { FallbackStore } from "../../src/conversations/fallback/store.js";
+import { MetricsService, setMetrics } from "../../src/app/metrics.js";
+import { setupMetricsMiddleware } from "../../src/api/middleware.js";
+import { createMetricsRouter } from "../../src/api/routes/metrics.js";
+import type { EndpointDependencies } from "../../src/api/types.js";
+import type { MockConfig } from "../../src/app/config.js";
+import { ConversationStore } from "../../src/conversations/store.js";
 
-type Scenario = MockConfig['scenario'];
+type Scenario = MockConfig["scenario"];
 
 export interface TestServerOptions {
   /** Enable metrics collection and /metrics endpoint */
@@ -48,8 +49,8 @@ export interface TestServer {
  * @returns TestServer with baseUrl, deps, and cleanup function
  */
 export async function createTestServer(
-  scenario: Scenario = 'success',
-  options: TestServerOptions = {}
+  scenario: Scenario = "success",
+  options: TestServerOptions = {},
 ): Promise<TestServer> {
   const mockApi = createMockProtonApi(scenario);
   const lumoClient = new LumoClient(mockApi, { enableEncryption: false });
@@ -66,7 +67,11 @@ export async function createTestServer(
   // Set up metrics if requested
   let metrics: MetricsService | undefined;
   if (options.metrics) {
-    metrics = new MetricsService({ enabled: true, collectDefaultMetrics: false, prefix: 'test_' });
+    metrics = new MetricsService({
+      enabled: true,
+      collectDefaultMetrics: false,
+      prefix: "test_",
+    });
     setMetrics(metrics);
   }
 
@@ -81,6 +86,7 @@ export async function createTestServer(
   app.use(createModelsRouter());
   app.use(createChatCompletionsRouter(deps));
   app.use(createResponsesRouter(deps));
+  app.use(createImagesRouter(deps));
 
   const server = await new Promise<Server>((resolve) => {
     const s = app.listen(0, () => resolve(s));
@@ -95,10 +101,11 @@ export async function createTestServer(
     deps,
     store,
     metrics,
-    close: () => new Promise((resolve) => {
-      if (metrics) setMetrics(null);
-      server.close(() => resolve());
-    }),
+    close: () =>
+      new Promise((resolve) => {
+        if (metrics) setMetrics(null);
+        server.close(() => resolve());
+      }),
   };
 }
 
@@ -106,19 +113,21 @@ export async function createTestServer(
  * Parse SSE event stream from response text.
  * Returns array of parsed event data objects.
  */
-export function parseSSEEvents(text: string): Array<{ event?: string; data: unknown }> {
+export function parseSSEEvents(
+  text: string,
+): Array<{ event?: string; data: unknown }> {
   const events: Array<{ event?: string; data: unknown }> = [];
-  const blocks = text.split('\n\n').filter(Boolean);
+  const blocks = text.split("\n\n").filter(Boolean);
 
   for (const block of blocks) {
-    const lines = block.split('\n');
+    const lines = block.split("\n");
     let eventType: string | undefined;
-    let dataStr = '';
+    let dataStr = "";
 
     for (const line of lines) {
-      if (line.startsWith('event: ')) {
+      if (line.startsWith("event: ")) {
         eventType = line.slice(7).trim();
-      } else if (line.startsWith('data: ')) {
+      } else if (line.startsWith("data: ")) {
         dataStr += line.slice(6);
       }
     }

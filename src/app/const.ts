@@ -104,6 +104,7 @@ export const ENUMS = {
     "historyToolEcho",
     "weeklyLimit",
     "cycle",
+    "imageGeneration",
   ],
   REASONING: ["none", "high"],
 } as const;
