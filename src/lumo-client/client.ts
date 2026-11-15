@@ -85,6 +85,9 @@ import {
   selectImageTools,
 } from "./images.js";
 
+/** Native image tool arguments (describe/edit take an image_id) written as text. */
+const IMAGE_ARGS_AS_TEXT_RE = /"image_id"\s*:\s*"/;
+
 // Re-export types for external consumers
 export type { LumoClientOptions, ChatResult };
 
@@ -123,6 +126,28 @@ function buildBounceInstruction(toolCall: ParsedToolCall): string {
     2,
   );
   return `${instruction}\n${toolCallJson}`;
+}
+
+/**
+ * Transient errors worth retrying: Proton's capacity timeouts ("Please try
+ * again"), temporary unavailability, and transport failures. Seen repeatedly
+ * in production streams; without a retry the agent client aborts the whole
+ * task on the first hiccup.
+ */
+const TRANSIENT_COMPLETION_ERROR_RE =
+  /(timed out waiting for capacity|please try again|temporarily unavailable|overloaded|fetch failed|network|econnreset|econnrefused|etimedout|epipe|socket hang up|terminated|aborted|timed out waiting for response data)/i;
+
+/** Attached by processStream: whether output was already streamed to the client. */
+interface RetryableErrorInfo {
+  hadPartialOutput?: boolean;
+}
+
+function isRetryableCompletionError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const info = error as Error & RetryableErrorInfo;
+  // Never retry when the client may already have received part of the answer.
+  if (info.hadPartialOutput) return false;
+  return TRANSIENT_COMPLETION_ERROR_RE.test(error.message);
 }
 
 function buildAnnounceBounceInstruction(): string {
@@ -348,6 +373,12 @@ export class LumoClient {
         usage,
         native: nativeToolProcessor.getResult(),
       };
+    } catch (error) {
+      // Flag whether anything was already streamed so the caller can tell a
+      // clean retry (nothing emitted) from a mid-answer failure.
+      (error as Error & RetryableErrorInfo).hadPartialOutput =
+        content.length > 0 || reasoning.length > 0;
+      throw error;
     } finally {
       // Cancel the upstream body if we stopped early (e.g. misrouted-tool abort).
       if (!streamEnded) {
@@ -480,22 +511,85 @@ export class LumoClient {
     // Human-like pacing; the caller classified the plan from the raw turns.
     await paceOutgoingRequest(params.plan);
 
-    const stream = await this.postWithRetry(params.endpoint, body);
+    // Retry transient in-stream failures (capacity timeout, transport errors)
+    // when nothing was streamed yet, so an agent working through a long task
+    // doesn't get killed by a single hiccup. Uses the pacing config's backoff
+    // (jitter, metrics, no-op sleeps under test) and re-slots every
+    // re-dispatch through the scheduler like any other request.
+    const retry = getPacingConfig().retry;
+    for (let attempt = 0; ; attempt++) {
+      if (attempt > 0) {
+        const delayMs = computeRetryDelay(retry, attempt);
+        logger.warn(
+          { attempt, delayMs },
+          "Backing off before completion retry",
+        );
+        getMetrics()?.backoffRetriesTotal.inc({ reason: "stream" });
+        await backoffSleep(delayMs);
+        await paceOutgoingRequest(params.plan);
+      }
+      try {
+        const stream = await this.postWithRetry(params.endpoint, body);
 
-    const result = await this.processStream(stream, encryptionContext, {
-      onChunk: params.onChunk,
-      onReasoning: params.onReasoning,
-      suppressBounce: params.suppressBounce,
-    });
+        const result = await this.processStream(stream, encryptionContext, {
+          onChunk: params.onChunk,
+          onReasoning: params.onReasoning,
+          suppressBounce: params.suppressBounce,
+        });
 
-    if (params.target === "message") noteResponseVolume(result.content.length);
+        if (params.target === "message")
+          noteResponseVolume(result.content.length);
 
-    // Attach estimated prompt tokens to usage for downstream reporting.
-    if (result.usage) {
-      result.usage.prompt_tokens = estimatedPromptTokens;
+        // Attach estimated prompt tokens to usage for downstream reporting.
+        if (result.usage) {
+          result.usage.prompt_tokens = estimatedPromptTokens;
+        }
+
+        return result;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (
+          attempt >= retry.maxAttempts - 1 ||
+          !isRetryableCompletionError(error)
+        ) {
+          logger.warn({ error: message }, "Completion failed (not retryable)");
+          throw error;
+        }
+        logger.warn(
+          { attempt: attempt + 1, error: message },
+          "Transient completion error; retrying",
+        );
+      }
     }
+  }
 
-    return result;
+  /** Re-ask once after appending the assistant reply and a corrective user
+   * turn. Runs with isBounce=true (no title of its own) and carries the
+   * concurrent title so it isn't wasted or re-derived from the synthetic
+   * bounce transcript. */
+  private async bounceOnce(
+    turns: Turn[],
+    assistantReply: string,
+    instruction: string,
+    onChunk: ((content: string) => void) | undefined,
+    options: LumoClientOptions,
+    titlePromise: Promise<CompletionResult | null> | null,
+  ): Promise<ChatResult> {
+    const bounced = await this.chatWithHistory(
+      [
+        ...turns,
+        { role: Role.Assistant, content: assistantReply },
+        { role: Role.User, content: instruction },
+      ],
+      onChunk,
+      options,
+      true,
+    );
+    const titleResult = titlePromise ? await titlePromise : null;
+    const title = titleResult?.content
+      ? postProcessTitle(titleResult.content)
+      : bounced.title;
+    return { ...bounced, title };
   }
 
   /**
@@ -601,11 +695,15 @@ export class LumoClient {
       );
     }
 
-    // Never on bounces; otherwise only when this turn is about images.
-    const offerImageTools =
-      getEnableImageTools() && !isBounce
-        ? selectImageTools(turns, instructions)
-        : [];
+    // Never on bounces (unless the bounce is about an image tool); otherwise
+    // only when this turn is about images.
+    const offerImageTools = !getEnableImageTools()
+      ? []
+      : options.imageToolsOverride
+        ? options.imageToolsOverride
+        : !isBounce
+          ? selectImageTools(turns, instructions)
+          : [];
     if (offerImageTools.length > 0)
       logger.info(
         { tools: offerImageTools },
@@ -693,26 +791,44 @@ export class LumoClient {
         "Bouncing misrouted tool call",
       );
 
-      const bounceTurns: Turn[] = [
-        ...turns,
-        { role: Role.Assistant, content: main.content },
-        { role: Role.User, content: bounceInstruction },
-      ];
-
-      // The bounce runs with isBounce=true (no title of its own); carry the
-      // title from this top-level attempt so it isn't wasted or re-derived
-      // from the synthetic bounce transcript.
-      const bounced = await this.chatWithHistory(
-        bounceTurns,
+      return this.bounceOnce(
+        turns,
+        main.content,
+        bounceInstruction,
         onChunk,
         options,
-        true,
+        titlePromise,
       );
-      const titleResult = titlePromise ? await titlePromise : null;
-      const title = titleResult?.content
-        ? postProcessTitle(titleResult.content)
-        : bounced.title;
-      return { ...bounced, title };
+    }
+
+    // Image tool arguments written as text ({"image_id": …} in a code block)
+    // instead of calling the native function: nothing runs and the agent
+    // stops. Ask once more, with the same image tools offered.
+    if (
+      !isBounce &&
+      offerImageTools.length > 0 &&
+      !main.native.toolCall &&
+      IMAGE_ARGS_AS_TEXT_RE.test(main.content)
+    ) {
+      logger.info(
+        { tools: offerImageTools },
+        "Bouncing image tool call written as text",
+      );
+      const instruction =
+        `Note: you wrote the image tool's arguments as text, so nothing ran. ` +
+        `Call your built-in ${offerImageTools.join(" / ")} function directly now ` +
+        `(native function calling, not a JSON code block), then continue.`;
+      return this.bounceOnce(
+        turns,
+        main.content,
+        instruction,
+        onChunk,
+        {
+          ...options,
+          imageToolsOverride: offerImageTools,
+        },
+        titlePromise,
+      );
     }
 
     if (
@@ -723,22 +839,14 @@ export class LumoClient {
     ) {
       const bounceInstruction = buildAnnounceBounceInstruction();
       logger.info("Bouncing announce-without-tool narration");
-      const bounceTurns: Turn[] = [
-        ...turns,
-        { role: Role.Assistant, content: main.content },
-        { role: Role.User, content: bounceInstruction },
-      ];
-      const bounced = await this.chatWithHistory(
-        bounceTurns,
+      return this.bounceOnce(
+        turns,
+        main.content,
+        bounceInstruction,
         onChunk,
         options,
-        true,
+        titlePromise,
       );
-      const titleResult = titlePromise ? await titlePromise : null;
-      const title = titleResult?.content
-        ? postProcessTitle(titleResult.content)
-        : bounced.title;
-      return { ...bounced, title };
     }
 
     flushHeld();

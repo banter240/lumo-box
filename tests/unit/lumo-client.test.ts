@@ -198,6 +198,68 @@ describe("LumoClient (Lumo 2.0 chat/completions)", () => {
     expect(api).toHaveBeenCalledTimes(1);
   });
 
+  describe("transient-error retry", () => {
+    // Real-world stream error seen repeatedly in production:
+    // Proton answers 200 then errors mid-stream when out of capacity.
+    const capacityError = {
+      error: {
+        message:
+          "API returned error: Request timed out waiting for capacity. Please try again.",
+      },
+    };
+
+    // Backoff delays are no-ops under VITEST (sleepUnlessTesting), so the
+    // pacing config's retry defaults exercise the real code path.
+
+    it("retries a capacity timeout and returns the retried answer", async () => {
+      let calls = 0;
+      const { client, api } = makeClient(() => {
+        calls++;
+        return calls <= 2
+          ? [capacityError]
+          : [cc({ content: "answer after retry" })];
+      });
+      const res = await client.chatWithHistory([
+        { role: Role.User, content: "do the task" },
+      ]);
+      expect(res.message.content).toBe("answer after retry");
+      expect(api).toHaveBeenCalledTimes(3);
+    });
+
+    it("gives up after exhausting the retries", async () => {
+      const { client, api } = makeClient(() => [capacityError]);
+      await expect(
+        client.chatWithHistory([{ role: Role.User, content: "hi" }]),
+      ).rejects.toThrow(/timed out waiting for capacity/u);
+      expect(api).toHaveBeenCalledTimes(3);
+    });
+
+    it("does not retry once content was already streamed to the client", async () => {
+      const { client, api } = makeClient(() => [
+        cc({ content: "partial" }),
+        capacityError,
+      ]);
+      const chunks: string[] = [];
+      await expect(
+        client.chatWithHistory([{ role: Role.User, content: "hi" }], (c) =>
+          chunks.push(c),
+        ),
+      ).rejects.toThrow(/timed out waiting for capacity/u);
+      expect(api).toHaveBeenCalledTimes(1);
+      expect(chunks.join("")).toBe("partial");
+    });
+
+    it("does not retry non-transient errors", async () => {
+      const { client, api } = makeClient(() => [
+        { error: { message: "API returned error: invalid model" } },
+      ]);
+      await expect(
+        client.chatWithHistory([{ role: Role.User, content: "hi" }]),
+      ).rejects.toThrow(/invalid model/u);
+      expect(api).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("issues a separate title completion and uses its content", async () => {
     const { client, api } = makeClient((opts) => {
       const target = (opts.data as { lumo?: { target?: string } }).lumo?.target;
