@@ -268,13 +268,10 @@ const pacingConfigSchema = z
     path: ["processingPause.maxMs"],
   });
 
-// Turn compaction: shrink what goes UP to Lumo without touching what is
-// persisted. Shared between server and CLI.
+// Turn compaction, shared between server and CLI.
 const compactionConfigSchema = z.object({
   enabled: z.boolean(),
-  // Turns at the end of the history that stay byte-identical
   keepRecentTurns: z.number().int().min(1).max(200),
-  // Tool results shorter than this are left alone (a stub would save nothing)
   minToolResultChars: z.number().int().min(0),
 });
 
@@ -388,10 +385,7 @@ function loadMergedConfig(mode: ConfigMode): MergedConfig {
       userModeConfig,
     );
 
-    // Pacing/compaction defaults live in the server section of the YAML; lift
-    // them to the shared level so server and CLI both validate (CLI inherits).
-    const mergedRecord = merged as Record<string, unknown>;
-    liftServerSections(mergedRecord);
+    liftServerSections(merged as Record<string, unknown>);
 
     // Stage 2: apply user mode overrides for shared keys only
     for (const key of SHARED_KEYS) {

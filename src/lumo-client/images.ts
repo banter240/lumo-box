@@ -62,7 +62,7 @@ export function parseImageUrl(url: unknown): ParsedImage {
   if (!isStrictBase64(data)) {
     return { ok: false, reason: "invalid base64 image data" };
   }
-  // Bytes win over declaration: a wrong or lying MIME type is rejected.
+  // Magic bytes win over the declared MIME type.
   const sniffed = sniffImageMimeType(data);
   if (sniffed !== mimeType) {
     return {
@@ -362,16 +362,11 @@ const HELPER_REQUEST_RE =
 
 const MARKER_RE = /<lumo-image\b[^>]*\/>|\[Image omitted:[^\]]*\]/g;
 
-/**
- * Agent-made user turns: OpenCode's post-compaction checkpoint (its summary
- * template headings), background-shell completion notices and instruction
- * notices. Words inside them ("image", "dernière version"…) are not requests.
- */
+/** Agent-made user turns (compaction checkpoints, shell and instruction notices) are not real requests. */
 const COMPACTION_HEADINGS_RE =
   /^#{2,3} (?:Objective|Requirements|Decisions|Work State|Completed|Active|Blocked|Next Move|Relevant Files|Important Context)\s*$/gm;
 const SHELL_NOTICE_RE = /^\s*<shell id="[^"]*" state="/;
-// OpenCode instruction notices sent as user turns: the skills list (full of
-// "image", "web", "generate") and the date change.
+// OpenCode instruction notices sent as user turns (skills list, date change).
 const CLIENT_NOTICE_RE =
   /^\s*(?:The available skills have changed\.|Today's date is now:|<system-reminder>|<skill_content\b)/;
 
@@ -496,11 +491,8 @@ export function selectImageTools(
 
   const tools = new Set<ToolName>();
   if (asksForImage(text)) tools.add("generate_image");
-  // Attachment tools only on the direct reply to the image. Tool-loop steps
-  // re-send the same history; without this the detector keeps re-describing
-  // the same screenshot instead of continuing the task. A model that still
-  // needs an image tool mid-loop writes its args as text, which the client
-  // bounce catches and re-offers via imageToolsOverride.
+  // Attachment tools only on the direct reply to the image: tool-loop
+  // steps re-send the same history and would keep re-describing it.
   if (hasImages(user) && g === turns.length - 1) {
     tools.add("describe_image");
     if (asksForImageEdit(text, true)) tools.add("edit_image");

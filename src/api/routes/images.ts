@@ -1,12 +1,8 @@
 /**
- * OpenAI-compatible /v1/images endpoints.
- *
- * Generation and editing run through Lumo's native image tools
- * (generate_image / edit_image) over a synthetic single-turn chat. Image
- * bytes come back inside the SSE stream (lumo.image_data), decrypted by
- * the LumoClient like any chat reply, and are returned as b64_json.
- *
- * Same policy as parseImageUrl: base64 data URLs in, no remote fetching.
+ * OpenAI-compatible /v1/images endpoints. Generation and editing run the
+ * native generate_image / edit_image tools over a synthetic single-turn
+ * chat; b64_json is extracted from the streamed markdown, not the persisted
+ * reply. Same policy as parseImageUrl: base64 data URLs only.
  */
 
 import { Router, type Request, type Response } from "express";
@@ -57,8 +53,8 @@ async function runImageTool(
 ): Promise<{ images: string[] } | { error: string }> {
   if (!deps.lumoClient) return { error: "Lumo client unavailable" };
   try {
-    // Persisted reply keeps only markers; base64 bytes arrive as
-    // generated-image markdown in onChunk. Collect the stream for extraction.
+    // The persisted reply keeps only markers; the bytes arrive as
+    // generated-image markdown in onChunk.
     let streamed = "";
     const result = await deps.queue.add(() =>
       deps.lumoClient!.chatWithHistory(

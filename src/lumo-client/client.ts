@@ -129,12 +129,7 @@ function buildBounceInstruction(toolCall: ParsedToolCall): string {
   return `${instruction}\n${toolCallJson}`;
 }
 
-/**
- * Transient errors worth retrying: Proton's capacity timeouts ("Please try
- * again"), temporary unavailability, and transport failures. Seen repeatedly
- * in production streams; without a retry the agent client aborts the whole
- * task on the first hiccup.
- */
+/** Transient in-stream errors worth one retry; partial output is never retried. */
 const TRANSIENT_COMPLETION_ERROR_RE =
   /(timed out waiting for capacity|please try again|temporarily unavailable|overloaded|fetch failed|network|econnreset|econnrefused|etimedout|epipe|socket hang up|terminated|aborted|timed out waiting for response data)/i;
 
@@ -395,8 +390,7 @@ export class LumoClient {
         native: nativeToolProcessor.getResult(),
       };
     } catch (error) {
-      // Flag whether anything was already streamed so the caller can tell a
-      // clean retry (nothing emitted) from a mid-answer failure.
+      // Clean retry (nothing emitted) vs. mid-answer failure.
       (error as Error & RetryableErrorInfo).hadPartialOutput =
         content.length > 0 || reasoning.length > 0;
       throw error;
@@ -532,11 +526,8 @@ export class LumoClient {
     // Human-like pacing; the caller classified the plan from the raw turns.
     await paceOutgoingRequest(params.plan);
 
-    // Retry transient in-stream failures (capacity timeout, transport errors)
-    // when nothing was streamed yet, so an agent working through a long task
-    // doesn't get killed by a single hiccup. Uses the pacing config's backoff
-    // (jitter, metrics, no-op sleeps under test) and re-slots every
-    // re-dispatch through the scheduler like any other request.
+    // Retry only when nothing was streamed yet; backoff and re-dispatch
+    // go through the pacer like any other request.
     const retry = getPacingConfig().retry;
     for (let attempt = 0; ; attempt++) {
       if (attempt > 0) {
@@ -561,7 +552,6 @@ export class LumoClient {
         if (params.target === "message")
           noteResponseVolume(result.content.length);
 
-        // Attach estimated prompt tokens to usage for downstream reporting.
         if (result.usage) {
           result.usage.prompt_tokens = estimatedPromptTokens;
         }

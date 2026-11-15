@@ -1,9 +1,8 @@
 /**
- * Turn compaction: shrink what goes UP to Lumo without touching what is
- * persisted or synced. Long agent sessions re-send the whole history every
- * request; old tool outputs dominate the prompt. This trims them to a
- * header line once they are further back than `keepRecentTurns`, leaving the
- * recent window (where the model actually works) byte-identical.
+ * Shrink what goes UP to Lumo without touching what is persisted: agent
+ * sessions re-send the full history every request and old tool results
+ * dominate the prompt. Only tool results outside the recent window are
+ * stubbed to a header line; the recent window stays byte-identical.
  */
 
 import { getCompactionConfig } from "../app/config.js";
