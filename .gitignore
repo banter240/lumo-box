@@ -19,7 +19,7 @@ build-info.json
 .idea/
 .cursor/
 
-# Local debug home (LUMO_HOME=.local)
+# Local debug home (BOX_HOME=.local)
 .local/
 
 # AI Workspace (private, via ai-core)

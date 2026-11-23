@@ -17,7 +17,7 @@ import {
   delay,
 } from "@lumo/mocks/handlers.js";
 
-// Import custom scenarios (lumo-tamer-specific)
+// Import custom scenarios (lumo-box-specific)
 import { customScenarios } from "./custom-scenarios.js";
 
 // Re-export for custom-scenarios.ts to use

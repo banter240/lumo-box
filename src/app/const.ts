@@ -13,10 +13,10 @@
  */
 
 export const APP = {
-  NAME: "lumo-tamer",
-  CONTAINER_NAME: "lumo-tamer",
-  BROWSER_CONTAINER_NAME: "lumo-tamer-browser",
-  GITHUB_REPO: "banter240/lumo-tamer",
+  NAME: "lumo-box",
+  CONTAINER_NAME: "lumo-box",
+  BROWSER_CONTAINER_NAME: "lumo-box-browser",
+  GITHUB_REPO: "banter240/lumo-box",
   GHCR_REGISTRY: "ghcr.io",
 } as const;
 
@@ -24,7 +24,7 @@ export const APP_GITHUB_URL = `https://github.com/${APP.GITHUB_REPO}`;
 
 /** Compose-published ports. YAML `server.port` is the runtime listen port. */
 export const PORTS = {
-  TAMER: 3003,
+  BOX: 3003,
   NOVNC: 3001,
   CDP: 9222,
 } as const;
@@ -68,7 +68,7 @@ export const AUTH = {
 
 export const DOCKER_UPDATE = {
   API_PREFIX: "/v1.41",
-  HELPER_NAME: "lumo-tamer-updater",
+  HELPER_NAME: "lumo-box-updater",
   REQUEST_TIMEOUT_MS: 120_000,
   STOP_TIMEOUT_SEC: 15,
   STABLE_TAG: "latest",

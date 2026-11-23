@@ -2,7 +2,7 @@
  * Login Authentication Entry Point
  *
  * Run interactive login using username/password credentials.
- * Used by CLI (tamer auth) and the /auth WebUI.
+ * Used by CLI (lumo_box auth) and the /auth WebUI.
  */
 
 import { AUTH } from '../../app/const.js';

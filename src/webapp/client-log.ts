@@ -1,5 +1,5 @@
 /**
- * Tamer-owned diagnostics: forwards browser console errors and unhandled
+ * Box-owned diagnostics: forwards browser console errors and unhandled
  * rejections to the server log. The hosted app swallows most failures
  * behind generic toasts; this surfaces the real cause.
  */

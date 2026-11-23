@@ -1,23 +1,23 @@
 # Updates
 
-No extra updater container. Tamer checks GitHub itself and, on Apply, talks to the Docker engine through a bind-mounted socket.
+No extra updater container. Box checks GitHub itself and, on Apply, talks to the Docker engine through a bind-mounted socket.
 
 ## What lives where
 
 | What | Where | Why |
 |------|--------|-----|
-| Channel, GitHub repo, interval, auto-apply, socket path | `config.yaml` → Settings → **Updates** | Tamer reads this at runtime. |
-| Which image the deployment runs | **`.env` → `LUMO_TAMER_IMAGE`** | Compose `image:` is set before the container exists. Settings cannot rewrite `.env`. |
+| Channel, GitHub repo, interval, auto-apply, socket path | `config.yaml` → Settings → **Updates** | Box reads this at runtime. |
+| Which image the deployment runs | **`.env` → `BOX_IMAGE`** | Compose `image:` is set before the container exists. Settings cannot rewrite `.env`. |
 
 Nothing else moved to env. API key, auth, models stay in `config.yaml`. There is **no Watchtower token**.
 
 ## Docker socket
 
-One-click updates need `/var/run/docker.sock` mounted on `tamer`. That is root-equivalent on the host: whoever controls the container (or its update source) controls the machine. `docker-compose.yml` therefore leaves the mount commented out; without it, update with `docker compose pull && docker compose up -d`.
+One-click updates need `/var/run/docker.sock` mounted on `lumo_box`. That is root-equivalent on the host: whoever controls the container (or its update source) controls the machine. `docker-compose.yml` therefore leaves the mount commented out; without it, update with `docker compose pull && docker compose up -d`.
 
 If you enable it, keep the port off the internet, use a long random API key, and note that `updates.repository` and `updates.dockerSocket` can only be changed in `config.yaml` on the host, never from the web UI or the API.
 
-Portainer: add the same bind on the `lumo-tamer` container if you did not deploy from this compose file.
+Portainer: add the same bind on the `lumo-box` container if you did not deploy from this compose file.
 
 Without the socket, the Update button still **checks** GitHub but Apply tells you to mount it (or pull by hand).
 
@@ -25,7 +25,7 @@ Without the socket, the Update button still **checks** GitHub but Apply tells yo
 
 ```bash
 # Must match Settings → channel (stable/main → :latest, dev → :dev)
-LUMO_TAMER_IMAGE=ghcr.io/banter240/lumo-tamer:latest
+BOX_IMAGE=ghcr.io/banter240/lumo-box:latest
 ```
 
 ## Settings (`updates.*`)
@@ -34,7 +34,7 @@ LUMO_TAMER_IMAGE=ghcr.io/banter240/lumo-tamer:latest
 updates:
   enabled: true
   channel: "stable"
-  repository: "banter240/lumo-tamer"
+  repository: "banter240/lumo-box"
   checkIntervalHours: 6
   autoApply: false
   dockerSocket: "/var/run/docker.sock"
@@ -52,21 +52,21 @@ Each channel is a **track**, not “newest overall”:
 - **stable** (default) = latest GitHub *release* on main (`:latest`). Never a `-dev` tag.
 - **dev** = newest prerelease (`:dev`).
 
-If you are on `0.7.0-dev.7` and pick stable, the chip proposes **main’s** version (e.g. `0.7.0` or `0.6.0`), not “dev is still newer”. Switching to an older main build is a **downgrade** — the UI warns that `config.yaml` and the vault may not load. Apply pulls `:latest` or `:dev` for that channel; also set `LUMO_TAMER_IMAGE` in `.env` so the next `compose up` does not roll back. Auto-apply never downgrades.
+If you are on `0.7.0-dev.7` and pick stable, the chip proposes **main’s** version (e.g. `0.7.0` or `0.6.0`), not “dev is still newer”. Switching to an older main build is a **downgrade** — the UI warns that `config.yaml` and the vault may not load. Apply pulls `:latest` or `:dev` for that channel; also set `BOX_IMAGE` in `.env` so the next `compose up` does not roll back. Auto-apply never downgrades.
 
 ## What Apply does
 
 1. Pull the GHCR tag this container already runs.
-2. Start a **one-shot helper** from that new image (`lumo-tamer-updater`, `--rm`).
-3. The helper stops `lumo-tamer`, creates it again with the new image (same mounts/ports/name), starts it, deletes the old container, and exits.
+2. Start a **one-shot helper** from that new image (`lumo-box-updater`, `--rm`).
+3. The helper stops `lumo-box`, creates it again with the new image (same mounts/ports/name), starts it, deletes the old container, and exits.
 
 No standing second service.
 
 ## Commands
 
 ```bash
-tamer update
-tamer update apply
+lumo_box update
+lumo_box update apply
 # chat: /update   /update apply
 ```
 
@@ -77,6 +77,6 @@ Apply is rate-limited: repeated `POST /v1/update` calls answer 429 after a few a
 ## Manual
 
 ```bash
-docker pull ghcr.io/banter240/lumo-tamer:latest    # or :dev
-docker compose up -d tamer
+docker pull ghcr.io/banter240/lumo-box:latest    # or :dev
+docker compose up -d lumo_box
 ```

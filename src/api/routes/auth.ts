@@ -209,22 +209,22 @@ function renderAuthPage(state: {
       <h3>2. Password</h3>
       <p>${AUTH.LOGIN_MAX_ATTEMPTS} attempts per ${AUTH.ATTEMPT_WINDOW_MS / 60_000} minutes. CAPTCHA: open <code>lumo.proton.me</code> on the same internet, then retry. 2028: password is locked — use Proton sign-in.</p>
       <h3>3. Sidecar (last resort)</h3>
-      <p>This container cannot open a window (and must not try to install Chrome). Start the sidecar, log in, extract tokens, then <strong>remove only the sidecar</strong>. Leave <code>${APP.CONTAINER_NAME}</code> (port ${PORTS.TAMER}) running.</p>
+      <p>This container cannot open a window (and must not try to install Chrome). Start the sidecar, log in, extract tokens, then <strong>remove only the sidecar</strong>. Leave <code>${APP.CONTAINER_NAME}</code> (port ${PORTS.BOX}) running.</p>
       <p>From the compose directory (often <code>/opt/${APP.NAME}</code>):</p>
       <ol>
         <li><code>docker compose --profile browser up -d browser</code></li>
         <li>Open <code>http://&lt;host&gt;:${PORTS.NOVNC}</code> and sign in at lumo.proton.me (CAPTCHA and security keys work)</li>
-        <li><code>docker compose run --rm -it tamer auth browser</code><br>CDP default is <code>${DOCKER_CDP_DEFAULT}</code>. That writes <code>auth.method: browser</code>, <code>auth.browser.launch: false</code>, and the CDP URL — do not set <code>launch: true</code> or <code>${DESKTOP_CDP_DEFAULT}</code> inside Docker.</li>
-        <li>Reload this page (the running server picks up the vault; do not restart tamer)</li>
+        <li><code>docker compose run --rm -it lumo_box auth browser</code><br>CDP default is <code>${DOCKER_CDP_DEFAULT}</code>. That writes <code>auth.method: browser</code>, <code>auth.browser.launch: false</code>, and the CDP URL — do not set <code>launch: true</code> or <code>${DESKTOP_CDP_DEFAULT}</code> inside Docker.</li>
+        <li>Reload this page (the running server picks up the vault; do not restart lumo_box)</li>
         <li>Stop and remove <em>only</em> the sidecar:
           <br><code>docker compose --profile browser stop browser</code>
           <br><code>docker compose --profile browser rm -f browser</code></li>
         <li>Optional — drop the image and Chromium profile so the next start is clean:
-          <br><code>docker rmi \$(docker images -q --filter reference='*lumo-tamer*browser*') 2&gt;/dev/null</code>
+          <br><code>docker rmi \$(docker images -q --filter reference='*lumo-box*browser*') 2&gt;/dev/null</code>
           <br><code>rm -rf ./browser-data</code></li>
         <li>Check it is gone: <code>docker ps -a --filter name=${APP.BROWSER_CONTAINER_NAME}</code> (empty = gone)</li>
       </ol>
-      <p>Portainer: start/stop/remove the container named <code>${APP.BROWSER_CONTAINER_NAME}</code> only. Console on <code>${APP.CONTAINER_NAME}</code> can run <code>tamer auth browser</code>. Do not stop the stack or the <code>${APP.CONTAINER_NAME}</code> container.</p>
+      <p>Portainer: start/stop/remove the container named <code>${APP.BROWSER_CONTAINER_NAME}</code> only. Console on <code>${APP.CONTAINER_NAME}</code> can run <code>lumo_box auth browser</code>. Do not stop the stack or the <code>${APP.CONTAINER_NAME}</code> container.</p>
     </div>
   </details>
   </div>
@@ -376,7 +376,7 @@ function renderAuthPage(state: {
     })();
   </script>`;
   return htmlPage({
-    title: "Sign in · lumo-tamer",
+    title: "Sign in · lumo-box",
     body: inner,
     extraCss,
     page: "auth",

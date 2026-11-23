@@ -19,7 +19,7 @@ describe('writeNewKeyFile', () => {
     dirs.push(dir);
     const keyFilePath = join(dir, 'nested', 'vault-key');
     const config = {
-      keychain: { service: 'lumo-tamer-test-no-such-service', account: 'vault-key' },
+      keychain: { service: 'lumo-box-test-no-such-service', account: 'vault-key' },
       keyFilePath,
     };
 

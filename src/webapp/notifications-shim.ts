@@ -1,5 +1,5 @@
 /**
- * Tamer-owned notifications: the desktop's native OS toasts cannot work
+ * Box-owned notifications: the desktop's native OS toasts cannot work
  * through a proxy, so this shim serves the same window.LumoNotifications
  * API on the Web Notification API instead. Injected INSTEAD of the
  * vendored bridges/notifications.js, which would otherwise overwrite it.

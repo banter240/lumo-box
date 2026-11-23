@@ -1,27 +1,27 @@
 {
-  "name": "lumo-tamer",
+  "name": "lumo-box",
   "version": "0.10.1",
   "description": "Use Proton's Lumo AI through OpenAI-compatible API and CLI",
-  "main": "dist/src/tamer.js",
+  "main": "dist/src/box.js",
   "type": "module",
   "workspaces": [
     "packages/*"
   ],
   "bin": {
-    "tamer": "./dist/src/tamer.js"
+    "lumo_box": "./dist/src/box.js"
   },
   "scripts": {
-    "dev:server": "tsx watch src/tamer.ts server",
-    "dev:cli": "tsx src/tamer.ts",
-    "dev:server:debug": "tsx watch --inspect=0.0.0.0:9229 src/tamer.ts server",
-    "dev:cli:debug": "tsx --inspect=0.0.0.0:9229 src/tamer.ts",
+    "dev:server": "tsx watch src/box.ts server",
+    "dev:cli": "tsx src/box.ts",
+    "dev:server:debug": "tsx watch --inspect=0.0.0.0:9229 src/box.ts server",
+    "dev:cli:debug": "tsx --inspect=0.0.0.0:9229 src/box.ts",
     "sync-upstream": "./scripts/upstream/sync.sh",
     "build": "node scripts/write-build-info.mjs && npx tsc && npx tsc-alias && node scripts/build-webapp.mjs",
     "build:login": "cd src/auth/login/go && go build -o ../../../../dist/proton-auth$(go env GOEXE) && echo 'All done!' || echo 'Warning: Go binary not built (Is Go installed?)'",
     "build:all": "npm run build && npm run build:login",
     "clean": "rm -rf dist",
-    "server": "node dist/src/tamer.js server",
-    "cli": "node dist/src/tamer.js",
+    "server": "node dist/src/box.js server",
+    "cli": "node dist/src/box.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit/",

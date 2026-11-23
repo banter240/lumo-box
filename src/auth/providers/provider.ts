@@ -70,7 +70,7 @@ export class AuthProvider implements IAuthProvider {
         if (!existsSync(config.vaultPath)) {
             throw new Error(
                 `Vault not found: ${config.vaultPath}\n` +
-                'Run: tamer auth'
+                'Run: lumo_box auth'
             );
         }
 
@@ -80,7 +80,7 @@ export class AuthProvider implements IAuthProvider {
         if (!tokens.uid || !tokens.accessToken) {
             throw new Error(
                 'Token file missing uid or accessToken.\n' +
-                'Run: tamer auth'
+                'Run: lumo_box auth'
             );
         }
 
@@ -139,7 +139,7 @@ export class AuthProvider implements IAuthProvider {
 
             if (hoursRemaining <= 0) {
                 status.warnings.push('Tokens have expired');
-                status.warnings.push('Run: tamer auth');
+                status.warnings.push('Run: lumo_box auth');
             } else if (hoursRemaining < 1) {
                 status.warnings.push(`Tokens expire in ${Math.round(hoursRemaining * 60)} minutes`);
                 status.valid = true;
@@ -325,11 +325,11 @@ export class AuthProvider implements IAuthProvider {
         }
 
         if (!this.supportsFullApi()) {
-            return 'Conversation sync disabled: this session has no Lumo API scope. Log in again at /auth or with tamer auth.';
+            return 'Conversation sync disabled: this session has no Lumo API scope. Log in again at /auth or with lumo_box auth.';
         }
 
         if (!this.tokens.keyPassword) {
-            return 'Conversation sync disabled: no keyPassword. Conversations will NOT sync to Proton. Re-run "tamer auth browser" to enable.';
+            return 'Conversation sync disabled: no keyPassword. Conversations will NOT sync to Proton. Re-run "lumo_box auth browser" to enable.';
         }
 
         return null;

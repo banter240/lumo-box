@@ -4,7 +4,7 @@ import { htmlPage } from "../../src/api/web-ui.js";
 describe("htmlPage local lock-button suppression", () => {
   const page = (localUi: boolean) =>
     htmlPage({
-      title: "Test · lumo-tamer",
+      title: "Test · lumo-box",
       body: "<p>body</p>",
       page: "config",
       localUi,

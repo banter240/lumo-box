@@ -5,11 +5,11 @@ This document is for developers working on conversation persistence.
 
 ## Overview
 
-lumo-tamer supports two conversation stores:
+lumo-box supports two conversation stores:
 - **ConversationStore**: encrypted offline persistence and full sync reusing WebClient's code
 - **FallbackStore**: in-memory, optional one-way sync
 
-ConversationStore is the way forward, but still new. It will allow future lumo-tamer versions to make Lumo remember and search past conversations.  
+ConversationStore is the way forward, but still new. It will allow future lumo-box versions to make Lumo remember and search past conversations.  
 However, FallbackStore is the default for now (`useFallbackStore: true`) because:
 - ConversationStore needs more testing (general performance and performance with `login` and `rclone` authentications)
 - Persistence is not required for the core functionality of chatting with Lumo
@@ -24,7 +24,7 @@ To sync conversations with other Lumo instances (web or mobile), you need a Lumo
 conversations:
   useFallbackStore: true          # true = fallback, false = ConversationStore (default: true)
   enableSync: false               # Enable server sync (browser, or login with Lumo scope)
-  projectName: lumo-tamer         # Project name (created if doesn't exist)
+  projectName: lumo-box         # Project name (created if doesn't exist)
   deriveIdFromUser: false         # For stateless clients (Home Assistant)
   databasePath: "sessions/"       # IndexedDB SQLite files location
 ```
@@ -59,7 +59,7 @@ ConversationStore (adapter)
 10. Return ConversationStore adapter
 
 ### Encryption
-lumo-tamer reuses the Lumo WebClient's encryption layer. Both offline storage and data synced to Lumo is encrypted using the following keys:
+lumo-box reuses the Lumo WebClient's encryption layer. Both offline storage and data synced to Lumo is encrypted using the following keys:
 
 1. **Master Key**: Fetched from `/lumo/v1/masterkeys`, decrypted with user's PGP private key
 2. **Space Key**: Generated per-space, wrapped with master key using AES-KW
@@ -91,7 +91,7 @@ Call `/save [optional title]` to save stateless conversations. See [troubleshoot
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| ConversationStore | [src/conversations/store.ts](../src/conversations/store.ts) | Adapter wrapping Redux for lumo-tamer's interface |
+| ConversationStore | [src/conversations/store.ts](../src/conversations/store.ts) | Adapter wrapping Redux for lumo-box's interface |
 | Store initialization | [src/conversations/init.ts](../src/conversations/init.ts) | Sets up Redux, IndexedDB, sagas, resolves project space |
 | KeyManager | [src/conversations/key-manager.ts](../src/conversations/key-manager.ts) | Master/space key management |
 | Deduplication | [src/conversations/deduplication.ts](../src/conversations/deduplication.ts) | Message deduplication via semantic IDs |
@@ -148,7 +148,7 @@ Browser cookies from lumo.proton.me always have it. Password / `/auth` login has
 
 ### Conversation Limit
 
-Proton's backend enforces a per-project conversation limit. Deleted conversations count towards this limit. When reached, sync fails with HTTP 422 "You've reached maximum number of conversations". Use a new `projectName` to work around this. See [#16](https://github.com/banter240/lumo-tamer/issues/16).
+Proton's backend enforces a per-project conversation limit. Deleted conversations count towards this limit. When reached, sync fails with HTTP 422 "You've reached maximum number of conversations". Use a new `projectName` to work around this. See [#16](https://github.com/banter240/lumo-box/issues/16).
 
 ---
 
@@ -160,7 +160,7 @@ Proton's backend enforces a per-project conversation limit. Deleted conversation
 
 ### "I enabled sync but my chats don't appear in Lumo"
 
-**Cause:** Your API client isn't providing a conversation identifier, so lumo-tamer treats requests as stateless.
+**Cause:** Your API client isn't providing a conversation identifier, so lumo-box treats requests as stateless.
 
 **Solution:** Configure your client to send a conversation identifier.
 - Include `"conversation": "your-conversation-id"` in the request (`/v1/responses`)

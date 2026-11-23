@@ -14,16 +14,16 @@ export function clearBusyIndicator(): void {
 
 export function printHelp(): void {
   print(`
-lumo-tamer - Use Proton Lumo on the command line
+lumo-box - Use Proton Lumo on the command line
 
 Usage:
-  tamer                      Interactive chat mode
-  tamer "your prompt"        One-shot query
-  tamer auth [method]        Authenticate to Proton
-  tamer auth status          Show authentication status
-  tamer update [apply]       Check GitHub / apply a Docker image update
-  tamer server               Start API server
-  tamer --help               Show this help
+  lumo_box                      Interactive chat mode
+  lumo_box "your prompt"        One-shot query
+  lumo_box auth [method]        Authenticate to Proton
+  lumo_box auth status          Show authentication status
+  lumo_box update [apply]       Check GitHub / apply a Docker image update
+  lumo_box server               Start API server
+  lumo_box --help               Show this help
 
 Commands:
   auth                       Authenticate to Proton (login, browser, or rclone)
@@ -32,46 +32,46 @@ Commands:
 
 Options:
   -h, --help         Show help
-  --home <dir>       User data dir (config, vault, sessions). Or set LUMO_HOME.
+  --home <dir>       User data dir (config, vault, sessions). Or set BOX_HOME.
 
 `);
 }
 
 export function printAuthHelp(): void {
   print(`
-tamer auth - Authenticate to Proton
+lumo_box auth - Authenticate to Proton
 
 Usage:
-  tamer auth                 Open /auth in your browser (Proton sign-in)
-  tamer auth login           Password (scripts)
-  tamer auth browser         Sidecar / CDP extract
-  tamer auth rclone          Paste rclone config
-  tamer auth status          Show current authentication status
-  tamer auth --help          Show this help
+  lumo_box auth                 Open /auth in your browser (Proton sign-in)
+  lumo_box auth login           Password (scripts)
+  lumo_box auth browser         Sidecar / CDP extract
+  lumo_box auth rclone          Paste rclone config
+  lumo_box auth status          Show current authentication status
+  lumo_box auth --help          Show this help
 
 `);
 }
 
 export function printServerHelp(): void {
   print(`
-tamer server - Start OpenAI-compatible API server
+lumo_box server - Start OpenAI-compatible API server
 
 Usage:
-  tamer server               Start the API server
-  tamer server --help        Show this help
+  lumo_box server               Start the API server
+  lumo_box server --help        Show this help
 
-The server listens on the port configured in config.yaml (default: ${PORTS.TAMER}).
+The server listens on the port configured in config.yaml (default: ${PORTS.BOX}).
 `);
 }
 
 export function printUpdateHelp(): void {
   print(`
-tamer update - Check GitHub and apply a Docker image update
+lumo_box update - Check GitHub and apply a Docker image update
 
 Usage:
-  tamer update               Check the configured channel (dev or stable)
-  tamer update apply         Pull GHCR and recreate this container (needs docker.sock)
-  tamer update --help        Show this help
+  lumo_box update               Check the configured channel (dev or stable)
+  lumo_box update apply         Pull GHCR and recreate this container (needs docker.sock)
+  lumo_box update --help        Show this help
 
 Channel and repository live in config.yaml (updates.*). Apply needs
 /var/run/docker.sock mounted on this container (see docs/updates.md).

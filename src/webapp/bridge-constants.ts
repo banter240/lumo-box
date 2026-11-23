@@ -1,5 +1,5 @@
 /**
- * Shared constants between the tamer server and the browser bundle.
+ * Shared constants between the lumo_box server and the browser bundle.
  * Dependency-free on purpose: server code and the esbuild injector both
  * import this, so the bridge location is defined exactly once.
  */

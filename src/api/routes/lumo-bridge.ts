@@ -523,7 +523,7 @@ export function createLumoBridgeRouter(options: BridgeOptions = {}): Router {
     },
     // Server-side directory listing backing the browser picker modal.
     // Directories only: a folder picker never needs file names.
-    tamer_list_directory: (args) => {
+    box_list_directory: (args) => {
       const raw = typeof args.path === "string" ? args.path.trim() : "";
       const abs = raw ? pathResolve(raw) : (process.env.HOME ?? "/");
       let dirents;

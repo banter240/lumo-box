@@ -1,7 +1,7 @@
 /**
  * Server-authorized webapp fork (single sign-in).
  *
- * After /auth the tamer session can PRODUCE a fork for the proxied web app
+ * After /auth the lumo_box session can PRODUCE a fork for the proxied web app
  * instead of routing the user through account.proton.me a second time:
  * pushForkSession with Independent:1 mints a fresh, separate session for
  * the web app (mirrors upstream fork/produce.ts), so server and app never
@@ -51,7 +51,7 @@ async function encryptForkBlob(
   return Buffer.from(ct).toString("base64");
 }
 
-/** Mint a fork for the web app from the tamer session. Returns the exact
+/** Mint a fork for the web app from the lumo_box session. Returns the exact
  * payload the app's /login#selector&sk handoff consumes. */
 export async function produceWebappFork(
   api: ProtonApi,

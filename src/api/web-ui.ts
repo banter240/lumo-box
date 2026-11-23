@@ -2,7 +2,7 @@
  * Shared HTML shell for /auth, /config, and /logs.
  * Colors follow Proton's public site: purple CTA, light canvas, tight cards.
  * Theme mode (light/dark/system) is stored in localStorage
- * (`lumo-tamer-mode`); system follows the OS preference.
+ * (`lumo-box-mode`); system follows the OS preference.
  */
 
 import { NAV_MOUNT_JS, renderNavHost } from "../webapp/nav-shell.js";
@@ -13,7 +13,7 @@ import {
   isBuildNewerThanProcess,
 } from "../app/version.js";
 
-const THEME_BOOT = `(function(){try{var m=localStorage.getItem('lumo-tamer-mode');if(m!=='light'&&m!=='dark'&&m!=='system'){m='system';}var old=localStorage.getItem('lumo-tamer-theme');if(m==='system'){var dark=matchMedia('(prefers-color-scheme: dark)').matches;if(old==='light'||old==='dark')dark=(old==='dark');document.documentElement.setAttribute('data-theme',dark?'dark':'light');}else{document.documentElement.setAttribute('data-theme',m);}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
+const THEME_BOOT = `(function(){try{var m=localStorage.getItem('lumo-box-mode');if(m!=='light'&&m!=='dark'&&m!=='system'){m='system';}var old=localStorage.getItem('lumo-box-theme');if(m==='system'){var dark=matchMedia('(prefers-color-scheme: dark)').matches;if(old==='light'||old==='dark')dark=(old==='dark');document.documentElement.setAttribute('data-theme',dark?'dark':'light');}else{document.documentElement.setAttribute('data-theme',m);}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
 
 const LOGOUT_BIND = `(function(){var btn=document.getElementById('logout');if(!btn)return;btn.addEventListener('click',function(){btn.disabled=true;btn.textContent='Signing out…';fetch('/auth/logout',{method:'POST'}).catch(function(){}).then(function(){location.href='/auth';});});})();`;
 
@@ -167,13 +167,13 @@ button.update-chip:disabled, button.auth-chip:disabled { opacity: 0.55; cursor: 
 }
 `;
 
-// Layout shift for the tamer pages: padding here, margins in the app
+// Layout shift for the lumo_box pages: padding here, margins in the app
 // bundle (nav-rail.ts) — the bar itself is a shadow DOM owned by
 // nav-shell.ts, only the host div is page-visible.
 const NAV_HOST_CSS = `
 body { padding-left: 52px; }
-body.tamer-nav-expanded { padding-left: 200px; }
-@media (max-width: 640px) { #tamer-nav-host { display: none; } body { padding-left: 0; } }
+body.box-nav-expanded { padding-left: 200px; }
+@media (max-width: 640px) { #box-nav-host { display: none; } body { padding-left: 0; } }
 `;
 
 export function htmlPage(options: {
@@ -210,7 +210,7 @@ export function htmlPage(options: {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${options.title}</title>
   <script>${THEME_BOOT}</script>
-  <script>fetch('/lumo-bridge/invoke',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:'get_server_theme',args:{}})}).then(function(r){return r.ok?r.json():null}).then(function(d){var m=d&&d.mode;if(m!=='light'&&m!=='dark'&&m!=='auto')return;var t=m==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):m;var prev=null;try{prev=localStorage.getItem('lumo-tamer-mode');}catch(e){}if(prev!==t){try{localStorage.setItem('lumo-tamer-mode',t);}catch(e){}document.documentElement.setAttribute('data-theme',t);}}).catch(function(){});</script>
+  <script>fetch('/lumo-bridge/invoke',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:'get_server_theme',args:{}})}).then(function(r){return r.ok?r.json():null}).then(function(d){var m=d&&d.mode;if(m!=='light'&&m!=='dark'&&m!=='auto')return;var t=m==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):m;var prev=null;try{prev=localStorage.getItem('lumo-box-mode');}catch(e){}if(prev!==t){try{localStorage.setItem('lumo-box-mode',t);}catch(e){}document.documentElement.setAttribute('data-theme',t);}}).catch(function(){});</script>
   <style>:root { --page-width: ${width}; }${protonUiCss}${verCss}${NAV_HOST_CSS}${options.extraCss ?? ""}</style>
 </head>
 <body>
@@ -220,7 +220,7 @@ export function htmlPage(options: {
       <a class="brand-home" href="/auth">
         <div class="mark">L</div>
         <div>
-          <h1>lumo-tamer</h1>
+          <h1>lumo-box</h1>
           <p>Unofficial Proton Lumo proxy${verTag}${buildTag}</p>
         </div>
       </a>

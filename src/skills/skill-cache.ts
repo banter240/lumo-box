@@ -3,7 +3,7 @@
  * bundles, executed through the bash connector's approval gate.
  *
  * Derivative of ProtonLumo/lumo-desktop src-tauri/src/skills.rs (GPL-3.0,
- * © Proton / ProtonLumo contributors), ported to TypeScript for the tamer
+ * © Proton / ProtonLumo contributors), ported to TypeScript for the lumo_box
  * connector registry. Same invariants, same limits, same attack-surface
  * boundaries; upstream changes land as patches to this file.
  *

@@ -6,10 +6,10 @@ auth:
   # Encrypted vault for secure token storage (AES-256-GCM)
   # Key is stored in OS keychain (desktop) or Docker secret (containers)
   vault:
-    # Relative to LUMO_HOME / --home (defaults to the install directory)
+    # Relative to BOX_HOME / --home (defaults to the install directory)
     path: "sessions/vault.enc"
     keychain:
-      service: "lumo-tamer"
+      service: "lumo-box"
       account: "vault-key"
 
     # Fallback key file path when OS keychain is unavailable (e.g., Docker, headless servers)
@@ -27,14 +27,14 @@ auth:
 
   # Browser-specific config (only used when method: browser)
   browser:
-    # tamer auth browser: launch a Chromium window. Docker sidecar uses launch: false + CDP.
+    # lumo_box auth browser: launch a Chromium window. Docker sidecar uses launch: false + CDP.
     launch: false
     # Persistent profile for the launched window (cookies only, not a browser install)
     userDataDir: "sessions/browser-profile"
     # Chrome DevTools Protocol endpoint when launch: false (Docker / already-running Chrome)
     cdpEndpoint: "http://localhost:9222"
-    # Docker/Portainer sidecar (tamer has no Chrome). Also set launch: false.
-    # After `tamer auth browser` this is written for you as http://browser:9222
+    # Docker/Portainer sidecar (lumo_box has no Chrome). Also set launch: false.
+    # After `lumo_box auth browser` this is written for you as http://browser:9222
     # cdpEndpoint: "http://browser:9222"
 
   # Login-specific config (only used when method: login)
@@ -60,7 +60,7 @@ log:
   # "stdout" or "file"
   target: "stdout"
   # Used when target is "file"
-  filePath: "lumo-tamer.log"
+  filePath: "lumo-box.log"
   # Log user/assistant message content (disabled by default to preserve privacy)
   messageContent: false
   # If set, append one JSON line per Proton API call (no auth headers). Empty = off.
@@ -88,7 +88,7 @@ conversations:
   # Enable syncing conversations to Proton servers (browser auth, or login that got Lumo scope)
   enableSync: false
   # Project name for conversations (created if doesn't exist)
-  projectName: lumo-tamer
+  projectName: lumo-box
 
 # Shared Commands Configuration (can be overridden in server/cli sections)
 commands:
@@ -97,8 +97,8 @@ commands:
   enabled: true
   # Alternative wakeword for commands
   # Useful for voice assistants or clients that have /commands themselves.
-  # Example: "tamer help" instead of "/help"
-  wakeword: "tamer"
+  # Example: "lumo_box help" instead of "/help"
+  wakeword: "lumo_box"
 
 # Self-update (GitHub check + Docker socket on this container; no extra updater)
 updates:
@@ -106,7 +106,7 @@ updates:
   # stable = GitHub latest (main) + GHCR :latest
   # dev = prereleases + GHCR :dev
   channel: "stable"
-  repository: "banter240/lumo-tamer"
+  repository: "banter240/lumo-box"
   checkIntervalHours: 6
   autoApply: false
   # Host docker.sock, bind-mounted into this container (see docker-compose.yml)
@@ -124,7 +124,7 @@ webapp:
   # via /config (changing it would tunnel the browser's Proton session elsewhere).
   upstream: "https://lumo.proton.me"
 
-  # Server-side schedule runner (Phase 4). Runs execute via tamer's Lumo
+  # Server-side schedule runner (Phase 4). Runs execute via lumo_box's Lumo
   # client with connectors forced read-only; the PWA only edits timings.
   schedules:
     enabled: false
@@ -166,7 +166,7 @@ server:
   # Address to listen on. "127.0.0.1" = this machine only (default).
   # "0.0.0.0" = every network interface: other devices can reach the API
   # (with the API key) and the web UI (after unlocking it with the API key).
-  # The Docker image sets LUMO_TAMER_HOST=0.0.0.0, which overrides this.
+  # The Docker image sets BOX_HOST=0.0.0.0, which overrides this.
   host: "127.0.0.1"
   port: 3003
   apiKey: "your-secret-api-key-here"
@@ -546,7 +546,7 @@ server:
 cli:
   log:
     target: "file"
-    filePath: "lumo-tamer-cli.log"
+    filePath: "lumo-box-cli.log"
 
   enableWebSearch: false
 

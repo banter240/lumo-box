@@ -50,7 +50,7 @@ export function isInstallStale(root: string): boolean {
 
 /** True when dist is missing or any source file under src is newer than the built entrypoint. */
 export function isBuildStale(root: string): boolean {
-    const distEntry = mtimeOf(join(root, 'dist', 'src', 'tamer.js'));
+    const distEntry = mtimeOf(join(root, 'dist', 'src', 'box.js'));
     if (distEntry === 0) return true;
     return newestMtime(join(root, 'src'), ['.ts', '.js']) > distEntry;
 }

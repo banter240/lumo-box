@@ -28,7 +28,7 @@ export async function generateLocalKeys(keyPassword: string): Promise<GeneratedK
     const { privateKey, publicKey } = await openpgp.generateKey({
         type: 'ecc',
         curve: 'curve25519Legacy',
-        userIDs: [{ name: 'Local User', email: 'local@lumo-tamer.local' }],
+        userIDs: [{ name: 'Local User', email: 'local@lumo-box.local' }],
         passphrase: keyPassword,
         format: 'armored',
     });

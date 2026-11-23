@@ -50,10 +50,10 @@ describe('resolveBrowserAuthMode', () => {
 });
 
 describe('sidecar copy', () => {
-  it('tells Docker operators not to install Chrome and not to stop tamer', () => {
+  it('tells Docker operators not to install Chrome and not to stop lumo_box', () => {
     expect(SIDECAR_NEEDED_ERROR).toMatch(/2028/);
     expect(SIDECAR_NEEDED_ERROR).toMatch(/cannot open a Chrome window/);
-    expect(SIDECAR_NEEDED_ERROR).toMatch(/lumo-tamer-browser/);
+    expect(SIDECAR_NEEDED_ERROR).toMatch(/lumo-box-browser/);
     expect(SIDECAR_NEEDED_ERROR).toMatch(/port 3003/);
     expect(SIDECAR_NEEDED_ERROR).not.toMatch(/playwright install/i);
   });
@@ -63,8 +63,8 @@ describe('sidecar copy', () => {
     expect(hint).toContain('docker compose --profile browser stop browser');
     expect(hint).toContain('docker compose --profile browser rm -f browser');
     expect(hint).toContain('browser-data');
-    expect(hint).toContain('lumo-tamer-browser');
-    expect(hint).toMatch(/Leave lumo-tamer \(port 3003\) running/);
+    expect(hint).toContain('lumo-box-browser');
+    expect(hint).toMatch(/Leave lumo-box \(port 3003\) running/);
     expect(hint).not.toContain('compose down');
   });
 });

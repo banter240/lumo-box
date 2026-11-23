@@ -77,7 +77,7 @@ export function printSummary(status: AuthProviderStatus, provider: AuthProvider)
 }
 
 export async function runStatus(): Promise<void> {
-    print('=== lumo-tamer auth status ===');
+    print('=== lumo-box auth status ===');
 
     const method = authConfig.method;
     print(`\nConfigured method: ${method}`);

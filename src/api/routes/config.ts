@@ -255,7 +255,7 @@ function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
   `;
   const body = `
   <div class="auth-banner" id="authBanner" style="display: ${isAuthenticated ? "none" : "block"}; padding: 0.75rem 1rem; margin-bottom: 1rem; background: var(--purple-soft); border-left: 4px solid var(--err); border-radius: 6px; font-size: 0.85rem;">
-    <strong>⚠️ Not logged in:</strong> Lumo-Tamer is waiting for authentication. Open <a href="/auth" style="color: var(--text); text-decoration: underline;">/auth</a> in your browser and sign in.
+    <strong>⚠️ Not logged in:</strong> Lumo-Box is waiting for authentication. Open <a href="/auth" style="color: var(--text); text-decoration: underline;">/auth</a> in your browser and sign in.
   </div>
   <div class="server-down-banner" id="serverDownBanner" style="display: none; padding: 0.75rem 1rem; margin-bottom: 1rem; background: #ff6b6b; color: #fff; border-left: 4px solid #c92a2a; border-radius: 6px; font-size: 0.85rem;">
     <strong>⚠️ Server is down</strong> — connection lost.
@@ -343,7 +343,7 @@ function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
     const dirty = new Map();
     const resets = new Set();
     let fields = [];
-    let active = localStorage.getItem('lumo-tamer-config-cat') || 'auth';
+    let active = localStorage.getItem('lumo-box-config-cat') || 'auth';
 
     function showToast(message, type = 'ok') {
       const container = document.getElementById('toast-container');
@@ -661,9 +661,9 @@ function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
       markAllRows();
     }
 
-    let navOpen = new Set(JSON.parse(localStorage.getItem('lumo-tamer-config-nav-open') || '[]'));
+    let navOpen = new Set(JSON.parse(localStorage.getItem('lumo-box-config-nav-open') || '[]'));
     function saveNavOpen() {
-      try { localStorage.setItem('lumo-tamer-config-nav-open', JSON.stringify([...navOpen])); } catch (e) {}
+      try { localStorage.setItem('lumo-box-config-nav-open', JSON.stringify([...navOpen])); } catch (e) {}
     }
     const subsOf = (id) => CATEGORIES.filter((c) => c.parent === id);
 
@@ -710,7 +710,7 @@ function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
             return;
           }
           active = catId;
-          localStorage.setItem('lumo-tamer-config-cat', active);
+          localStorage.setItem('lumo-box-config-cat', active);
           filterEl.value = '';
           render();
         });
@@ -865,7 +865,7 @@ function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
         updateButtons();
         showToast('Configuration saved and reloaded.', 'ok');
         await load();
-        window.dispatchEvent(new CustomEvent('lumo-tamer-config-saved', {
+        window.dispatchEvent(new CustomEvent('lumo-box-config-saved', {
           detail: { paths: Object.keys(payload.changes || {}) },
         }));
       } catch (err) {
@@ -895,7 +895,7 @@ function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
         await fetch('/v1/restart', { method: 'POST' });
         showToast('Waiting for the server...', 'muted');
         await waitUntilUp();
-        localStorage.setItem('lumo-tamer-toast', JSON.stringify({msg: 'Server restarted successfully.', type: 'ok'}));
+        localStorage.setItem('lumo-box-toast', JSON.stringify({msg: 'Server restarted successfully.', type: 'ok'}));
         location.reload();
       } catch (err) {
         showToast(err.message || 'Restart failed', 'err');
@@ -1031,9 +1031,9 @@ function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
       statusEl.textContent = err.message || 'Load failed';
     });
 
-    const storedToast = localStorage.getItem('lumo-tamer-toast');
+    const storedToast = localStorage.getItem('lumo-box-toast');
     if (storedToast) {
-      localStorage.removeItem('lumo-tamer-toast');
+      localStorage.removeItem('lumo-box-toast');
       try {
         const t = JSON.parse(storedToast);
         showToast(t.msg, t.type);
@@ -1041,7 +1041,7 @@ function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
     }
   </script>`;
   return htmlPage({
-    title: "Settings · lumo-tamer",
+    title: "Settings · lumo-box",
     body,
     wide: true,
     extraCss,

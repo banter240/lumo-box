@@ -3,12 +3,12 @@ import { splitImageRef, dockerSocketAvailable } from '../../src/app/docker-updat
 
 describe('splitImageRef', () => {
   it('splits registry/name:tag', () => {
-    expect(splitImageRef('ghcr.io/banter240/lumo-tamer:dev')).toEqual({
-      fromImage: 'ghcr.io/banter240/lumo-tamer',
+    expect(splitImageRef('ghcr.io/banter240/lumo-box:dev')).toEqual({
+      fromImage: 'ghcr.io/banter240/lumo-box',
       tag: 'dev',
     });
-    expect(splitImageRef('ghcr.io/banter240/lumo-tamer')).toEqual({
-      fromImage: 'ghcr.io/banter240/lumo-tamer',
+    expect(splitImageRef('ghcr.io/banter240/lumo-box')).toEqual({
+      fromImage: 'ghcr.io/banter240/lumo-box',
       tag: 'latest',
     });
   });

@@ -16,7 +16,7 @@
   "use strict";
 
   const HEAL_THROTTLE_MS = 60_000;
-  const HEAL_KEY = "tamer-guest-heal-at";
+  const HEAL_KEY = "box-guest-heal-at";
 
   /** True when the bridge reports a live server session. */
   async function serverSignedIn(): Promise<boolean> {
@@ -69,9 +69,9 @@
 
   function showPill(text: string): void {
     if (onLoginPath()) return;
-    if (document.getElementById("tamer-signin")) return;
+    if (document.getElementById("box-signin")) return;
     const bar = document.createElement("div");
-    bar.id = "tamer-signin";
+    bar.id = "box-signin";
     bar.setAttribute(
       "style",
       [

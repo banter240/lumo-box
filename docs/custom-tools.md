@@ -40,7 +40,7 @@ This section applies to `legacy` mode. Native mode has no injected protocol and 
 Custom tool support is experimental. Tool calls can fail because of:
 
 - **Too many tools**: Lumo gets confused when the client provides many tools or (very) long instructions.
-- **Misrouted calls**: Lumo routes custom tools through its native pipeline, which fails server-side. lumo-tamer bounces these back, but this adds latency and isn't always reliable.
+- **Misrouted calls**: Lumo routes custom tools through its native pipeline, which fails server-side. lumo-box bounces these back, but this adds latency and isn't always reliable.
 - **Only-announced calls**: Lumo narrates an action ("I would edit the file...") without emitting the JSON block. The `recovery` bounces cover this.
 - **Wrong tool/arguments**: Lumo sets the wrong tool name or arguments.
 - **Detection failures**: JSON code blocks or mid-line `{"name":…}` objects are not properly detected or parsed. Example JSON that names a tool not in the request is left as text.
@@ -55,7 +55,7 @@ This requires trial and error. Experiment with `server.instructions` settings to
 
 1. Native mode is the default: nothing to configure, the client's `tools[]` are forwarded as function schemas. Keep `customTools.enabled: true` (the default).
 2. Configure your API client (Home Assistant, Open WebUI, etc.) to use tools as normal.
-3. lumo-tamer returns Lumo's tool calls in OpenAI format for your client to execute.
+3. lumo-box returns Lumo's tool calls in OpenAI format for your client to execute.
 
 In `legacy` mode, whatever `call_id` the client echoes (`toolname__synth__…`, `call_…`, `fc-…`), the result is rewritten to a user message (`[Tool Result: name]` plus the output) before it goes to Proton — sending the OpenAI tool protocol through would 400. In `native` mode the upstream wire carries tool results natively.
 
@@ -224,7 +224,7 @@ The default pattern rewrites standalone prose mentions of "tool(s)" to "custom t
 
 **OpenCode / Responses API: 400 loop after a tool call**
 
-- Custom tools are detected from text, so the `call_id` is invented by lumo-tamer
+- Custom tools are detected from text, so the `call_id` is invented by lumo-box
 - Results are flattened to user text (see above). If you still see 400s, check the log for the Proton error body, not just the client retry.
 
 **Payloads containing triple backticks break the tool call**
@@ -274,9 +274,9 @@ Native and custom tools work together per `customTools.routing.nativeTools` (see
    ```
    ````
 
-   _If Lumo misroutes the call or only announces it, lumo-tamer bounces it — see [Misrouted Tool Calls](#misrouted-tool-calls)._
+   _If Lumo misroutes the call or only announces it, lumo-box bounces it — see [Misrouted Tool Calls](#misrouted-tool-calls)._
 
-5. **lumo-tamer detects and extracts** tool calls, strips the prefix, and returns in OpenAI format
+5. **lumo-box detects and extracts** tool calls, strips the prefix, and returns in OpenAI format
 6. **Your client executes** the tool and sends results back
 
 ### Response Format
@@ -308,7 +308,7 @@ Sometimes Lumo routes a custom tool through its native SSE pipeline instead of o
 
 ### What Happens
 
-1. lumo-tamer detects the misrouted call (tool name not in `KNOWN_NATIVE_TOOLS`: `proton_info`, `web_search`, `weather`, `stock`, `cryptocurrency`)
+1. lumo-box detects the misrouted call (tool name not in `KNOWN_NATIVE_TOOLS`: `proton_info`, `web_search`, `weather`, `stock`, `cryptocurrency`)
 2. Suppresses Lumo's error response ("I don't have access to that tool...")
 3. Bounces the call back with `instructions.forToolBounce`
 4. Lumo re-outputs the tool call as JSON text

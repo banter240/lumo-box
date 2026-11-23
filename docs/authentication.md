@@ -11,18 +11,18 @@ Authenticating to Proton is not straightforward: different flows depending on us
 ## Quick Start
 
 ```bash
-tamer auth
+lumo_box auth
 # Opens /auth. Use Start Proton sign-in (any device).
-# Fallbacks: tamer auth login | tamer auth browser | tamer auth rclone
+# Fallbacks: lumo_box auth login | lumo_box auth browser | lumo_box auth rclone
 ```
 
 After successful authentication, `config.yaml` is updated with your selected method.
 
 ---
 
-## Login (`/auth` or `tamer auth login`)
+## Login (`/auth` or `lumo_box auth login`)
 
-Password login via Go SRP or the `/auth` page. Tries Lumo scope first. CAPTCHA and Proton desktop sign-in fall back to Drive-scoped tokens. **Chat through the API works; Proton conversation history does not** (`lumo.proton.me` threads stay empty). Sync needs a Lumo-scoped browser session (`tamer auth browser`). Proton 2028 (abuse lock) cannot retry the password API; `/auth` then uses Proton’s desktop sign-in URL (`account.proton.me/desktop/login`) on any device.
+Password login via Go SRP or the `/auth` page. Tries Lumo scope first. CAPTCHA and Proton desktop sign-in fall back to Drive-scoped tokens. **Chat through the API works; Proton conversation history does not** (`lumo.proton.me` threads stay empty). Sync needs a Lumo-scoped browser session (`lumo_box auth browser`). Proton 2028 (abuse lock) cannot retry the password API; `/auth` then uses Proton’s desktop sign-in URL (`account.proton.me/desktop/login`) on any device.
 
 Uses Proton's SRP (Secure Remote Password) protocol via a Go binary built from [go-proton-api](https://github.com/henrybear327/go-proton-api).
 
@@ -34,9 +34,9 @@ Uses Proton's SRP (Secure Remote Password) protocol via a Go binary built from [
 
 ### Setup
 
-Desktop: `tamer auth login` (build the Go binary first with `npm run build:login`).
+Desktop: `lumo_box auth login` (build the Go binary first with `npm run build:login`).
 
-Docker / Portainer: start only `tamer` and open `http://<host>:3003/auth`. Same form, no extra container. `GET /auth`, `POST /auth/login`, and `POST /auth/logout` do not need an API key. Login is limited to 5 attempts per IP per 10 minutes. Authenticator code uses `autocomplete=one-time-code` (Proton Pass / system 2FA). The page has a short “If login fails” list (CAPTCHA, 2028, Docker sidecar). After a successful login it shows **Lumo API Ready** and **lumo.proton.me** On / Off / Unavailable (capability × `conversations.enableSync`). Settings is `/config`. **Log out** signs out and leaves the server running so you can switch accounts.
+Docker / Portainer: start only `lumo_box` and open `http://<host>:3003/auth`. Same form, no extra container. `GET /auth`, `POST /auth/login`, and `POST /auth/logout` do not need an API key. Login is limited to 5 attempts per IP per 10 minutes. Authenticator code uses `autocomplete=one-time-code` (Proton Pass / system 2FA). The page has a short “If login fails” list (CAPTCHA, 2028, Docker sidecar). After a successful login it shows **Lumo API Ready** and **lumo.proton.me** On / Off / Unavailable (capability × `conversations.enableSync`). Settings is `/config`. **Log out** signs out and leaves the server running so you can switch accounts.
 
 > **Tip:** If you hit a CAPTCHA, try logging in to Proton in any regular browser from the same IP first. This may clear the challenge for subsequent login attempts.
 
@@ -58,7 +58,7 @@ The first SRP attempt uses Lumo's own app version (`web-lumo`). `login.appVersio
 
 - **CAPTCHA**: May trigger CAPTCHA. We then retry without Lumo scope (chat only). Same-IP visit to lumo.proton.me usually clears it.
 - **2028 abuse lock**: Password API is blocked. `/auth` offers a Proton sign-in link (open on any device). Sidecar is last resort.
-- **No Proton chat history**: `/auth` (password or Proton sign-in) does not sync threads to or from lumo.proton.me. Use `tamer auth browser` for that.
+- **No Proton chat history**: `/auth` (password or Proton sign-in) does not sync threads to or from lumo.proton.me. Use `lumo_box auth browser` for that.
 - **TOTP only** (password form): authenticator codes, not security keys
 
 ### Proton desktop sign-in (used on CAPTCHA / 2028)
@@ -67,9 +67,9 @@ When the password API is blocked (CAPTCHA after retries, 2028 abuse lock), `/aut
 
 1. `/auth` creates a **session fork** on Proton's API (trying `lumo.proton.me/api` with app `lumo`, then `mail.proton.me/api` with `proton-lumo`).
 2. It shows the URL `account.proton.me/desktop/login` — open it on **any device** (phone is fine) and approve.
-3. Meanwhile tamer polls the fork; on approval it decrypts the payload (AES-256-GCM) and writes the vault. The pending fork expires after **10 minutes** — just start over if it lapses.
+3. Meanwhile lumo_box polls the fork; on approval it decrypts the payload (AES-256-GCM) and writes the vault. The pending fork expires after **10 minutes** — just start over if it lapses.
 
-The resulting tokens are Drive-scoped when obtained via the mail endpoint: API chat works, lumo.proton.me history does not (same as the password path). If sync keys are missing, tamer generates local ones so the vault stays usable.
+The resulting tokens are Drive-scoped when obtained via the mail endpoint: API chat works, lumo.proton.me history does not (same as the password path). If sync keys are missing, lumo_box generates local ones so the vault stays usable.
 
 ### Troubleshooting
 
@@ -84,13 +84,13 @@ The resulting tokens are Drive-scoped when obtained via the mail endpoint: API c
 **Code 2028 / "unusual activity" / appeal-abuse**
 - Proton locked password API for this account/IP. Retrying `/auth/v4` will not help.
 - Open the Proton sign-in link on `/auth` (phone is fine). Wait on that page until it says signed in.
-- Docker: start the browser sidecar (see [Headless / Docker](#headless--docker)), log in at `:3001`, then `tamer auth browser`. Stop **and remove** only the sidecar afterwards; leave `lumo-tamer` (port 3003) running.
+- Docker: start the browser sidecar (see [Headless / Docker](#headless--docker)), log in at `:3001`, then `lumo_box auth browser`. Stop **and remove** only the sidecar afterwards; leave `lumo-box` (port 3003) running.
 
 ---
 
 ## Browser (Proton chat history)
 
-`/auth` cannot read lumo.proton.me threads. For that, tamer must extract cookies from a real Lumo session.
+`/auth` cannot read lumo.proton.me threads. For that, lumo_box must extract cookies from a real Lumo session.
 
 ### Desktop
 
@@ -108,7 +108,7 @@ auth:
 Then:
 
 ```bash
-tamer auth browser
+lumo_box auth browser
 ```
 
 A Chromium window opens (system Chrome/Edge if Playwright can find them, otherwise Playwright Chromium). Log in at **https://lumo.proton.me**. When the Lumo chat UI is up, extraction runs and the window closes. Cookies stay in `sessions/browser-profile`.
@@ -117,11 +117,11 @@ Alternatively leave `launch: false` and point `cdpEndpoint` at a Chromium you st
 
 ### Headless / Docker
 
-Start only `tamer` and open `http://<host>:3003/auth` for API chat (no history).
+Start only `lumo_box` and open `http://<host>:3003/auth` for API chat (no history).
 
-For chat history, use the sidecar (Chromium + noVNC, ~1 GB). Compose keeps it behind `--profile browser`. The tamer image has no Chrome.
+For chat history, use the sidecar (Chromium + noVNC, ~1 GB). Compose keeps it behind `--profile browser`. The lumo_box image has no Chrome.
 
-`tamer auth browser` in Docker connects over CDP (`http://browser:9222`), then writes this into `config.yaml` (do not set `launch: true` or `localhost:9222` inside Docker):
+`lumo_box auth browser` in Docker connects over CDP (`http://browser:9222`), then writes this into `config.yaml` (do not set `launch: true` or `localhost:9222` inside Docker):
 
 ```yaml
 auth:
@@ -133,20 +133,20 @@ auth:
 
 #### Start, extract, reload
 
-From the compose directory (often `/opt/lumo-tamer`):
+From the compose directory (often `/opt/lumo-box`):
 
 ```bash
 docker compose --profile browser up -d browser
 # http://<host>:3001  -> log in at lumo.proton.me (CAPTCHA and security keys work)
-docker compose run --rm -it tamer auth browser   # CDP default: http://browser:9222
-# Reload http://<host>:3003/auth — the running server loads the vault. Do not restart tamer.
+docker compose run --rm -it lumo_box auth browser   # CDP default: http://browser:9222
+# Reload http://<host>:3003/auth — the running server loads the vault. Do not restart box.
 ```
 
-Portainer: start the container named `lumo-tamer-browser` (enable profile `browser` on the stack, or run the `up` command over SSH). Open `:3001`. Extract from **Console** on `lumo-tamer`: `tamer auth browser`. Do not stop the stack.
+Portainer: start the container named `lumo-box-browser` (enable profile `browser` on the stack, or run the `up` command over SSH). Open `:3001`. Extract from **Console** on `lumo-box`: `lumo_box auth browser`. Do not stop the stack.
 
 #### Stop and delete only the sidecar
 
-Leave `lumo-tamer` (port 3003) running.
+Leave `lumo-box` (port 3003) running.
 
 ```bash
 docker compose --profile browser stop browser
@@ -156,7 +156,7 @@ docker compose --profile browser rm -f browser
 Image and Chromium profile as well (next start builds/logs in a fresh profile):
 
 ```bash
-docker rmi $(docker images -q --filter reference='*lumo-tamer*browser*') 2>/dev/null
+docker rmi $(docker images -q --filter reference='*lumo-box*browser*') 2>/dev/null
 # optional profile:
 # rm -rf ./browser-data
 ```
@@ -164,15 +164,15 @@ docker rmi $(docker images -q --filter reference='*lumo-tamer*browser*') 2>/dev/
 Check:
 
 ```bash
-docker ps -a --filter name=lumo-tamer-browser
+docker ps -a --filter name=lumo-box-browser
 ```
 
-Empty = gone. Do not `docker compose down` (that stops tamer too). In Portainer: stop and remove **only** `lumo-tamer-browser`; optionally delete that image and the host folder `browser-data`.
+Empty = gone. Do not `docker compose down` (that stops lumo_box too). In Portainer: stop and remove **only** `lumo-box-browser`; optionally delete that image and the host folder `browser-data`.
 
 ### Limitations
 
 - **Needs a display** for `launch: true` (normal desktop). Headless servers use CDP or `login`.
-- **Re-auth**: if the refresh token is revoked, run `tamer auth browser` again (desktop: window; Docker: sidecar, extract, remove sidecar).
+- **Re-auth**: if the refresh token is revoked, run `lumo_box auth browser` again (desktop: window; Docker: sidecar, extract, remove sidecar).
 
 ### Config
 
@@ -187,12 +187,12 @@ auth:
 ### Troubleshooting
 
 **"No browser contexts found. Is the browser running?"**
-- Verify the sidecar is up: `curl http://browser:9222/json/version` from the tamer container (desktop: `http://localhost:9222`)
+- Verify the sidecar is up: `curl http://browser:9222/json/version` from the lumo_box container (desktop: `http://localhost:9222`)
 - If the browser is on a different machine, you may need to forward the port, e.g. with socat: `socat TCP-LISTEN:9222,fork TCP:<remote-host>:<remote-port>`
-- Check firewall/network settings. `localhost:9222` from inside Docker is the tamer container, not the sidecar.
+- Check firewall/network settings. `localhost:9222` from inside Docker is the lumo_box container, not the sidecar.
 
 **"Login timeout. Please log in and try again."**
-- The browser was reached but you're not logged in to Lumo. Log in to https://lumo.proton.me in the browser, then re-run `tamer auth browser`.
+- The browser was reached but you're not logged in to Lumo. Log in to https://lumo.proton.me in the browser, then re-run `lumo_box auth browser`.
 
 **"No AUTH-\* cookie found for lumo.proton.me"**
 - The browser is on the Lumo page but has no valid auth cookies. Try logging out and back in within the browser.
@@ -200,14 +200,14 @@ auth:
 **"Browser session is not authenticated"**
 - The browser session exists but the AUTH cookie is missing or expired. Log in again in the browser.
 
-**`tamer auth` succeeds but `tamer` or `tamer server` fails**
+**`lumo_box auth` succeeds but `lumo_box` or `lumo_box server` fails**
 
 Similar issues:
 ```
 WARN: Persisted session blob found but ClientKey fetch failed
 WARN: Conversation persistence may not work without ClientKey
 ```
-- Your browser may be maintaining multiple active sessions, confusing the extraction logic. Log out of Proton, clear all browser data for all proton.me domains (account, root, lumo), then log in again and re-run `tamer auth browser`.
+- Your browser may be maintaining multiple active sessions, confusing the extraction logic. Log out of Proton, clear all browser data for all proton.me domains (account, root, lumo), then log in again and re-run `lumo_box auth browser`.
 
 ---
 
@@ -224,21 +224,21 @@ Use rclone to log in and copy the tokens from its config file. No conversation s
 ### Setup
 
 1. Install rclone
-2. Add a "proton drive" remote named "lumo-tamer" as described here: https://rclone.org/protondrive/. If you hit a CAPTCHA, try logging in to Proton in any regular browser from the same IP first. See [rclone remote setup](https://rclone.org/remote_setup/) for extra ways to login into rclone.
-3. Test if rclone succeeds: `rclone about lumo-tamer:`
+2. Add a "proton drive" remote named "lumo-box" as described here: https://rclone.org/protondrive/. If you hit a CAPTCHA, try logging in to Proton in any regular browser from the same IP first. See [rclone remote setup](https://rclone.org/remote_setup/) for extra ways to login into rclone.
+3. Test if rclone succeeds: `rclone about lumo-box:`
 4. Find your rclone config file: `~/.config/rclone/rclone.conf` (Linux/macOS) or `%APPDATA%\rclone\rclone.conf` (Windows)
-5. Copy the tokens under lumo-tamer manually or `grep -A 6 "lumo-tamer" rclone.conf`
-6. Run `tamer auth rclone`.
+5. Copy the tokens under lumo-box manually or `grep -A 6 "lumo-box" rclone.conf`
+6. Run `lumo_box auth rclone`.
 7. Paste your rclone config section when prompted.
 
-> **Warning:** This method reuses tokens/keys that are stored insecurely by rclone. Use it as a fallback if the other two methods don't work. If you already use rclone for Proton Drive, add a separate remote for lumo-tamer, as lumo-tamer will refresh tokens and invalidate the ones used by rclone.
+> **Warning:** This method reuses tokens/keys that are stored insecurely by rclone. Use it as a fallback if the other two methods don't work. If you already use rclone for Proton Drive, add a separate remote for lumo-box, as lumo-box will refresh tokens and invalidate the ones used by rclone.
 
 ### Config Format
 
 Paste the INI section from your rclone config:
 
 ```ini
-[lumo-tamer]
+[lumo-box]
 type = protondrive
 client_uid = abc123...
 client_access_token = xyz789...
@@ -257,7 +257,7 @@ client_salted_key_pass = base64encodedKeyPassword==
 - Ensure you're pasting a protondrive section, not another remote type
 
 **"Missing required fields"**
-- Your rclone config may need refresh: `rclone config reconnect lumo-tamer:`
+- Your rclone config may need refresh: `rclone config reconnect lumo-box:`
 
 ---
 
@@ -300,7 +300,7 @@ All methods store a `refreshToken` and use Proton's `/auth/refresh` endpoint:
 - On a schedule (every `intervalHours`)
 - On 401 errors (if `onError: true`)
 
-If Proton rejects the refresh (401/403/422) or there is no refresh token, tamer **drops the session**: the vault is deleted, chat returns 503, `/health` shows `auth.available: false`, and `/auth` shows the login form with “Proton session expired… Log in again.” That is the re-login. Transient errors (network, 5xx) retry; three failures in a row also drop the session. When the refresh token is already dead, the remote revoke is deliberately skipped (nothing left to revoke) — the vault disappears without a call to Proton.
+If Proton rejects the refresh (401/403/422) or there is no refresh token, lumo_box **drops the session**: the vault is deleted, chat returns 503, `/health` shows `auth.available: false`, and `/auth` shows the login form with “Proton session expired… Log in again.” That is the re-login. Transient errors (network, 5xx) retry; three failures in a row also drop the session. When the refresh token is already dead, the remote revoke is deliberately skipped (nothing left to revoke) — the vault disappears without a call to Proton.
 
 **Shared vault setups:** the atomic vault write follows symlinks, so a symlinked `sessions/vault.enc` (several instances sharing one login, slot-style setups) always lands on the link target and survives restarts.
 
@@ -325,7 +325,7 @@ When token refresh fails, make sure that:
 Check current authentication status:
 
 ```bash
-tamer auth status
+lumo_box auth status
 ```
 
 Shows:

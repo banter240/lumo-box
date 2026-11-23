@@ -1,8 +1,8 @@
 /**
- * Custom mock scenarios for lumo-tamer testing
+ * Custom mock scenarios for lumo-box testing
  *
  * Unlike the upstream scenarios in proton-upstream/mocks/handlers.ts,
- * these are lumo-tamer-specific scenarios for features we built on top.
+ * these are lumo-box-specific scenarios for features we built on top.
  */
 
 import {

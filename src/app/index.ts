@@ -27,7 +27,7 @@ import { suppressFullApiErrors } from '../shims/console.js';
 export function isRecoverableAuthError(error: unknown): boolean {
   const msg = error instanceof Error ? error.message : String(error);
   // Vault / session errors that mean "needs re-login" rather than fatal crash
-  return /Vault not found|No secure key storage|Cannot generate vault key|Failed to decrypt vault|Vault key file |Invalid vault key|Key file exists but is invalid|is a directory|Token file missing|wrong key or corrupted|Run: tamer auth|Token refresh failed|No refresh token available|No access token in refresh response/i.test(msg);
+  return /Vault not found|No secure key storage|Cannot generate vault key|Failed to decrypt vault|Vault key file |Invalid vault key|Key file exists but is invalid|is a directory|Token file missing|wrong key or corrupted|Run: lumo_box auth|Token refresh failed|No refresh token available|No access token in refresh response/i.test(msg);
 }
 
 export class Application {
@@ -129,7 +129,7 @@ export class Application {
   }
 
   /**
-   * Load a vault written by /auth or `tamer auth` without restarting.
+   * Load a vault written by /auth or `lumo_box auth` without restarting.
    */
   async applyVaultAuth(): Promise<void> {
     this.dropSession();
@@ -253,7 +253,7 @@ export class Application {
 
   getLumoClient(): LumoClient {
     if (!this.lumoClient) {
-      throw new Error('Not authenticated. Open /auth or run: tamer auth');
+      throw new Error('Not authenticated. Open /auth or run: lumo_box auth');
     }
     return this.lumoClient;
   }

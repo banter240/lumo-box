@@ -61,7 +61,7 @@ if (args._[0] === 'auth') {
   const sub = args._[1];
   try {
     if (sub === 'recreate') {
-      await recreatePeer(args._[2] || 'lumo-tamer');
+      await recreatePeer(args._[2] || 'lumo-box');
       process.exit(0);
     }
     if (sub === 'apply') {
@@ -80,7 +80,7 @@ if (args._[0] === 'auth') {
     }
     print(`Update available: ${status.current} → ${status.latest} (${status.channel})`);
     if (status.latestUrl) print(status.latestUrl);
-    if (status.canApply) print('Apply with: tamer update apply');
+    if (status.canApply) print('Apply with: lumo_box update apply');
     else if (status.applyHint) print(status.applyHint);
     process.exit(0);
   } catch (error) {
@@ -91,7 +91,7 @@ if (args._[0] === 'auth') {
   const { Application } = await import('./app/index.js');
   const { APIServer } = await import('./api/server.js');
 
-  logger.info('Starting lumo-tamer API Server...');
+  logger.info('Starting lumo-box API Server...');
 
   const app = await Application.create({ allowMissingVault: true });
   const apiServer = new APIServer(app);
@@ -104,7 +104,7 @@ if (args._[0] === 'auth') {
   const { Application } = await import('./app/index.js');
   const { CLIClient } = await import('./cli/client.js');
 
-  logger.info('Starting lumo-tamer cli...');
+  logger.info('Starting lumo-box cli...');
   const app = await Application.create();
   const cliClient = new CLIClient(app);
   await cliClient.run();

@@ -13,12 +13,12 @@ import {
   isPlainObject,
   sameValue,
   walkConfigFields,
-} from './config-editor.js';
-import { compareVersions } from './semver.js';
+} from "./config-editor.js";
+import { compareVersions } from "./semver.js";
 
 export { compareVersions };
 
-export const CONFIG_EXPORT_FORMAT = 'lumo-tamer-config';
+export const CONFIG_EXPORT_FORMAT = "lumo-box-config";
 
 /** Forward migrations, oldest first. Applied when the snapshot predates
  * `since`. Extend as paths get renamed. */
@@ -86,12 +86,17 @@ export function parseConfigSnapshot(raw: string): ConfigSnapshot {
   } catch (error) {
     throw new Error(`Not valid JSON: ${(error as Error).message}`);
   }
-  if (!isPlainObject(parsed)) throw new Error('Expected a JSON object.');
+  if (!isPlainObject(parsed)) throw new Error("Expected a JSON object.");
+  if (parsed.$format === "lumo-tamer-config") {
+    // Pre-rename export files stay importable.
+    parsed.$format = CONFIG_EXPORT_FORMAT;
+  }
   if (parsed.$format !== CONFIG_EXPORT_FORMAT) {
     throw new Error(`Unknown format: expected "$${CONFIG_EXPORT_FORMAT}".`);
   }
-  if (!isPlainObject(parsed.changes)) throw new Error('Missing "changes" object.');
-  if (typeof parsed.version !== 'string' || !parsed.version) {
+  if (!isPlainObject(parsed.changes))
+    throw new Error('Missing "changes" object.');
+  if (typeof parsed.version !== "string" || !parsed.version) {
     throw new Error('Missing "version" field.');
   }
   return parsed as unknown as ConfigSnapshot;
@@ -107,16 +112,28 @@ export function planConfigImport(
   currentVersion: string,
   user: Record<string, unknown>,
   secretPaths: Set<string>,
-  migrations: ReadonlyArray<{ since: string; renames: Record<string, string> }> = CONFIG_MIGRATIONS,
-): { edits: { changes: Record<string, unknown>; resets: string[] }; report: ImportReport } {
+  migrations: ReadonlyArray<{
+    since: string;
+    renames: Record<string, string>;
+  }> = CONFIG_MIGRATIONS,
+): {
+  edits: { changes: Record<string, unknown>; resets: string[] };
+  report: ImportReport;
+} {
   const report: ImportReport = {
-    imported: [], overwrites: [], unchanged: [], migrated: [], dropped: [], warnings: [],
+    imported: [],
+    overwrites: [],
+    unchanged: [],
+    migrated: [],
+    dropped: [],
+    warnings: [],
   };
 
   const renames = new Map<string, string>();
   for (const entry of migrations) {
     if (compareVersions(snapshot.version, entry.since) < 0) {
-      for (const [from, to] of Object.entries(entry.renames)) renames.set(from, to);
+      for (const [from, to] of Object.entries(entry.renames))
+        renames.set(from, to);
     }
   }
 
@@ -134,7 +151,10 @@ export function planConfigImport(
       report.dropped.push(target);
       continue;
     }
-    if (secretPaths.has(target) && (raw === null || raw === undefined || raw === '')) {
+    if (
+      secretPaths.has(target) &&
+      (raw === null || raw === undefined || raw === "")
+    ) {
       report.warnings.push(`${target}: empty secret skipped.`);
       continue;
     }

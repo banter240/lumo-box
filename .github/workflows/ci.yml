@@ -30,6 +30,6 @@ jobs:
         with:
           context: .
           push: false
-          tags: lumo-tamer:ci
-          cache-from: type=gha,scope=lumo-tamer
-          cache-to: type=gha,mode=max,scope=lumo-tamer
+          tags: lumo-box:ci
+          cache-from: type=gha,scope=lumo-box
+          cache-to: type=gha,mode=max,scope=lumo-box

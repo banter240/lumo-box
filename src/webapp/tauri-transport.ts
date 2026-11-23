@@ -1,6 +1,6 @@
 /**
  * Tauri IPC transport polyfill for proxied Lumo pages: the ONLY piece of
- * desktop emulation we own. Maps invoke() onto the tamer bridge HTTP
+ * desktop emulation we own. Maps invoke() onto the lumo_box bridge HTTP
  * endpoint and event.listen() onto its SSE stream. Everything downstream
  * (window.LumoConnectors, LumoSchedules, account identity) is vendored
  * upstream code driving this transport unmodified.

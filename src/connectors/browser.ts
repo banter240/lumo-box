@@ -140,7 +140,7 @@ export class BrowserConnector {
       res = await fetch(target, {
         redirect: "follow",
         signal: AbortSignal.timeout(TIMEOUT_MS),
-        headers: { "user-agent": "lumo-tamer-browser-connector" },
+        headers: { "user-agent": "lumo-box-browser-connector" },
       });
     } catch (error) {
       throw new ConnectorError(

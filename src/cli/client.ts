@@ -198,7 +198,7 @@ export class CLIClient {
 
     // Welcome message
     print("");
-    print("Welcome to lumo-tamer cli");
+    print("Welcome to lumo-box cli");
     if (commandsConfig.enabled)
       print("Type /help for commands, /quit to exit.");
     print("");

@@ -3,7 +3,7 @@
  *
  * Checking needs no extra privileges. Applying bind-mounts docker.sock on
  * *this* container (no standing updater). Switching stable ↔ dev still
- * requires LUMO_TAMER_IMAGE in .env to match.
+ * requires BOX_IMAGE in .env to match.
  */
 
 import { APP, DOCKER_UPDATE, GITHUB } from "./const.js";
@@ -147,7 +147,7 @@ export function imageTagFromRef(ref: string): string {
 }
 
 export function runningImageRef(): string {
-  if (process.env.LUMO_TAMER_IMAGE) return process.env.LUMO_TAMER_IMAGE;
+  if (process.env.BOX_IMAGE) return process.env.BOX_IMAGE;
   return `${APP.GHCR_REGISTRY}/${APP.GITHUB_REPO}:${channelImageTag(channelFromVersion(VERSION))}`;
 }
 
@@ -171,14 +171,14 @@ function applyHint(opts: {
   } else if (action === "switch") {
     bits.push(
       `Switch from the ${runningChannel} image to ${cfg.channel} (${latest ?? channelTag}). ` +
-        `Set LUMO_TAMER_IMAGE=${target} in .env so the next compose up does not roll back.`,
+        `Set BOX_IMAGE=${target} in .env so the next compose up does not roll back.`,
     );
   }
   if (!dockerSocketAvailable(cfg.dockerSocket) && !gitOk) {
     bits.push(
       `This container has no Docker socket at ${cfg.dockerSocket}. ` +
         `Bind-mount it (see docker-compose.yml) to apply from this page, ` +
-        `or on the host: docker pull ${target} && docker compose up -d tamer`,
+        `or on the host: docker pull ${target} && docker compose up -d lumo_box`,
     );
   }
   return bits.length ? bits.join(" ") : null;
@@ -471,7 +471,7 @@ export async function applyUpdate(
       "Applying Docker self-update",
     );
     await pullAndSpawnHelper(cfg.dockerSocket, name, imageRef);
-    const envHint = ` Set LUMO_TAMER_IMAGE=${imageRef} in .env so compose does not roll back.`;
+    const envHint = ` Set BOX_IMAGE=${imageRef} in .env so compose does not roll back.`;
     return {
       ok: true,
       status,

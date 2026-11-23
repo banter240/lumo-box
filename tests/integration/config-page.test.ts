@@ -85,16 +85,16 @@ describe("config page", () => {
     expect(html).toContain("data-copy");
     expect(html).toContain("waitUntilUp");
     expect(html).toContain("location.reload()");
-    expect(html).toContain("lumo-tamer-theme");
+    expect(html).toContain("lumo-box-theme");
     expect(html).toContain("btn-default");
     expect(html).toContain("data-undo");
     expect(html).toContain("field.kind !== 'secret'");
     expect(html).toContain("data-cat");
     expect(html).toContain('href="/auth"');
-    expect(html).toContain("github.com/banter240/lumo-tamer");
+    expect(html).toContain("github.com/banter240/lumo-box");
     expect(html).toContain("updateChip");
     expect(html).toContain("/v1/update");
-    expect(html).toContain("lumo-tamer-config-saved");
+    expect(html).toContain("lumo-box-config-saved");
     expect(html).toContain(
       "Reset all visible fields to defaults? This does not save",
     );
@@ -147,7 +147,7 @@ describe("config page", () => {
 
   it("import skips host-only settings", async () => {
     const snapshot = {
-      $format: "lumo-tamer-config",
+      $format: "lumo-box-config",
       version: "0.7.0",
       exportedAt: new Date().toISOString(),
       changes: {

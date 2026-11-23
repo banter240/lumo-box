@@ -50,8 +50,8 @@ docker_build() {
   local i
   for i in 1 2 3 4 5; do
     docker buildx build \
-      --cache-from type=gha,scope=lumo-tamer \
-      --cache-to type=gha,mode=max,scope=lumo-tamer \
+      --cache-from type=gha,scope=lumo-box \
+      --cache-to type=gha,mode=max,scope=lumo-box \
       --load \
       -t "$tag" \
       . && return 0

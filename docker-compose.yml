@@ -1,12 +1,12 @@
 services:
 
-  tamer:
+  lumo_box:
     # Pin the tag in .env (see .env.example). Git branch on the host does not matter.
     # First boot: if GHCR is empty, `build: .` is the fallback.
-    image: ${LUMO_TAMER_IMAGE:-ghcr.io/banter240/lumo-tamer:latest}
+    image: ${BOX_IMAGE:-ghcr.io/banter240/lumo-box:latest}
     build: .
     pull_policy: missing
-    container_name: lumo-tamer
+    container_name: lumo-box
     ports:
       - "3003:3003"
     volumes:
@@ -14,21 +14,21 @@ services:
       # Docker creates a directory if the file doesn't exist, causing errors.
       - ./config.yaml:/app/config.yaml
       - ./sessions:/app/sessions
-      # One-click self-update (Settings → Updates / tamer update apply) needs
+      # One-click self-update (Settings → Updates / lumo_box update apply) needs
       # the Docker socket. It is ROOT-EQUIVALENT ON THE HOST: anything that
       # controls this container then controls the machine. Off by default;
       # update with `docker compose pull && docker compose up -d` instead, or
-      # uncomment on a private box only. See docs/updates.md.
+      # uncomment on a private lumo_box only. See docs/updates.md.
       # - /var/run/docker.sock:/var/run/docker.sock
     secrets:
       - lumo-vault-key
     environment:
       - NODE_ENV=production
       # Keep config.yaml + sessions on the mounted /app (same as before).
-      - LUMO_HOME=/app
+      - BOX_HOME=/app
       # So Updates knows which GHCR tag this container is pinned to.
-      - LUMO_TAMER_IMAGE=${LUMO_TAMER_IMAGE:-ghcr.io/banter240/lumo-tamer:latest}
-      - LUMO_CONTAINER_NAME=lumo-tamer
+      - BOX_IMAGE=${BOX_IMAGE:-ghcr.io/banter240/lumo-box:latest}
+      - BOX_CONTAINER_NAME=lumo-box
     restart: unless-stopped
 
   # Optional Chromium+noVNC (~1 GB). Not started by a normal `compose up`.
@@ -36,21 +36,21 @@ services:
   # password login (CAPTCHA / 2028) or you need a hardware key:
   #   docker compose --profile browser up -d browser
   #   open http://<host>:3001  -> lumo.proton.me
-  #   docker compose run --rm -it tamer auth browser   # CDP http://browser:9222
+  #   docker compose run --rm -it lumo_box auth browser   # CDP http://browser:9222
   #   # writes auth.browser.launch: false + cdpEndpoint (not localhost)
   #   docker compose --profile browser stop browser
   #   docker compose --profile browser rm -f browser
-  # Optional image + profile wipe (tamer / port 3003 stays up):
-  #   docker rmi $(docker images -q --filter reference='*lumo-tamer*browser*')
+  # Optional image + profile wipe (lumo_box / port 3003 stays up):
+  #   docker rmi $(docker images -q --filter reference='*lumo-box*browser*')
   #   # rm -rf ./browser-data
-  #   docker ps -a --filter name=lumo-tamer-browser   # empty = gone
+  #   docker ps -a --filter name=lumo-box-browser   # empty = gone
   browser:
     profiles: ["browser"]
     # image: lscr.io/linuxserver/chromium:latest
     build:
       context: .
       dockerfile: Dockerfile.browser
-    container_name: lumo-tamer-browser
+    container_name: lumo-box-browser
     environment:
       - PUID=1000
       - PGID=1000
@@ -80,7 +80,7 @@ services:
     ports:
       - "3080:8080"
     environment:
-      - OPENAI_API_BASE_URLS=http://tamer:3003/v1
+      - OPENAI_API_BASE_URLS=http://lumo_box:3003/v1
       - ENABLE_OPENAI_API=true
     volumes:
       # access app config for API key

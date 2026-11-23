@@ -33,7 +33,7 @@ describe('writeVault across symlinks', () => {
     const keyFile = join(dir, 'vault-key');
     writeFileSync(keyFile, Buffer.alloc(32, 1), { mode: 0o600 });
     return {
-      keychain: { service: 'lumo-tamer-test-no-such-service', account: 'vault-key' },
+      keychain: { service: 'lumo-box-test-no-such-service', account: 'vault-key' },
       keyFilePath: keyFile,
     };
   }

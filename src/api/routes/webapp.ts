@@ -2,7 +2,7 @@
  * Lumo web app passthrough (experimental, webapp.enabled).
  *
  * Reverse proxy for the official Lumo web app, mounted as a catch-all AFTER
- * every tamer route. Anything reaching it belongs to the app: pages, assets,
+ * every lumo_box route. Anything reaching it belongs to the app: pages, assets,
  * and the app's own API calls (the browser's Proton session rides in cookies
  * and headers). U2L encryption runs client-side inside the page; the proxy
  * only moves bytes.
@@ -24,14 +24,14 @@ import { BRIDGE_INJECT_PATH } from "../../webapp/bridge-constants.js";
 import { BRIDGE_PREFIX } from "./lumo-bridge.js";
 import { observeForkRedemption } from "./webapp-signin.js";
 
-/** Tamer-owned web prefixes. Single source for BOTH the routing table
+/** Box-owned web prefixes. Single source for BOTH the routing table
  * and the access-gate predicates below: adding an owned route must touch
  * exactly here, or the gate silently bypasses or swallows it. */
 const BRIDGE_WEB_PREFIX = `/${BRIDGE_PREFIX}`;
 const SIGNIN_WEB_PREFIX = "/webapp-signin";
 
-/** Paths owned by tamer; when the webapp is on, everything else is proxied. */
-const TAMER_PREFIXES = [
+/** Paths owned by lumo_box; when the webapp is on, everything else is proxied. */
+const BOX_PREFIXES = [
   "/v1",
   "/auth",
   "/config",
@@ -90,7 +90,7 @@ export function isWebappCandidatePath(
   webappEnabled: boolean,
 ): boolean {
   if (!webappEnabled) return false;
-  return !TAMER_PREFIXES.some((prefix) => hasPrefix(path, prefix));
+  return !BOX_PREFIXES.some((prefix) => hasPrefix(path, prefix));
 }
 
 /** Config-aware variant used by the middleware gates. */
@@ -113,7 +113,7 @@ export function isBridgeRequestPath(path: string): boolean {
 }
 
 /**
- * Tamer-owned routes that only exist to serve the proxied web app
+ * Box-owned routes that only exist to serve the proxied web app
  * (Proton fork sign-in). Same machine-or-unlock gate as the proxy.
  */
 export function isWebappOwnedPath(path: string): boolean {
@@ -319,7 +319,7 @@ function proxyHandler(upstream: string) {
     }
 
     // Sniff the app's fork redemption: the fork GET consumes the fork, so
-    // this pass-through response is tamer's only look at the session.
+    // this pass-through response is lumo_box's only look at the session.
     const contentType = upstreamRes.headers.get("content-type") ?? "";
     const forkMatch = FORK_RE.exec(target.pathname);
     if (forkMatch && upstreamRes.status >= 200 && upstreamRes.status < 300) {

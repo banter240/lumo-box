@@ -216,7 +216,7 @@ export const CONFIG_CATEGORIES: ConfigCategory[] = [
     blurb: "Docker socket access and auto-apply settings.",
   },
   // Niche surfaces
-  { id: "cli", title: "CLI", blurb: "Desktop tamer CLI only." },
+  { id: "cli", title: "CLI", blurb: "Desktop lumo_box CLI only." },
   {
     id: "cliGeneral",
     title: "General",
@@ -314,7 +314,7 @@ const COPY: Record<string, FieldCopy> = {
   "server.customTools.recovery.bounceDanglingColon": {
     label: "Bounce dangling-colon replies",
     hint: "Bounce when Lumo announces an action and ends on a colon without a tool call.",
-    more: `Lumo sometimes writes "Let me read the config:" and stops — the tool call never follows. With this on, tamer detects the dangling colon and retries once with a reminder to emit the JSON block. Turn off if you want such half-answers passed through unchanged.`,
+    more: `Lumo sometimes writes "Let me read the config:" and stops — the tool call never follows. With this on, lumo_box detects the dangling colon and retries once with a reminder to emit the JSON block. Turn off if you want such half-answers passed through unchanged.`,
   },
   "server.customTools.recovery.bounceNarration": {
     label: "Bounce narrated tool calls",
@@ -324,7 +324,7 @@ const COPY: Record<string, FieldCopy> = {
   "server.customTools.recovery.bounceBlankReply": {
     label: "Bounce thinking-only replies",
     hint: "Bounce replies with no message text at all (thought loops).",
-    more: `Lumo can burn an entire reply on internal reasoning and return zero message text, looping forever while “thinking”. With this on, tamer detects the empty content and retries with a nudge to answer visibly.`,
+    more: `Lumo can burn an entire reply on internal reasoning and return zero message text, looping forever while “thinking”. With this on, lumo_box detects the empty content and retries with a nudge to answer visibly.`,
   },
   "server.customTools.recovery.danglingColonMaxLength": {
     label: "Dangling-colon max total length",
@@ -380,16 +380,16 @@ const COPY: Record<string, FieldCopy> = {
   "auth.browser.launch": {
     label: "Launch a browser window",
     hint: "Playwright Chromium extract only. Everyday login is /auth in your own browser.",
-    more: "On a desktop with a display, leave this on. Inside Docker there is no Chrome in the tamer image — leave this off. After a sidecar login, tamer writes launch: false for you. Do not turn it back on in the container.",
+    more: "On a desktop with a display, leave this on. Inside Docker there is no Chrome in the lumo_box image — leave this off. After a sidecar login, lumo_box writes launch: false for you. Do not turn it back on in the container.",
   },
   "auth.browser.userDataDir": {
     label: "Browser profile directory",
-    hint: "Persistent profile for that window (cookies only). Relative to LUMO_HOME.",
+    hint: "Persistent profile for that window (cookies only). Relative to BOX_HOME.",
   },
   "auth.browser.cdpEndpoint": {
     label: "Chrome DevTools endpoint",
     hint: "Chrome DevTools URL when launch is off (Docker sidecar or already-running Chrome).",
-    more: `Used only when launch is false. localhost is a Chrome on the same machine (desktop). Inside Docker/Portainer the sidecar is ${CDP.DOCKER} — not localhost. After extraction, stop and remove only ${APP.BROWSER_CONTAINER_NAME}; leave tamer on port ${PORTS.TAMER}.`,
+    more: `Used only when launch is false. localhost is a Chrome on the same machine (desktop). Inside Docker/Portainer the sidecar is ${CDP.DOCKER} — not localhost. After extraction, stop and remove only ${APP.BROWSER_CONTAINER_NAME}; leave lumo_box on port ${PORTS.BOX}.`,
     examples: [
       { label: "Example 1 — desktop Chrome", value: CDP.DESKTOP },
       { label: "Example 2 — Docker sidecar", value: CDP.DOCKER },
@@ -397,7 +397,7 @@ const COPY: Record<string, FieldCopy> = {
   },
   "auth.vault.path": {
     label: "Vault file",
-    hint: "Encrypted token file (AES-256-GCM). Relative to LUMO_HOME.",
+    hint: "Encrypted token file (AES-256-GCM). Relative to BOX_HOME.",
   },
   "auth.vault.keychain.service": {
     label: "Keychain service",
@@ -453,7 +453,7 @@ const COPY: Record<string, FieldCopy> = {
   },
   "log.filePath": {
     label: "Log file",
-    hint: "Log file when destination is file. Relative to LUMO_HOME.",
+    hint: "Log file when destination is file. Relative to BOX_HOME.",
   },
   "log.messageContent": {
     label: "Log chat text",
@@ -463,12 +463,12 @@ const COPY: Record<string, FieldCopy> = {
   "log.dumpApiPath": {
     label: "Dump Proton API calls",
     hint: "If set, append one JSON line per Proton API call (no auth headers). Empty = off.",
-    more: "Relative to LUMO_HOME, or empty. Each Proton call becomes one JSON line without cookies or auth headers. Useful when a 400/422 needs the raw body.",
+    more: "Relative to BOX_HOME, or empty. Each Proton call becomes one JSON line without cookies or auth headers. Useful when a 400/422 needs the raw body.",
     examples: sample("proton-api.jsonl"),
   },
   "conversations.databasePath": {
     label: "Conversation database path",
-    hint: "IndexedDB files when the in-memory store is off. Relative to LUMO_HOME.",
+    hint: "IndexedDB files when the in-memory store is off. Relative to BOX_HOME.",
   },
   "conversations.deriveIdFromUser": {
     label: "Group chats by user field",
@@ -498,12 +498,12 @@ const COPY: Record<string, FieldCopy> = {
   "updates.enabled": {
     label: "Check for updates",
     hint: "Look up GitHub Releases on a timer and show the Update button.",
-    more: "Save applies channel/repo/interval immediately (no Restart). Checking is HTTP only. Applying uses the Docker socket on this container. LUMO_TAMER_IMAGE in .env must match the channel after a switch.",
+    more: "Save applies channel/repo/interval immediately (no Restart). Checking is HTTP only. Applying uses the Docker socket on this container. BOX_IMAGE in .env must match the channel after a switch.",
   },
   "updates.channel": {
     label: "Release channel",
     hint: `stable (default) = ${GITHUB.STABLE_BRANCH} / GitHub latest + GHCR :${DOCKER_UPDATE.STABLE_TAG}. dev = prereleases + GHCR :${DOCKER_UPDATE.DEV_TAG}.`,
-    more: `Each channel is its own track. stable/main = latest GitHub release (not -dev). dev = newest prerelease. Switching to an older main build is a downgrade — config and the vault may not load. After a switch, set LUMO_TAMER_IMAGE in .env to :${DOCKER_UPDATE.STABLE_TAG} or :${DOCKER_UPDATE.DEV_TAG} so compose does not roll back.`,
+    more: `Each channel is its own track. stable/main = latest GitHub release (not -dev). dev = newest prerelease. Switching to an older main build is a downgrade — config and the vault may not load. After a switch, set BOX_IMAGE in .env to :${DOCKER_UPDATE.STABLE_TAG} or :${DOCKER_UPDATE.DEV_TAG} so compose does not roll back.`,
     choices: ["stable", "dev"],
     examples: [
       { label: "Example 1 — main / stable", value: "stable" },
@@ -542,7 +542,7 @@ const COPY: Record<string, FieldCopy> = {
   "webapp.enabled": {
     label: "Serve the Lumo web app",
     hint: "Proxy the official Lumo web app through this server and open it at the root URL.",
-    more: "Off by default. When on, requests that match no tamer route are proxied to the Lumo web app: you browse and sign in to Proton inside the page, chats run client-side with Lumo's own encryption. The /v1 API, /auth, /config keep working unchanged. The page's own Proton session lives in your browser cookies, not on this server.",
+    more: "Off by default. When on, requests that match no lumo_box route are proxied to the Lumo web app: you browse and sign in to Proton inside the page, chats run client-side with Lumo's own encryption. The /v1 API, /auth, /config keep working unchanged. The page's own Proton session lives in your browser cookies, not on this server.",
   },
   "webapp.upstream": {
     label: "Web app upstream",
@@ -607,7 +607,7 @@ const COPY: Record<string, FieldCopy> = {
   "webapp.schedules.enabled": {
     label: "Scheduled tasks",
     hint: "Run schedules server-side via this server's Lumo session, even when the app is closed.",
-    more: "Off by default. The web app edits the timings; tamer books and executes the runs itself and reports history back. Scheduled runs mark connectors read-only. Needs a logged-in session on /auth.",
+    more: "Off by default. The web app edits the timings; lumo_box books and executes the runs itself and reports history back. Scheduled runs mark connectors read-only. Needs a logged-in session on /auth.",
   },
   "webapp.schedules.maxConcurrency": {
     label: "Max concurrent runs",
@@ -617,13 +617,13 @@ const COPY: Record<string, FieldCopy> = {
   "commands.wakeword": {
     label: "Wakeword",
     hint: "Spoken prefix instead of a slash, so voice clients do not steal /help.",
-    more: 'For Assist and other clients that already own slash commands. "tamer help" runs /help. Case-insensitive. Leave empty to disable the spoken form.',
-    examples: sample("tamer"),
+    more: 'For Assist and other clients that already own slash commands. "lumo_box help" runs /help. Case-insensitive. Leave empty to disable the spoken form.',
+    examples: sample("lumo_box"),
   },
   "server.host": {
     label: "Listen address",
     hint: "127.0.0.1 = this machine only. 0.0.0.0 = reachable from other devices.",
-    more: "With 0.0.0.0, other devices can use the API with the API key and open these pages after unlocking them with the API key. Use a long random key. The Docker image overrides this with LUMO_TAMER_HOST=0.0.0.0 so the published port works. Needs a restart.",
+    more: "With 0.0.0.0, other devices can use the API with the API key and open these pages after unlocking them with the API key. Use a long random key. The Docker image overrides this with BOX_HOST=0.0.0.0 so the published port works. Needs a restart.",
   },
   "server.port": {
     label: "Listen port",
@@ -1007,7 +1007,7 @@ const COPY: Record<string, FieldCopy> = {
   },
   "cli.log.filePath": {
     label: "CLI log file",
-    hint: "CLI log file when destination is file. Relative to LUMO_HOME.",
+    hint: "CLI log file when destination is file. Relative to BOX_HOME.",
   },
   "cli.enableWebSearch": {
     label: "CLI native web search",
@@ -1020,7 +1020,7 @@ const COPY: Record<string, FieldCopy> = {
   "cli.localActions.enabled": {
     label: "Run local code blocks",
     hint: "Let the CLI run bash/read/edit/create blocks on this machine. Confirmations still apply.",
-    more: "Interactive tamer CLI only, not the API server or web app — those use connectors. When on, fenced bash/python/read/edit/create in the model output can run on this machine. You still get a confirm prompt except for ```read if fileReads is on.",
+    more: "Interactive lumo_box CLI only, not the API server or web app — those use connectors. When on, fenced bash/python/read/edit/create in the model output can run on this machine. You still get a confirm prompt except for ```read if fileReads is on.",
   },
   "cli.localActions.fileReads.enabled": {
     label: "Allow ```read without confirm",

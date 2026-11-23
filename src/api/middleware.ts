@@ -143,7 +143,7 @@ function escapeHtml(value: string): string {
 function uiLoginPage(next: string, error?: string): string {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Unlock lumo-tamer</title>
+<title>Unlock lumo-box</title>
 <style>
 :root { color-scheme: light dark; }
 body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; display: grid; place-items: center; min-height: 100vh; margin: 0; padding: 16px; box-sizing: border-box; }
@@ -154,8 +154,8 @@ input, button { font: inherit; padding: 0.6rem 0.75rem; border-radius: 6px; }
 .err { color: #d33; opacity: 1; }
 </style></head>
 <body><form method="post" action="${UI_LOGIN_PATH}">
-<h1>Unlock lumo-tamer</h1>
-<p>This page is only open from the machine running lumo-tamer. Enter the server API key to use it from this device.</p>
+<h1>Unlock lumo-box</h1>
+<p>This page is only open from the machine running lumo-box. Enter the server API key to use it from this device.</p>
 ${error ? `<p class="err">${escapeHtml(error)}</p>` : ""}
 <input type="password" name="key" autocomplete="current-password" placeholder="API key" required autofocus>
 <input type="hidden" name="next" value="${escapeHtml(next)}">

@@ -3,7 +3,7 @@
  *
  * This process cannot stop-and-recreate itself: stopping the container kills
  * us. After a pull we start a one-shot helper from the *new* image (same
- * socket mount) that recreates lumo-tamer, then we return and get replaced.
+ * socket mount) that recreates lumo-box, then we return and get replaced.
  */
 
 import { existsSync } from 'fs';
@@ -200,7 +200,7 @@ export async function pullAndSpawnHelper(
       AutoRemove: true,
       Binds: [`${socketPath}:${socketPath}`],
     },
-    Env: [`LUMO_TAMER_IMAGE=${imageRef}`],
+    Env: [`BOX_IMAGE=${imageRef}`],
   });
   assertOk(helper, 'Create updater helper');
   const helperId = (helper.json as { Id: string }).Id;
@@ -256,5 +256,5 @@ export async function pruneOldImages(socketPath: string, newImageRef: string): P
 
 export function selfContainerName(): string {
   // Explicit override wins, then the container hostname (Docker sets HOSTNAME).
-  return process.env.LUMO_CONTAINER_NAME || process.env.HOSTNAME || APP.CONTAINER_NAME;
+  return process.env.BOX_CONTAINER_NAME || process.env.HOSTNAME || APP.CONTAINER_NAME;
 }

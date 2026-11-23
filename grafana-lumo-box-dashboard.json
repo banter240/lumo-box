@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Monitoring dashboard for lumo-tamer OpenAI-compatible API",
+  "description": "Monitoring dashboard for lumo-box OpenAI-compatible API",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -852,7 +852,7 @@
       "targets": [
         {
           "expr": "sum(rate(lumo_http_requests_total{endpoint=~\"/v1/.*\"}[5m])) by (status) * 60",
-          "legendFormat": "lumo-tamer {{status}}",
+          "legendFormat": "lumo-box {{status}}",
           "refId": "A"
         },
         {
@@ -1535,7 +1535,7 @@
   "refresh": "30s",
   "schemaVersion": 38,
   "tags": [
-    "lumo-tamer",
+    "lumo-box",
     "api",
     "prometheus"
   ],
@@ -1568,8 +1568,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "lumo-tamer",
-  "uid": "lumo-tamer-metrics",
+  "title": "lumo-box",
+  "uid": "lumo-box-metrics",
   "version": 2,
   "weekStart": ""
 }

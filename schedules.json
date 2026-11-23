@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "schedules": [
+    {
+      "id": "s1",
+      "timingRevision": 3,
+      "enabled": true,
+      "timing": {
+        "kind": "once",
+        "at": "2026-12-01T00:00:00Z"
+      },
+      "missedRunPolicy": "run_once",
+      "createdAt": 1795438920651
+    }
+  ],
+  "runs": []
+}

@@ -13,7 +13,7 @@ Add Lumo to `provider` in your OpenCode `opencode.json` / `opencode.jsonc`:
 ```json
 {
   "provider": {
-    "lumo-tamer": {
+    "lumo-box": {
       "models": {
         "lumo": {
           "name": "Lumo",

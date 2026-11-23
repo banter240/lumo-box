@@ -1,12 +1,12 @@
 /**
- * Authentication module for lumo-tamer
+ * Authentication module for lumo-box
  *
  * Usage (via CLI):
- *   tamer auth              - Open /auth (Proton sign-in)
- *   tamer auth login        - Password SRP (scripts)
- *   tamer auth browser      - Sidecar / CDP extract
- *   tamer auth rclone       - Paste rclone config
- *   tamer auth status
+ *   lumo_box auth              - Open /auth (Proton sign-in)
+ *   lumo_box auth login        - Password SRP (scripts)
+ *   lumo_box auth browser      - Sidecar / CDP extract
+ *   lumo_box auth rclone       - Paste rclone config
+ *   lumo_box auth status
  *
  * Updates config.yaml with selected values after successful auth.
  */
@@ -58,7 +58,7 @@ async function authenticateBrowser(): Promise<BrowserAuthResult> {
  * Called from CLI after config/logger are initialized.
  */
 function localAuthUrl(): string {
-  return `http://127.0.0.1:${getServerConfig().port || PORTS.TAMER}/auth`;
+  return `http://127.0.0.1:${getServerConfig().port || PORTS.BOX}/auth`;
 }
 
 function offerLocalAuthPage(): void {
@@ -79,19 +79,19 @@ export async function runAuthCommand(argv: string[]): Promise<void> {
     return runStatus();
   }
 
-  print('=== lumo-tamer authentication ===\n');
+  print('=== lumo-box authentication ===\n');
 
   if (!subArg) {
     offerLocalAuthPage();
-    print('The server must be running (`tamer server`). Sign in on that page.');
-    print('Fallbacks: tamer auth login | tamer auth browser | tamer auth rclone');
+    print('The server must be running (`lumo_box server`). Sign in on that page.');
+    print('Fallbacks: lumo_box auth login | lumo_box auth browser | lumo_box auth rclone');
     return;
   }
 
   const method = authMethodSchema.safeParse(subArg).data;
   if (!method) {
     print(`Unknown method: ${subArg}`);
-    print('Use: tamer auth | tamer auth login | tamer auth browser | tamer auth rclone | tamer auth status');
+    print('Use: lumo_box auth | lumo_box auth login | lumo_box auth browser | lumo_box auth rclone | lumo_box auth status');
     process.exit(1);
   }
 
@@ -160,7 +160,7 @@ export async function runAuthCommand(argv: string[]): Promise<void> {
     printStatus(status);
     printSummary(status, provider);
 
-    print('\nYou can now run: tamer or tamer server');
+    print('\nYou can now run: lumo_box or lumo_box server');
     if (usedCdp) {
       print('');
       print(sidecarTeardownHint());

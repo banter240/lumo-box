@@ -28,7 +28,7 @@ describe('sr-github-release', () => {
 
   it('updates an existing GitHub release instead of failing', async () => {
     const result = await publish({}, {
-      env: { GITHUB_REPOSITORY: 'banter240/lumo-tamer', GITHUB_TOKEN: 't' },
+      env: { GITHUB_REPOSITORY: 'banter240/lumo-box', GITHUB_TOKEN: 't' },
       logger: { log: () => {} },
       branch: { name: 'dev', prerelease: 'dev' },
       nextRelease: { gitTag: 'v0.7.0-dev.9', notes: 'notes' },

@@ -17,4 +17,4 @@ the patch lands here and nowhere else.
 Byte-exact upstream code (unmodified) lives separately under
 packages/lumo-webview and is synced only via scripts/upstream/sync-webview.sh.
 The Node shims in src/shims exist so upstream code can run unmodified; they
-are tamer-owned, not mirrors.
+are box-owned, not mirrors.

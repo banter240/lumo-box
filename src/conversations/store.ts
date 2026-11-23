@@ -9,8 +9,8 @@
  * - Sagas handle async operations (sync to server, load from IDB)
  *
  * Type mapping:
- * - lumo-tamer's Message -> upstream's Message (similar structure, different createdAt type)
- * - lumo-tamer's ConversationState -> upstream's Conversation + messages
+ * - lumo-box's Message -> upstream's Message (similar structure, different createdAt type)
+ * - lumo-box's ConversationState -> upstream's Conversation + messages
  */
 
 import { randomUUID } from "crypto";
@@ -62,7 +62,7 @@ import type {
 import { ConversationStatus, Role } from "@lumo/types.js";
 
 /**
- * Convert upstream Message to lumo-tamer Message
+ * Convert upstream Message to lumo-box Message
  *
  * @param semanticIdMap - Optional map of messageId -> semanticId for deduplication.
  *   If not provided or missing entry, falls back to hash of role+content.
@@ -86,7 +86,7 @@ function fromUpstreamMessage(
 }
 
 /**
- * Convert lumo-tamer ConversationState from upstream Conversation + messages
+ * Convert lumo-box ConversationState from upstream Conversation + messages
  *
  * @param semanticIdMap - Optional map of messageId -> semanticId for deduplication
  */

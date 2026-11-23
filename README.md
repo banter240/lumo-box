@@ -1,16 +1,16 @@
 <div align="center">
 
-# lumo-tamer
+# lumo-box
 
-[![Latest Release](https://img.shields.io/github/v/release/banter240/lumo-tamer?style=for-the-badge&color=6d4aff&logo=github)](https://github.com/banter240/lumo-tamer/releases/latest)
-[![License](https://img.shields.io/github/license/banter240/lumo-tamer?style=for-the-badge&color=blue)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/banter240/lumo-box?style=for-the-badge&color=6d4aff&logo=github)](https://github.com/banter240/lumo-box/releases/latest)
+[![License](https://img.shields.io/github/license/banter240/lumo-box?style=for-the-badge&color=blue)](LICENSE)
 [![Dev Process](https://img.shields.io/badge/Dev_Process-AI_Assisted-8957e5?style=for-the-badge)](#project-status)
 [![Discord](https://img.shields.io/discord/1460909918482858060?logo=discord&logoColor=white&style=for-the-badge&color=5865F2)](https://discord.gg/kxUsjHyxfT)
 [![Fluxer Members](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Ffluxer.com%2Fapi%2Fv1%2Finvites%2Ft5LNln9X&query=%24.member_count&label=Fluxer%20Members&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI%2BPHBhdGggZD0iTTIxIDExLjVhOC4zOCA4LjM4IDAgMCAwLS45LTMuNzQgOC4zNyA4LjM3IDAgMCAxLTkuNDIgMS42MiA4LjM4IDguMzggMCAwIDAtLjkuMTNiIi8%2BPHBhdGggZD0iTTQuMjQgMi4yNmMuNS0xLjM2IDEuODUtMi4xNyAzLjM4LTIuMTcgMi4wOS4wMyAzLjc1IDEuMjUgNC4zNyAyLjQ4LjU0IDEuMDkgMi4zNyAxLjMxIDMuLjM5LjI5YTEuNSAxLjUgMCAwIDEgMi4yIDIuMmMtLjQyLjQyLS45Mi44LTEuNTMgMS4xMi0yLjM5IDEuMi0zLjk5IDEuOC01LjczIDEuOTRhMTAgMTAgMCAwIDEtMi4yNS0uMTYgMTIgMTIgMCAwIDEtMi4wMy0uNThjLTMuMTQtMS4yMy00LjktMi4yMi00LjkzLTMuMDZhMTMuMDUgMTMuMDUgMCAwIDEgMy40OS0zLjVaIi8%2BPC9zdmc%2B&style=for-the-badge&color=ff7a00)](https://fluxer.gg/t5LNln9X)
 
-[![Open Issues](https://img.shields.io/github/issues/banter240/lumo-tamer?style=for-the-badge&color=red&logo=github)](https://github.com/banter240/lumo-tamer/issues)
-[![Discussions](https://img.shields.io/github/discussions/banter240/lumo-tamer?style=for-the-badge&logo=github&color=7289DA)](https://github.com/banter240/lumo-tamer/discussions)
-[![Stars](https://img.shields.io/github/stars/banter240/lumo-tamer?style=for-the-badge&color=yellow&logo=github)](https://github.com/banter240/lumo-tamer/stargazers)
+[![Open Issues](https://img.shields.io/github/issues/banter240/lumo-box?style=for-the-badge&color=red&logo=github)](https://github.com/banter240/lumo-box/issues)
+[![Discussions](https://img.shields.io/github/discussions/banter240/lumo-box?style=for-the-badge&logo=github&color=7289DA)](https://github.com/banter240/lumo-box/discussions)
+[![Stars](https://img.shields.io/github/stars/banter240/lumo-box?style=for-the-badge&color=yellow&logo=github)](https://github.com/banter240/lumo-box/stargazers)
 
 <a href="https://buymeacoffee.com/banter240" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 50px !important;width: 181px !important;"></a>
 
@@ -18,7 +18,7 @@
 
 ```
                         ┌─────────────────┐     ┌─────────────────┐
-┌─────────────────┐     │   lumo-tamer    │◄───►│  Home Assistant │
+┌─────────────────┐     │    lumo-box     │◄───►│  Home Assistant │
 │  Proton Lumo    │     │                 │     └─────────────────┘
 │                 │     │   Translation   │     ┌─────────────────┐
 │  Your favorite  │◄───►│   Encryption    │◄───►│  Open WebUI     │
@@ -31,11 +31,11 @@
 Use [Proton Lumo](https://lumo.proton.me/) in your favorite AI-enabled app or on the command line.
 
 > **Official API support [is coming](https://www.reddit.com/r/lumo/comments/1qsa8xq/comment/o304ez3/) to Lumo!**  
-> lumo-tamer will be ported to use the new API when it becomes available, and obsolete parts will be stripped out (depending on API features such as OpenAI compatibility, tools, conversation support). If you can't wait, give lumo-tamer a go!
+> lumo-box will be ported to use the new API when it becomes available, and obsolete parts will be stripped out (depending on API features such as OpenAI compatibility, tools, conversation support). If you can't wait, give lumo-box a go!
 
 [Lumo](https://lumo.proton.me/about) is Proton's privacy-first AI assistant, powered by open-source LLMs running exclusively on Proton-controlled servers. Your prompts and responses are never logged, stored, or used for training. See Proton's [security model](https://proton.me/blog/lumo-security-model) and [privacy policy](https://proton.me/support/lumo-privacy) for details.
 
-lumo-tamer is a lightweight local proxy that talks to Proton's Lumo API using the same protocol as the official web client. Chat is U2L-encrypted on the wire (same as the official client). Tokens sit in an AES-256-GCM vault. Think "proton-bridge for Lumo".
+lumo-box is a lightweight local proxy that talks to Proton's Lumo API using the same protocol as the official web client. Chat is U2L-encrypted on the wire (same as the official client). Tokens sit in an AES-256-GCM vault. Think "proton-bridge for Lumo".
 
 Need help, want to share a setup, or report something quickly? Join the [Discord](https://discord.gg/kxUsjHyxfT). If you like the project, you can support it on [Fluxer](https://fluxer.gg/t5LNln9X).
 
@@ -68,7 +68,7 @@ All of that code is © Proton / ProtonLumo contributors, licensed under GPL-3.0 
 
 This is an unofficial, personal project in early stages of development, not affiliated with or endorsed by Proton. Rough edges are to be expected. Only tested on Linux.
 
-In a Reddit thread about lumo-tamer, a member of Proton's support team [stated](https://www.reddit.com/r/lumo/comments/1siwz4c/comment/og3upqf/):
+In a Reddit thread about lumo-box, a member of Proton's support team [stated](https://www.reddit.com/r/lumo/comments/1siwz4c/comment/og3upqf/):
 
 > "As long as you keep in mind that this is unofficial and not supported or endorsed by Proton in any way, it should be fine to use."
 
@@ -86,23 +86,23 @@ Note that this is an informal statement by support staff, not an amendment to Pr
 ### 1. Install
 
 ```bash
-git clone https://github.com/banter240/lumo-tamer.git
-cd lumo-tamer
+git clone https://github.com/banter240/lumo-box.git
+cd lumo-box
 git checkout dev
 npm install && npm run build:all
-# Optionally install command `tamer` globally
-# If you don't, replace "tamer" with "npx lumo-tamer" in all commands
+# Optionally install command `lumo_box` globally
+# If you don't, replace "lumo_box" with "npx lumo-box" in all commands
 npm link
 ```
 
 For Docker installation, see [Docker](#docker).
 
-User files (`config.yaml`, `sessions/`, logs) live next to the install by default. Override with `LUMO_HOME` or `tamer --home /path`.
+User files (`config.yaml`, `sessions/`, logs) live next to the install by default. Override with `BOX_HOME` or `lumo_box --home /path`.
 
 ### 2. Authenticate
 
 ```bash
-tamer auth
+lumo_box auth
 ```
 
 Opens `/auth`. Use **Start Proton sign-in** (any device) or password on that page. Tokens are saved. No extra browser container.
@@ -112,12 +112,12 @@ Opens `/auth`. Use **Start Proton sign-in** (any device) or password on that pag
 **Chat history (desktop):** in `config.yaml` set `auth.browser.launch: true` and `conversations.enableSync: true`, then:
 
 ```bash
-tamer auth browser
+lumo_box auth browser
 ```
 
-A Chromium window opens. Log in at **lumo.proton.me** (not `/auth`). When the Lumo chat is visible, tamer extracts cookies and closes the window.
+A Chromium window opens. Log in at **lumo.proton.me** (not `/auth`). When the Lumo chat is visible, lumo_box extracts cookies and closes the window.
 
-**Chat history (Docker):** start the browser sidecar, log in at `http://<host>:3001` on lumo.proton.me, then `docker compose run --rm -it tamer auth browser`. Full steps: [authentication](docs/authentication.md#browser).
+**Chat history (Docker):** start the browser sidecar, log in at `http://<host>:3001` on lumo.proton.me, then `docker compose run --rm -it lumo_box auth browser`. Full steps: [authentication](docs/authentication.md#browser).
 
 <details>
 <summary><strong>I'm asked to enter a CAPTCHA</strong></summary>
@@ -129,7 +129,7 @@ Log in to Proton in a regular browser from the same IP first. This often clears 
 <summary><strong>Why do I have to enter my password?</strong></summary>
 
 Proton's security model doesn't allow for a simple OAuth authentication. Your credentials are not saved or logged, and security tokens are stored encrypted.
-Open `/auth` and use **Start Proton sign-in** (any device). Password on that page is optional. That does not sync Proton chat history. `tamer auth rclone` is a last-resort fallback.
+Open `/auth` and use **Start Proton sign-in** (any device). Password on that page is optional. That does not sync Proton chat history. `lumo_box auth rclone` is a last-resort fallback.
 
 See [docs/authentication.md](docs/authentication.md) for details and troubleshooting.
 
@@ -138,7 +138,7 @@ See [docs/authentication.md](docs/authentication.md) for details and troubleshoo
 <details>
 <summary><strong>I get an error saying no secure key storage is available.</strong></summary>
 
-By default, lumo-tamer encrypts tokens with a key in your OS keychain. Without a keychain, the first `/auth` login writes `auth.vault.keyFilePath` (32 bytes, mode 0600) if that path is writable. Docker Compose still needs `secrets/lumo-vault-key` on the host because it mounts the file. To pre-create a key:
+By default, lumo-box encrypts tokens with a key in your OS keychain. Without a keychain, the first `/auth` login writes `auth.vault.keyFilePath` (32 bytes, mode 0600) if that path is writable. Docker Compose still needs `secrets/lumo-vault-key` on the host because it mounts the file. To pre-create a key:
 
 ```bash
 openssl rand -base64 32 > /path/to/your/lumo-vault-key
@@ -159,13 +159,13 @@ auth:
 
 ```bash
 # One-shot: ask a question directly
-tamer "What is 2+2?"
+lumo_box "What is 2+2?"
 
 # Interactive CLI
-tamer
+lumo_box
 
 # Start server
-tamer server
+lumo_box server
 ```
 
 ## Usage
@@ -185,33 +185,33 @@ server:
 Then run:
 
 ```bash
-tamer server
+lumo_box server
 ```
 
 Then, point your favorite OpenAI-compatible app to `http://yourhost:3003/v1` and provide your API key.
 See [API clients](#api-clients) for some inspiration.
 
-> **Security:** Keep your API key private and make sure lumo-tamer is only accessible from your local network, not the internet.
+> **Security:** Keep your API key private and make sure lumo-box is only accessible from your local network, not the internet.
 
 #### Security and privacy defaults
 
-- **This machine only.** The server listens on `127.0.0.1` by default. Set `server.host: "0.0.0.0"` (or `LUMO_TAMER_HOST`) to accept other devices, and use a long random API key: lumo-tamer warns at startup when the key is the example value or short.
+- **This machine only.** The server listens on `127.0.0.1` by default. Set `server.host: "0.0.0.0"` (or `BOX_HOST`) to accept other devices, and use a long random API key: lumo-box warns at startup when the key is the example value or short.
 - **Web UI.** `/config`, `/auth`, `/logs`, `/health`, `/metrics`, restart and update open without a key only from this machine, addressed as `localhost` / `127.0.0.1`. Other devices are sent to `/ui-login`, which asks for the API key once and sets an HttpOnly, `SameSite=Strict` cookie (derived from the key, not the key itself). Requests naming another host are refused (DNS rebinding), and state-changing requests from other sites are refused (CSRF). Scripts can still use `Authorization: Bearer <key>`.
 - **Host-only settings.** Settings that could hand over the machine or the Proton session can only be changed in `config.yaml` on the host. The web UI shows them read-only, and `PUT /v1/config` and import refuse them. They cover the update source (`updates.repository`, `updates.dockerSocket`), spawned executables (`auth.login.binaryPath`), the browser that receives the Proton session (`auth.browser.*`), secret and log paths, `log.messageContent` and `server.host`.
 - **No Docker socket by default.** `docker-compose.yml` does not mount `/var/run/docker.sock`, which is root-equivalent on the host. See [docs/updates.md](docs/updates.md).
 - **No conversation content in logs.** With `log.messageContent: false` (default), prompts, replies, tool arguments, search queries and tool results are logged only as `[hidden: N chars]`, including on the `/logs` page.
-- **No third-party requests.** The web UI uses local fonts only; lumo-tamer talks to Proton (`lumo.proton.me`, `account.proton.me`) and, for update checks, GitHub.
+- **No third-party requests.** The web UI uses local fonts only; lumo-box talks to Proton (`lumo.proton.me`, `account.proton.me`) and, for update checks, GitHub.
 - **Lumo encryption is kept.** Every request uses Lumo's U2L encryption (images included), as in Proton's own web client. See Proton's [security model](https://proton.me/blog/lumo-security-model).
 
-> **Tip:** Run `tamer server` as a docker service or use a tool like nohup to run it in the background.
+> **Tip:** Run `lumo_box server` as a docker service or use a tool like nohup to run it in the background.
 
 ### CLI
 
 Talk to Lumo from the command line like you would via the web interface:
 
 ```bash
-tamer                   # use Lumo interactively
-tamer "make me laugh"   # one-time prompt
+lumo_box                   # use Lumo interactively
+lumo_box "make me laugh"   # one-time prompt
 ```
 
 To give Lumo access to your files and let it execute commands locally, set `cli.localActions.enabled: true` in `config.yaml` (see [Local Actions](#local-actions-cli)).  
@@ -219,7 +219,7 @@ You can ask Lumo to give you a demo of its capabilities, or see this [demo chat]
 
 ### In-chat commands
 
-Both CLI and API accept slash commands (or the `commands.wakeword` prefix, default `tamer`).
+Both CLI and API accept slash commands (or the `commands.wakeword` prefix, default `lumo_box`).
 
 | Command          | Description                                                                               |
 | ---------------- | ----------------------------------------------------------------------------------------- |
@@ -237,7 +237,7 @@ Both CLI and API accept slash commands (or the `commands.wakeword` prefix, defau
 
 Add configuration options to `config.yaml`. Find all options in [`config.defaults.yaml`](config.defaults.yaml), but don't edit this file directly.
 
-Below is a non-exhaustive overview of the most common config sections and their options. Except for some auth settings (which are set by `tamer auth`), all settings are optional. Sync, native web search, and native image tools stay off until you turn them on. Client `tools[]` are honored by default (`customTools.enabled: true`).
+Below is a non-exhaustive overview of the most common config sections and their options. Except for some auth settings (which are set by `lumo_box auth`), all settings are optional. Sync, native web search, and native image tools stay off until you turn them on. Client `tools[]` are honored by default (`customTools.enabled: true`).
 
 ### Global options
 
@@ -253,7 +253,7 @@ log:
 
 cli:
   log:
-    filePath: "lumo-tamer-cli.log"
+    filePath: "lumo-box-cli.log"
 ```
 
 ### Images
@@ -279,7 +279,7 @@ Outbound: generated images are streamed as markdown data URLs (`![lumo:<id>](dat
 
 ### Request Pacing
 
-To be gentle on Proton's servers, lumo-tamer spaces out every outgoing completion (chat, title, bounces) with human-like timing instead of firing them back-to-back. All knobs live under `server.pacing`:
+To be gentle on Proton's servers, lumo-box spaces out every outgoing completion (chat, title, bounces) with human-like timing instead of firing them back-to-back. All knobs live under `server.pacing`:
 
 ```yaml
 server:
@@ -347,7 +347,7 @@ In plain chat these tools are always offered. On agent requests (the client send
 
 ### Model Tiers and Thinking Mode
 
-lumo-tamer maps standard OpenAI request fields to Lumo 2.0's model tier and answer mode:
+lumo-box maps standard OpenAI request fields to Lumo 2.0's model tier and answer mode:
 
 - `model`: `lumo` (Proton auto-routes), `lumo-lite`, `lumo-max`, or `apertus-15`. `apertus` and `apertus-1.5` map to `apertus-15`. These are advertised on `/v1/models`; an unknown model returns HTTP 400.
 - `reasoning_effort`: accepts `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `default`. `high`/`xhigh` turn thinking on, `none`/`minimal` turn it off (aliases exist for client compatibility, e.g. OpenCode's per-model toggle), `default` uses the configured default. In the Responses API, use `reasoning.effort` instead.
@@ -388,12 +388,12 @@ server:
       reasoning: none
 ```
 
-> **Note:** Availability of `lumo-max` and thinking mode depends on your Proton plan. Requests are end-to-end encrypted the same way as the rest of lumo-tamer.
+> **Note:** Availability of `lumo-max` and thinking mode depends on your Proton plan. Requests are end-to-end encrypted the same way as the rest of lumo-box.
 
 **Known limitations:**
 
 - `low`/`medium`/`high` effort values are equivalent: Lumo only has binary thinking on/off.
-- `"none"` is a lumo-tamer extension; standard OpenAI clients don't send it. Default is compact (no think). `lumo-max` still thinks when effort is omitted; send `reasoning_effort: "none"` to turn that off.
+- `"none"` is a lumo-box extension; standard OpenAI clients don't send it. Default is compact (no think). `lumo-max` still thinks when effort is omitted; send `reasoning_effort: "none"` to turn that off.
 - `reasoning_content` follows Deepseek's convention, not the OpenAI spec. It works with clients that support it (Cursor, Open WebUI with Deepseek config). With `server.reasoning.surfaceThinking: true`, the Responses API emits `reasoning_text` parts.
 
 ### Context window
@@ -414,7 +414,7 @@ Example from the app:
 | Reserved, to keep chatting      | 25.6K  |
 | Free space                      | 131.4K |
 
-25.6K reserved + conversation + files + free = 256.0K. The reserve is 10% of the window, so chatting can continue; when the bar is full, Lumo summarizes older messages. lumo-tamer does not run that summarizer.
+25.6K reserved + conversation + files + free = 256.0K. The reserve is 10% of the window, so chatting can continue; when the bar is full, Lumo summarizes older messages. lumo-box does not run that summarizer.
 
 Client catalogs need integers. **256.0K = 262144** (256 × 1024). **25.6K = 26214**. Set those as OpenCode `limit.context` / `limit.output` or OpenClaw `contextWindow` / `maxTokens`. See [OpenCode](docs/opencode.md) and [OpenClaw](docs/openclaw.md).
 
@@ -422,9 +422,9 @@ Client catalogs need integers. **256.0K = 262144** (256 × 1024). **25.6K = 2621
 
 Customize instructions with `server.instructions.template` and `cli.instructions.template`. See [`config.defaults.yaml`](config.defaults.yaml) for more options.
 
-Instructions from API clients will be inserted in the main template. If you can, put instructions on personal preferences within your API client and only use `server.instructions` to define the internal interaction between Lumo and lumo-tamer.
+Instructions from API clients will be inserted in the main template. If you can, put instructions on personal preferences within your API client and only use `server.instructions` to define the internal interaction between Lumo and lumo-box.
 
-> **Note:** Under the hood, lumo-tamer injects instructions into normal messages (the same way it is done in Lumo's webclient). Instructions set in the webclient's personal or project settings will be ignored and left unchanged.
+> **Note:** Under the hood, lumo-box injects instructions into normal messages (the same way it is done in Lumo's webclient). Instructions set in the webclient's personal or project settings will be ignored and left unchanged.
 
 ### Custom Tools (Server)
 
@@ -464,12 +464,12 @@ See [Local Actions](docs/local-actions.md) for further configuration and trouble
 ```yaml
 conversations:
   enableSync: true
-  projectName: "lumo-tamer" # project conversations will belong to
+  projectName: "lumo-box" # project conversations will belong to
 ```
 
 > **Note:** Sync needs a Lumo-scoped session: browser cookies, or password/`/auth` login that got Lumo scope (not the CAPTCHA Drive fallback).
 
-> **Warning:** Projects in Lumo have a limit on the number of conversations per project. When hit, sync will fail. Deleting conversations won't help. Use a new `projectName` as a workaround. See [#16](https://github.com/banter240/lumo-tamer/issues/16).
+> **Warning:** Projects in Lumo have a limit on the number of conversations per project. When hit, sync will fail. Deleting conversations won't help. Use a new `projectName` as a workaround. See [#16](https://github.com/banter240/lumo-box/issues/16).
 
 ## API clients
 
@@ -546,20 +546,20 @@ curl http://localhost:3003/v1/chat/completions \
 
 ### Other API clients
 
-Many clients are untested with lumo-tamer but should work if they only use the `/v1/responses` or `/v1/chat/completions` endpoints. As a rule of thumb: basic chatting will most likely work, but the more a client relies on custom tools, the more the experience is degraded.  
-To test an API client, increase log levels on both the client and lumo-tamer: `server.log.level: debug` and check for errors.
+Many clients are untested with lumo-box but should work if they only use the `/v1/responses` or `/v1/chat/completions` endpoints. As a rule of thumb: basic chatting will most likely work, but the more a client relies on custom tools, the more the experience is degraded.  
+To test an API client, increase log levels on both the client and lumo-box: `server.log.level: debug` and check for errors.
 
-Please share your experiences with new API clients (both issues and successes) in [the project discussions](https://github.com/banter240/lumo-tamer/discussions/new?category=general)!
+Please share your experiences with new API clients (both issues and successes) in [the project discussions](https://github.com/banter240/lumo-box/discussions/new?category=general)!
 
 ## Docker
 
-It is recommended to run lumo-tamer's server in a Docker container.
+It is recommended to run lumo-box's server in a Docker container.
 
 ### Install
 
 ```bash
-git clone https://github.com/banter240/lumo-tamer.git
-cd lumo-tamer
+git clone https://github.com/banter240/lumo-box.git
+cd lumo-box
 git checkout dev
 # Create secret key to encrypt the token vault (or alternatively, use another secrets manager)
 mkdir -p secrets && chmod 700 secrets
@@ -570,25 +570,25 @@ cp -n .env.example .env
 touch config.yaml
 ```
 
-The box runs the GHCR tag in `.env` (`LUMO_TAMER_IMAGE`), not the git branch. Default is `:latest` (main / stable). **dev** is `:dev`.
+The lumo_box runs the GHCR tag in `.env` (`BOX_IMAGE`), not the git branch. Default is `:latest` (main / stable). **dev** is `:dev`.
 
 Self-update is optional and uses **this** container plus the Docker socket (no extra updater). Full split: [Updates](docs/updates.md).
 
 ```bash
 # .env — which GHCR image tag to run (stable/main → :latest, dev → :dev)
-# LUMO_TAMER_IMAGE=ghcr.io/banter240/lumo-tamer:latest
+# BOX_IMAGE=ghcr.io/banter240/lumo-box:latest
 ```
 
-Update with `docker compose pull && docker compose up -d`. The **Update** button / `/update apply` (pull that tag and recreate `lumo-tamer`) need the Docker socket, which is root-equivalent on the host, so `docker-compose.yml` leaves that mount commented out. See [docs/updates.md](docs/updates.md) before enabling it.
+Update with `docker compose pull && docker compose up -d`. The **Update** button / `/update apply` (pull that tag and recreate `lumo-box`) need the Docker socket, which is root-equivalent on the host, so `docker-compose.yml` leaves that mount commented out. See [docs/updates.md](docs/updates.md) before enabling it.
 
 Manual pull still works:
 
 ```bash
-docker pull ghcr.io/banter240/lumo-tamer:latest
-docker compose up -d tamer
+docker pull ghcr.io/banter240/lumo-box:latest
+docker compose up -d lumo_box
 ```
 
-`docker compose build tamer` is only if you build the image yourself.
+`docker compose build lumo_box` is only if you build the image yourself.
 
 ### Configure
 
@@ -599,16 +599,16 @@ server:
   apiKey: "your-secret-api-key-here"
 ```
 
-> **Security:** Keep your API key private and make sure lumo-tamer is only accessible from your local network, not the internet. Disable docker port forwarding if API clients belong to the same docker network.
+> **Security:** Keep your API key private and make sure lumo-box is only accessible from your local network, not the internet. Disable docker port forwarding if API clients belong to the same docker network.
 >
-> The image sets `LUMO_TAMER_HOST=0.0.0.0` so the published port works. Requests from outside the container count as other devices: the web UI at `http://<host>:3003/config` first asks for the API key at `/ui-login`. To keep the port off your network, publish it as `127.0.0.1:3003:3003`.
+> The image sets `BOX_HOST=0.0.0.0` so the published port works. Requests from outside the container count as other devices: the web UI at `http://<host>:3003/config` first asks for the API key at `/ui-login`. To keep the port off your network, publish it as `127.0.0.1:3003:3003`.
 
 ### Authenticate
 
-Start only `tamer`, then open the login page in any browser (your laptop, phone, Portainer host, whatever):
+Start only `lumo_box`, then open the login page in any browser (your laptop, phone, Portainer host, whatever):
 
 ```bash
-docker compose up -d tamer
+docker compose up -d lumo_box
 # open http://<host>:3003/auth
 ```
 
@@ -626,24 +626,24 @@ If Proton still blocks password login, start the optional Chromium sidecar (~1 G
 ```bash
 docker compose --profile browser up -d browser
 # open http://<host>:3001  -> log in at lumo.proton.me
-docker compose run --rm -it tamer auth browser   # CDP http://browser:9222
-# Reload http://<host>:3003/auth — tamer picks up the vault. Do not restart it.
+docker compose run --rm -it lumo_box auth browser   # CDP http://browser:9222
+# Reload http://<host>:3003/auth — lumo_box picks up the vault. Do not restart it.
 ```
 
 That writes `auth.method: browser`, `auth.browser.launch: false`, and `cdpEndpoint: http://browser:9222`. Do not set `launch: true` or `localhost:9222` inside Docker.
 
-Then remove **only** the sidecar (leave `lumo-tamer` on port 3003):
+Then remove **only** the sidecar (leave `lumo-box` on port 3003):
 
 ```bash
 docker compose --profile browser stop browser
 docker compose --profile browser rm -f browser
 # optional — image + Chromium profile (next start is clean):
-# docker rmi $(docker images -q --filter reference='*lumo-tamer*browser*') 2>/dev/null
+# docker rmi $(docker images -q --filter reference='*lumo-box*browser*') 2>/dev/null
 # rm -rf ./browser-data
-docker ps -a --filter name=lumo-tamer-browser   # empty = gone
+docker ps -a --filter name=lumo-box-browser   # empty = gone
 ```
 
-Portainer: start/stop/remove `lumo-tamer-browser` only. Console on `lumo-tamer` can run `tamer auth browser`. Do not stop the stack. Details: [authentication](docs/authentication.md#headless--docker).
+Portainer: start/stop/remove `lumo-box-browser` only. Console on `lumo-box` can run `lumo_box auth browser`. Do not stop the stack. Details: [authentication](docs/authentication.md#headless--docker).
 </details>
 
 ### Run
@@ -651,13 +651,13 @@ Portainer: start/stop/remove `lumo-tamer-browser` only. Console on `lumo-tamer` 
 Server:
 
 ```bash
-docker compose up -d tamer
+docker compose up -d lumo_box
 ```
 
 CLI:
 
 ```bash
-docker compose run --rm -it -v ./some-dir:/dir/ tamer cli
+docker compose run --rm -it -v ./some-dir:/dir/ lumo_box cli
 ```
 
 > **Note:** Running the CLI within Docker may not be very useful:
@@ -682,18 +682,18 @@ See [docs/](docs/) for detailed documentation:
 
 ## Roadmap
 
-- **Getting feedback**: I'm curious how people use lumo-tamer and what they run into.
+- **Getting feedback**: I'm curious how people use lumo-box and what they run into.
 - **Test more API clients**: Test new & improve existing integrations with API clients.
 - **Better auth**: CAPTCHA still forces a Drive-scoped fallback (chat only). SimpleLogin OAuth is unsolved.
 
 ## Full Disclaimer
 
 - **Unofficial project.** This project is not affiliated with, endorsed by, or related to Proton AG in any way.
-- **Terms of service.** A Proton support team member stated on Reddit that lumo-tamer-style clients are "fine to use" as unofficial, unsupported tools ([link](https://www.reddit.com/r/lumo/comments/1siwz4c/comment/og3upqf/)), but this is an informal remark, not an official policy or ToS amendment, and it does not protect against automated abuse detection or rate limiting. A follow-up clarification from Proton support (Nov 2026) confirmed that enforcement targets clearly non-human traffic patterns (sustained, round-the-clock or high-volume automated use), that conservative rate caps and human-in-the-loop defaults reduce problematic patterns, and that enforcement is graduated with appeal options — but the Terms govern wherever informal statements diverge. Use at your own risk.
+- **Terms of service.** A Proton support team member stated on Reddit that lumo-box-style clients are "fine to use" as unofficial, unsupported tools ([link](https://www.reddit.com/r/lumo/comments/1siwz4c/comment/og3upqf/)), but this is an informal remark, not an official policy or ToS amendment, and it does not protect against automated abuse detection or rate limiting. A follow-up clarification from Proton support (Nov 2026) confirmed that enforcement targets clearly non-human traffic patterns (sustained, round-the-clock or high-volume automated use), that conservative rate caps and human-in-the-loop defaults reduce problematic patterns, and that enforcement is graduated with appeal options — but the Terms govern wherever informal statements diverge. Use at your own risk.
 - **Rate limiting and token usage.** Although care was put into making the app behave, it may make many API calls, potentially getting you rate-limited, or burn through your allowed tokens quickly. I have not experienced either of these issues on Lumo Plus.
 - **Security.** This app handles Proton user secrets. Although the code is vetted to the best of my knowledge and follows best practices, this is not my area of expertise. Please verify for yourself.
 - **AI-assisted development.** This code was written with the extensive use of Claude Code.
-- **Tool execution.** Enabling tools gives Lumo the power to execute actions client-side (API or CLI). I am not responsible for Lumo's actions. lumo-tamer does not prevent prompt injection.
+- **Tool execution.** Enabling tools gives Lumo the power to execute actions client-side (API or CLI). I am not responsible for Lumo's actions. lumo-box does not prevent prompt injection.
 
 ## License
 

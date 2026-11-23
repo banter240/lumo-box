@@ -2,7 +2,7 @@
 
 All options live in [`config.defaults.yaml`](../config.defaults.yaml). Copy what you need into `config.yaml`. Do not edit the defaults file.
 
-User files (`config.yaml`, `sessions/`, logs) sit next to the install. Override with `LUMO_HOME` or `tamer --home /path`.
+User files (`config.yaml`, `sessions/`, logs) sit next to the install. Override with `BOX_HOME` or `lumo_box --home /path`.
 
 ## Web UI
 
@@ -23,7 +23,7 @@ Own model names (`server.extraModels`): `id` + `model` (`lumo` / `lumo-lite` / `
 - The page has no login (same as `/auth`). Anyone who can reach the port can change settings.
 - `server.apiKey` is a password field and is **never** sent back to the browser. Leave it blank to keep the current key. To read the key, open the file on the host (SSH / Portainer).
 - Changing `server.port` here does not update `docker-compose.yml`.
-- **Updates** stay in `config.yaml` (channel, repo, interval, auto-apply, socket path). The image pin is `LUMO_TAMER_IMAGE` in `.env`, same as before. Apply uses the Docker socket on this container — no extra updater. See [Updates](updates.md).
+- **Updates** stay in `config.yaml` (channel, repo, interval, auto-apply, socket path). The image pin is `BOX_IMAGE` in `.env`, same as before. Apply uses the Docker socket on this container — no extra updater. See [Updates](updates.md).
 
 ```
 GET  /config      HTML form

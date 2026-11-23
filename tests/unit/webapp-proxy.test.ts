@@ -15,7 +15,7 @@ describe("isWebappCandidatePath", () => {
     expect(isWebappCandidatePath("/api/chat", true)).toBe(true);
   });
 
-  it("never proxies tamer-owned paths", () => {
+  it("never proxies box-owned paths", () => {
     for (const path of [
       "/v1/chat/completions",
       "/v1/models",

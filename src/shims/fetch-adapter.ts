@@ -1,7 +1,7 @@
 /**
  * Fetch Adapter
  *
- * Bridges upstream LumoApi's fetch() calls to lumo-tamer's authenticated Api.
+ * Bridges upstream LumoApi's fetch() calls to lumo-box's authenticated Api.
  *
  * The upstream LumoApi calls fetch() with:
  * - URL: '/api/lumo/v1/...'
@@ -29,7 +29,7 @@ const originalFetch = globalThis.fetch;
  * Only intercepts relative URLs starting with '/api/' (used by upstream LumoApi).
  * All other requests (including absolute URLs) pass through to original fetch.
  *
- * @param protonApi - The authenticated Api function from lumo-tamer
+ * @param protonApi - The authenticated Api function from lumo-box
  * @param canUseFullApi - Whether lumo API calls are allowed (requires lumo scope from browser auth)
  * @returns A fetch-compatible function
  */
@@ -125,7 +125,7 @@ export function createFetchAdapter(
  * Installs the fetch adapter globally.
  * Call this before creating LumoApi instances.
  *
- * @param protonApi - The authenticated Api function from lumo-tamer
+ * @param protonApi - The authenticated Api function from lumo-box
  * @param canUseFullApi - Whether lumo API calls are allowed (requires lumo scope from browser auth)
  * @returns A cleanup function to restore the original fetch
  */

@@ -1,9 +1,9 @@
 # How-to use Lumo as a Voice Assistant in Home Assistant
 
-This guide walks you through setting up [Proton Lumo](https://lumo.proton.me/) as a voice assistant in Home Assistant using lumo-tamer.
+This guide walks you through setting up [Proton Lumo](https://lumo.proton.me/) as a voice assistant in Home Assistant using lumo-box.
 
 > **Official API support [is coming](https://www.reddit.com/r/lumo/comments/1qsa8xq/comment/o304ez3/) to Lumo!**  
-> lumo-tamer will be ported to use the new API when it becomes available, and obsolete parts will be stripped out (depending on API features such as OpenAI compatibility, tools, conversation support). If you can't wait, give lumo-tamer a go!
+> lumo-box will be ported to use the new API when it becomes available, and obsolete parts will be stripped out (depending on API features such as OpenAI compatibility, tools, conversation support). If you can't wait, give lumo-box a go!
 
 <img src="images/ha-lumo.png" alt="Lumo, Home Assistant's housecat" height="150px">
 
@@ -12,8 +12,8 @@ This guide walks you through setting up [Proton Lumo](https://lumo.proton.me/) a
 **Time:** 15-30 minutes
 
 **You'll configure:**  
-**[Part 1: lumo-tamer](#part-1-set-up-lumo-tamer)** - a proxy server that connects to Proton Lumo  
-**[Part 2: Home Assistant](#part-2-configure-home-assistant)** - to use lumo-tamer as a voice assistant
+**[Part 1: lumo-box](#part-1-set-up-lumo-box)** - a proxy server that connects to Proton Lumo  
+**[Part 2: Home Assistant](#part-2-configure-home-assistant)** - to use lumo-box as a voice assistant
 
 **Skill level:** Moderate  
 You should be comfortable with editing configuration files, running terminal commands, and basic Home Assistant administration.
@@ -22,15 +22,15 @@ You should be comfortable with editing configuration files, running terminal com
 
 - Home Assistant installed and running
 - A Proton account (free works, [Lumo Plus](https://lumo.proton.me/) gives unlimited daily chats and more)
-- A computer or server to run lumo-tamer on the same private network or machine as Home Assistant
+- A computer or server to run lumo-box on the same private network or machine as Home Assistant
 
-**Be aware:** The use of lumo-tamer may violate Proton's terms of service; use at your own risk. [Full Disclaimer](../README.md/#full-disclaimer)
+**Be aware:** The use of lumo-box may violate Proton's terms of service; use at your own risk. [Full Disclaimer](../README.md/#full-disclaimer)
 
 ---
 
-## Part 1: Set up lumo-tamer
+## Part 1: Set up lumo-box
 
-Choose your installation method for lumo-tamer. Docker is recommended if you're familiar with it.
+Choose your installation method for lumo-box. Docker is recommended if you're familiar with it.
 
 | Method                        | Requirements                                |
 | ----------------------------- | ------------------------------------------- |
@@ -44,8 +44,8 @@ Choose your installation method for lumo-tamer. Docker is recommended if you're 
 #### Step 1: Install
 
 ```bash
-git clone https://github.com/banter240/lumo-tamer.git
-cd lumo-tamer
+git clone https://github.com/banter240/lumo-box.git
+cd lumo-box
 git checkout dev
 # Create secret key to encrypt the token vault (or alternatively, use another secrets manager)
 mkdir -p secrets && chmod 700 secrets
@@ -56,7 +56,7 @@ cp -n .env.example .env
 touch config.yaml
 ```
 
-The container runs the GHCR tag in `.env` (`LUMO_TAMER_IMAGE`), not this git checkout. Default is `:latest` (main). Self-update: [Updates](updates.md).
+The container runs the GHCR tag in `.env` (`BOX_IMAGE`), not this git checkout. Default is `:latest` (main). Self-update: [Updates](updates.md).
 
 #### Step 2: Configure
 
@@ -74,12 +74,12 @@ server:
 
 If you customize `instructions.forTools` with Home Assistant nested `ha_call_*` / Hass* examples, copy the same nesting into `forToolsCompact`. Follow-up turns only send the compact protocol; tool schemas stay in full.
 
-> **Security:** Keep your API key private and make sure lumo-tamer is only accessible from your local network, not the internet.
+> **Security:** Keep your API key private and make sure lumo-box is only accessible from your local network, not the internet.
 
 #### Step 3: Authenticate with Proton
 
 ```bash
-docker compose up -d tamer
+docker compose up -d lumo_box
 # open http://<host>:3003/auth
 ```
 
@@ -90,7 +90,7 @@ Optional: [web config](config.md) at `http://<host>:3003/config` (web search, re
 <details>
 <summary><strong>I'm asked to enter a CAPTCHA</strong></summary>
 
-Log in to Proton in a regular browser from the same IP first. This often clears the challenge. If you're still hit with a CAPTCHA challenge or Proton 2028 after, use the [Docker sidecar](authentication.md#headless--docker) (start, extract, then remove only `lumo-tamer-browser`).
+Log in to Proton in a regular browser from the same IP first. This often clears the challenge. If you're still hit with a CAPTCHA challenge or Proton 2028 after, use the [Docker sidecar](authentication.md#headless--docker) (start, extract, then remove only `lumo-box-browser`).
 </details>
 
 <details>
@@ -105,7 +105,7 @@ Proton's security model doesn't allow for a simple OAuth authentication. Your cr
 
 ```bash
 curl http://localhost:3003/health # Should include "status":"ok"
-docker compose logs -f tamer
+docker compose logs -f lumo_box
 ```
 
 **→ Continue to [Part 2: Configure Home Assistant](#part-2-configure-home-assistant)**
@@ -138,12 +138,12 @@ go version       # Should show go1.25 or higher
 #### Step 2: Clone and build
 
 ```bash
-git clone https://github.com/banter240/lumo-tamer.git
-cd lumo-tamer
+git clone https://github.com/banter240/lumo-box.git
+cd lumo-box
 git checkout dev
 npm install && npm run build:all
-# Optionally install command `tamer` globally
-# If you don't, replace "tamer" with "npx lumo-tamer" in all commands
+# Optionally install command `lumo_box` globally
+# If you don't, replace "lumo_box" with "npx lumo-box" in all commands
 npm link
 ```
 
@@ -163,12 +163,12 @@ server:
 
 If you customize `instructions.forTools` with Home Assistant nested `ha_call_*` / Hass* examples, copy the same nesting into `forToolsCompact`. Follow-up turns only send the compact protocol; tool schemas stay in full.
 
-> **Security:** Keep your API key private and make sure lumo-tamer is only accessible from your local network, not the internet.
+> **Security:** Keep your API key private and make sure lumo-box is only accessible from your local network, not the internet.
 
 #### Step 4: Authenticate with Proton
 
 ```bash
-tamer auth login
+lumo_box auth login
 ```
 
 Enter your Proton email, password, and 2FA code (if enabled).
@@ -176,7 +176,7 @@ Enter your Proton email, password, and 2FA code (if enabled).
 <details>
 <summary><strong>I'm asked to enter a CAPTCHA</strong></summary>
 
-Log in to Proton in a regular browser from the same IP first. This often clears the challenge. If you're still hit with a CAPTCHA challenge or Proton 2028 after, use the [Docker sidecar](authentication.md#headless--docker) (start, extract, then remove only `lumo-tamer-browser`).
+Log in to Proton in a regular browser from the same IP first. This often clears the challenge. If you're still hit with a CAPTCHA challenge or Proton 2028 after, use the [Docker sidecar](authentication.md#headless--docker) (start, extract, then remove only `lumo-box-browser`).
 </details>
 
 <details>
@@ -188,7 +188,7 @@ Proton's security model doesn't allow for a simple OAuth authentication. Your cr
 <details>
 <summary><strong>I get an error saying no secure key storage is available.</strong></summary>
 
-By default, lumo-tamer will encrypt fetched tokens with a password saved to your OS keychain. If this is unavailable (for example on headless environments), you can alternatively create a keyfile and guard it with your life:
+By default, lumo-box will encrypt fetched tokens with a password saved to your OS keychain. If this is unavailable (for example on headless environments), you can alternatively create a keyfile and guard it with your life:
 
 ```bash
 openssl rand -base64 32 > /path/to/your/lumo-vault-key
@@ -208,7 +208,7 @@ auth:
 #### Step 5: Start the server
 
 ```bash
-tamer server
+lumo_box server
 ```
 
 #### Step 6: Verify
@@ -226,14 +226,14 @@ curl http://localhost:3003/health
 
 ## Part 2: Configure Home Assistant
 
-lumo-tamer acts as an OpenAI compatible server, so we'll use an OpenAI integration in Home Assistant to connect to it. There are two options: the standard [OpenAI](https://www.home-assistant.io/integrations/openai_conversation/) integration, and the [Extended OpenAI Conversation](https://github.com/jekalmin/extended_openai_conversation). Which one you'll need depends on your Home Assistant installation:
+lumo-box acts as an OpenAI compatible server, so we'll use an OpenAI integration in Home Assistant to connect to it. There are two options: the standard [OpenAI](https://www.home-assistant.io/integrations/openai_conversation/) integration, and the [Extended OpenAI Conversation](https://github.com/jekalmin/extended_openai_conversation). Which one you'll need depends on your Home Assistant installation:
 
 | Installation      | Method                                                                          |
 | ----------------- | ------------------------------------------------------------------------------- |
 | Docker / Core     | [Configure OpenAI using an environment variable](#standard-openai-conversation) |
 | Home Assistant OS | [Configure Extended OpenAI Conversation](#extended-openai-conversation)         |
 
-> **Note:** Extended OpenAI Conversation has its own custom tool support which hasn't been tested thoroughly with lumo-tamer. If you can set environment variables, the standard OpenAI integration is recommended.
+> **Note:** Extended OpenAI Conversation has its own custom tool support which hasn't been tested thoroughly with lumo-box. If you can set environment variables, the standard OpenAI integration is recommended.
 
 ![OpenAI integrations in Home Assistant](images/ha-openai-integrations.png)
 
@@ -257,13 +257,13 @@ OPENAI_BASE_URL=http://YOUR_SERVER_IP:3003/v1
 1. Go to **Settings** > **Devices & Services**
 2. Click **Add Integration**
 3. Select **OpenAI**
-4. Enter your lumo-tamer API key
+4. Enter your lumo-box API key
 5. Set the model to `lumo` or `lumo-max` (other names such as `gpt-4o` return HTTP 400)
 6. Click **Submit**
 
 If you see an error, check that:
 
-- lumo-tamer is running
+- lumo-box is running
 - `OPENAI_BASE_URL` is correct
 - The API key matches `config.yaml`
 
@@ -294,7 +294,7 @@ Follow the [HACS installation guide](https://hacs.xyz/docs/setup/download).
 3. Select **Extended OpenAI Conversation**
 4. Configure:
    - **Name:** Lumo (or whatever you like)
-   - **API Key:** Your lumo-tamer API key
+   - **API Key:** Your lumo-box API key
    - **Base URL:** `http://YOUR_SERVER_IP:3003/v1`
    - **Model:** `lumo` or `lumo-max` (not `gpt-4o`)
    - Leave other fields empty
@@ -375,7 +375,7 @@ Lumo taking a few seconds to answer is to be expected. If you encounter larger r
 
 - Reduce the number of exposed entities.
 - Enable Home Assistant's built-in intent recognition to handle simple commands locally.
-- Lumo might [misroute](custom-tools.md#misrouted-tool-calls) tool calls, which lumo-tamer needs to redirect, adding to the latency. Enable debug logging for lumo-tamer (`server.log.level: debug`), look for "misrouted tool calls" and experiment with settings `server.instructions` to get better results.
+- Lumo might [misroute](custom-tools.md#misrouted-tool-calls) tool calls, which lumo-box needs to redirect, adding to the latency. Enable debug logging for lumo-box (`server.log.level: debug`), look for "misrouted tool calls" and experiment with settings `server.instructions` to get better results.
 
 ### Home Assistant reports an unknown model / HTTP 400
 
@@ -388,11 +388,11 @@ This usually indicates Lumo has trouble understanding the exposed entities and t
 - Ask Lumo "What devices do you know about?" or "What Home Assistant tools can you use?" to see what it can access.
 - Ensure `customTools.enabled: true` in config.yaml
 - Check that entities are exposed in HA (**Settings** > **Voice Assistants** > **Expose**) and reduce the number of aliases per entity.
-- Enable debug logging for lumo-tamer (`server.log.level: debug`) and check logs for errors
+- Enable debug logging for lumo-box (`server.log.level: debug`) and check logs for errors
 
 ### Home Assistant still shows "OpenAI" in some messages
 
-This is expected. The integrations refer to OpenAI here and there (e.g., "Error talking to OpenAI"), while they're actually talking to Lumo through lumo-tamer.
+This is expected. The integrations refer to OpenAI here and there (e.g., "Error talking to OpenAI"), while they're actually talking to Lumo through lumo-box.
 
 ### The Lumo (web) app shows many duplicated chats from Home Assistant
 
@@ -408,8 +408,8 @@ conversations:
 
 ## Further Reading
 
-- [lumo-tamer README](../README.md)
-- [lumo-tamer Authentication](authentication.md)
-- [lumo-tamer Custom Tools](custom-tools.md)
+- [lumo-box README](../README.md)
+- [lumo-box Authentication](authentication.md)
+- [lumo-box Custom Tools](custom-tools.md)
 - [Home Assistant OpenAI integration](https://www.home-assistant.io/integrations/openai_conversation/)
 - [Home Assistant Extended OpenAI Conversation](https://github.com/jekalmin/extended_openai_conversation)

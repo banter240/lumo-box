@@ -153,7 +153,7 @@ export class APIServer {
         if (!this.app.isAuthenticated()) {
           throw new Error("Not authenticated — log in at /auth first");
         }
-        // prompt is a documented tamer extension on the stored record; the
+        // prompt is a documented lumo_box extension on the stored record; the
         // desktop wire contract never carries it.
         const prompt = (
           schedule as StoredSchedule & { prompt?: string }
@@ -247,7 +247,7 @@ export class APIServer {
         host,
         () => {
           logger.info("========================================");
-          logger.info(`lumo-tamer v${VERSION} is ready!`);
+          logger.info(`lumo-box v${VERSION} is ready!`);
           logger.info(
             `  base_url: http://localhost:${this.serverConfig.port}/v1`,
           );

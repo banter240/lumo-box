@@ -11,7 +11,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import type { Request } from "express";
 
-export const UI_SESSION_COOKIE = "lumo_tamer_ui";
+export const UI_SESSION_COOKIE = "lumo_box_ui";
 export const UI_SESSION_MAX_AGE_SEC = 30 * 24 * 60 * 60;
 
 const LOOPBACK_ADDRESSES = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
@@ -71,7 +71,7 @@ export function hasValidBearer(req: Request, apiKey: string): boolean {
 /** Cookie value derived from the API key, so the key itself never sits in a cookie. */
 export function uiSessionToken(apiKey: string): string {
   return createHmac("sha256", apiKey)
-    .update("lumo-tamer ui session v1")
+    .update("lumo-box ui session v1")
     .digest("base64url");
 }
 

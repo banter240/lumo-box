@@ -7,7 +7,7 @@ npm install
 npm run build
 ```
 
-CI and the Docker image use Node 22. User files (`config.yaml`, `sessions/`, logs) live next to the install by default; override with `LUMO_HOME` or `tamer --home /path`.
+CI and the Docker image use Node 22. User files (`config.yaml`, `sessions/`, logs) live next to the install by default; override with `BOX_HOME` or `lumo_box --home /path`.
 
 See the [README](../README.md) for authentication setup.
 
@@ -27,15 +27,15 @@ To attach a debugger, open `chrome://inspect` in Chrome and add `localhost:9229`
 
 ## Isolated dev instance
 
-Tamer keeps user data (`config.yaml`, `sessions/`, logs) next to the install by default. For development, redirect all of it into a gitignored `.local/` directory so your dev checkout never touches a running instance:
+Box keeps user data (`config.yaml`, `sessions/`, logs) next to the install by default. For development, redirect all of it into a gitignored `.local/` directory so your dev checkout never touches a running instance:
 
 ```bash
 mkdir -p .local
 cp config.local.example.yaml .local/config.yaml
-LUMO_HOME=.local npm run dev:server
+BOX_HOME=.local npm run dev:server
 ```
 
-`.local/` is gitignored (`config.yaml`, vault, `lumo-tamer.log`, `dump-api.jsonl`).
+`.local/` is gitignored (`config.yaml`, vault, `lumo-box.log`, `dump-api.jsonl`).
 
 Mock is on in the example (`historyToolEcho` streams `Done read` plus args JSON). Check the detector without Proton:
 
@@ -50,7 +50,7 @@ curl -sS http://127.0.0.1:3003/v1/chat/completions \
   }'
 ```
 
-Expect `tool_calls` with `name: read`, not the string `Done read` in `content`. Watch `.local/lumo-tamer.log` while testing.
+Expect `tool_calls` with `name: read`, not the string `Done read` in `content`. Watch `.local/lumo-box.log` while testing.
 
 To test against the real Lumo backend, set `test.mock.enabled: false` in `.local/config.yaml`, restart the server, and log in once via `http://127.0.0.1:3003/auth` in a browser. Credentials and vault keys stay on your machine — do not paste them into chats or issues. The logger redacts login fields (email, username, passwords, tokens, uid, cookies); for debugging, look for `Tool call detected` / `Bouncing` lines (`messageContent` stays false).
 
@@ -74,7 +74,7 @@ packages/
 ├── lumo/                      # @lumo/* - synced from Proton WebClients/applications/lumo/src/app/ (do not edit)
 └── proton/                    # @proton/* - synced from Proton WebClients/packages (do not edit)
 src/
-├── tamer.ts                   # Entry point (CLI, server, auth)
+├── box.ts                   # Entry point (CLI, server, auth)
 ├── api/                       # OpenAI-compatible API
 │   ├── routes/                # /v1/responses, /v1/chat-completions, /v1/config (+export/import),
 │   │                          # /v1/logs, /v1/update, /v1/models, /v1/auth/*, /health, /metrics
@@ -184,20 +184,20 @@ server:
     prefix: "lumo_"
 ```
 
-A Grafana dashboard is included at [`grafana-lumo-tamer-dashboard.json`](../grafana-lumo-tamer-dashboard.json).
+A Grafana dashboard is included at [`grafana-lumo-box-dashboard.json`](../grafana-lumo-box-dashboard.json).
 
 ## Release
 
 Push to `dev` or `main` runs tests, then semantic-release (tag, CHANGELOG, GitHub Release, GHCR).
 
-- `dev` → `v0.7.0-dev.N` and `…/lumo-tamer:dev` (pre-release)
-- `main` → `v0.7.0` and `…/lumo-tamer:latest`
+- `dev` → `v0.7.0-dev.N` and `…/lumo-box:dev` (pre-release)
+- `main` → `v0.7.0` and `…/lumo-box:latest`
 
-The host runs a **pinned image**, not a git branch. Copy `.env.example` to `.env` and set `LUMO_TAMER_IMAGE` (`:latest` / main, or `:dev`). Create `config.yaml` before the first `compose up` (Docker would otherwise create a directory at that path).
+The host runs a **pinned image**, not a git branch. Copy `.env.example` to `.env` and set `BOX_IMAGE` (`:latest` / main, or `:dev`). Create `config.yaml` before the first `compose up` (Docker would otherwise create a directory at that path).
 
-Self-update uses the Docker socket on the tamer container (see [Updates](updates.md)). There is no standing updater.
+Self-update uses the Docker socket on the lumo_box container (see [Updates](updates.md)). There is no standing updater.
 
 ```bash
-docker pull ghcr.io/banter240/lumo-tamer:latest   # or :dev / :0.7.0
-docker compose up -d tamer
+docker pull ghcr.io/banter240/lumo-box:latest   # or :dev / :0.7.0
+docker compose up -d lumo_box
 ```

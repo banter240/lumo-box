@@ -20,7 +20,7 @@ by what you need to do with it:
 | You are looking at…                                          | It lives in…                         | Status                                                                                                 | Why it is not somewhere else                                                                                                       |
 | ------------------------------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Vendored WebClients code (1:1 syncs + shims)                 | `packages/lumo/`, `packages/proton/` | DO NOT EDIT; refreshed by `npm run sync-upstream`; provenance in each package's `UPSTREAM` + `LICENSE` | Separate npm workspace so the sync pipeline and path aliases (`@lumo/*`, `@proton/*`) stay machine-stable                          |
-| Vendored desktop webview bundles (bridges, bundled pages)    | `packages/lumo-webview/`             | DO NOT EDIT; refreshed by `scripts/upstream/sync-webview.sh`; provenance in `UPSTREAM`                 | Upstream refresh must overwrite tamer glue without touching adapters                                                               |
+| Vendored desktop webview bundles (bridges, bundled pages)    | `packages/lumo-webview/`             | DO NOT EDIT; refreshed by `scripts/upstream/sync-webview.sh`; provenance in `UPSTREAM`                 | Upstream refresh must overwrite lumo_box glue without touching adapters                                                               |
 | Our own wire adapters (protocol mirrors of WebClients logic) | `src/proton/`                        | Editable; each file carries an upstream-reference header                                               | Adapters intentionally diverge (scoped to what the proxy needs); mixing them into `packages/` would break the 1:1 sync guarantee   |
 | Derivative ports of desktop Rust code                        | e.g. `src/skills/skill-cache.ts`     | Editable; provenance header names the upstream file and every intentional divergence                   | Ported to the connector registry, not synced; kept next to the layer it plugs into                                                 |
 | Upstream research clones                                     | `dev/tmp/`                           | Disposable; never imported, never shipped                                                              | Scratch space only — the source of truth is GitHub, pinned per package in `UPSTREAM` files and `scripts/upstream/last-sync-commit` |
@@ -157,7 +157,7 @@ Local implementations for `@proton/*` packages. The sync script warns when upstr
 
 Two alias systems coexist:
 
-### Package imports (for lumo-tamer code)
+### Package imports (for lumo-box code)
 
 | Import    | Resolves To           |
 | --------- | --------------------- |
@@ -248,7 +248,7 @@ Non-Proton shims that don't need upstream tracking:
 | File                            | Purpose                                  |
 | ------------------------------- | ---------------------------------------- |
 | `console.ts`                    | Redirects console to pino logger         |
-| `fetch-adapter.ts`              | Bridges upstream API calls to lumo-tamer |
+| `fetch-adapter.ts`              | Bridges upstream API calls to lumo-box |
 | `indexeddb-polyfill.ts`         | SQLite-backed IndexedDB for Node.js      |
 | `uint8array-base64-polyfill.ts` | ES2024 Uint8Array.fromBase64/toBase64    |
 | `lodash-*.ts`                   | ESM wrappers for lodash functions        |

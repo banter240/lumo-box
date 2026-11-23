@@ -32,7 +32,7 @@ describe('buildConfigSnapshot', () => {
     };
     const without = buildConfigSnapshot(DEFAULTS, user, '1.0.0', false, SECRETS);
     expect(without.changes).toEqual({ 'server.enableWebSearch': true });
-    expect(without.$format).toBe('lumo-tamer-config');
+    expect(without.$format).toBe('lumo-box-config');
     expect(without.version).toBe('1.0.0');
 
     const withSecrets = buildConfigSnapshot(DEFAULTS, user, '1.0.0', true, SECRETS);
@@ -52,13 +52,13 @@ describe('parseConfigSnapshot', () => {
     expect(() => parseConfigSnapshot('{oops')).toThrow(/JSON/i);
     expect(() => parseConfigSnapshot('[]')).toThrow(/object/i);
     expect(() => parseConfigSnapshot('{}')).toThrow(/format/i);
-    expect(() => parseConfigSnapshot('{"$format":"lumo-tamer-config"}')).toThrow(/changes/i);
-    expect(() => parseConfigSnapshot('{"$format":"lumo-tamer-config","changes":{},"version":""}')).toThrow(/version/i);
+    expect(() => parseConfigSnapshot('{"$format":"lumo-box-config"}')).toThrow(/changes/i);
+    expect(() => parseConfigSnapshot('{"$format":"lumo-box-config","changes":{},"version":""}')).toThrow(/version/i);
   });
 
   it('accepts a well-formed snapshot', () => {
     const snap = parseConfigSnapshot(
-      '{"$format":"lumo-tamer-config","version":"0.7.0","exportedAt":"x","changes":{"server.port":3030}}',
+      '{"$format":"lumo-box-config","version":"0.7.0","exportedAt":"x","changes":{"server.port":3030}}',
     );
     expect(snap.changes['server.port']).toBe(3030);
   });
@@ -67,7 +67,7 @@ describe('parseConfigSnapshot', () => {
 describe('planConfigImport', () => {
   it('imports known paths, coerces types, drops unknown ones', () => {
     const snap = parseConfigSnapshot(JSON.stringify({
-      $format: 'lumo-tamer-config',
+      $format: 'lumo-box-config',
       version: '0.7.0',
       exportedAt: 'x',
       changes: {
@@ -86,7 +86,7 @@ describe('planConfigImport', () => {
 
   it('reports overwrites and no-ops per path', () => {
     const snap = parseConfigSnapshot(JSON.stringify({
-      $format: 'lumo-tamer-config',
+      $format: 'lumo-box-config',
       version: '0.7.0',
       exportedAt: 'x',
       changes: {
@@ -104,7 +104,7 @@ describe('planConfigImport', () => {
 
   it('marks settings that only differ from the default as new, not overwrites', () => {
     const snap = parseConfigSnapshot(JSON.stringify({
-      $format: 'lumo-tamer-config',
+      $format: 'lumo-box-config',
       version: '0.7.0',
       exportedAt: 'x',
       changes: { 'server.port': 3030 },
@@ -117,7 +117,7 @@ describe('planConfigImport', () => {
 
   it('applies migrations from older snapshots only', () => {
     const snap = parseConfigSnapshot(JSON.stringify({
-      $format: 'lumo-tamer-config',
+      $format: 'lumo-box-config',
       version: '0.6.0',
       exportedAt: 'x',
       changes: { 'server.webSearch': true, 'server.enableWebSearch': false },
@@ -131,7 +131,7 @@ describe('planConfigImport', () => {
 
   it('skips empty secrets and warns about newer snapshots', () => {
     const snap = parseConfigSnapshot(JSON.stringify({
-      $format: 'lumo-tamer-config',
+      $format: 'lumo-box-config',
       version: '9.9.9',
       exportedAt: 'x',
       changes: { 'updates.githubToken': '' },

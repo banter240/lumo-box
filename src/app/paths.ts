@@ -3,7 +3,7 @@
  *
  * Bundled files (defaults, Go binary) resolve against the install / project root.
  * User files (config.yaml, vault, sessions, logs) resolve against the data dir:
- * `--home`, then LUMO_HOME, then the project root (Docker / git checkout).
+ * `--home`, then BOX_HOME, then the project root (Docker / git checkout).
  */
 
 import { fileURLToPath } from 'url';
@@ -32,8 +32,8 @@ export function getDataDir(): string {
     if (dataDirOverride) {
         return dataDirOverride;
     }
-    if (process.env.LUMO_HOME) {
-        return expandUserPath(process.env.LUMO_HOME);
+    if (process.env.BOX_HOME) {
+        return expandUserPath(process.env.BOX_HOME);
     }
     return PROJECT_ROOT;
 }

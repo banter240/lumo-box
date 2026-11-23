@@ -1,14 +1,14 @@
 /**
  * Proton fork sign-in for the proxied web app (webapp.enabled).
  *
- * Same login path as tamer's /auth (desktop fork login), with one
+ * Same login path as lumo_box's /auth (desktop fork login), with one
  * deviation: account only whitelists redirectUrls registered for the app
  * (desktop uses the proton-lumo:// scheme), so no redirectUrl is sent.
  * /start shows a holding page: sign in at account (new tab), then the
  * Continue button hands off to /login#selector=&sk= where the web app
- * redeems the fork client-side. The fork GET is CONSUMING, so tamer
+ * redeems the fork client-side. The fork GET is CONSUMING, so lumo_box
  * never fetches it: the proxy sniffs the app's own redemption response
- * (observeForkRedemption) and fills the tamer vault alongside.
+ * (observeForkRedemption) and fills the lumo_box vault alongside.
  */
 
 import { Router } from "express";
@@ -101,7 +101,7 @@ function holdingPage(loginUrl: string, state: string): string {
   );
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sign in · lumo-tamer</title><style>
+<title>Sign in · lumo-box</title><style>
 body{font:16px/1.5 system-ui,sans-serif;background:#1b1340;color:#eee;
   display:grid;place-items:center;min-height:100vh;margin:0}
 .card{background:#241a52;padding:2rem 2.5rem;border-radius:12px;max-width:26rem}
@@ -142,7 +142,7 @@ if (document.visibilityState === "visible") {
 }
 
 /**
- * Proxy hook: the app's fork redemption ran through us. Fill the tamer
+ * Proxy hook: the app's fork redemption ran through us. Fill the lumo_box
  * vault from the same response the app consumes — the fork GET is
  * consuming, so sniffing is the only chance to see the payload.
  */
@@ -170,7 +170,7 @@ export function observeForkRedemption(
 }
 
 /**
- * Single sign-in: mint the webapp fork from the RUNNING tamer session
+ * Single sign-in: mint the webapp fork from the RUNNING lumo_box session
  * (pushForkSession, Independent:1 — separate app tokens, no refresh race)
  * and hand the browser straight to the app's /login#selector&sk redemption.
  * Falls back to /start (account.proton.me round trip) when the server has

@@ -2,7 +2,7 @@
  * Injected into the served settings page. Transport polyfill plus the
  * page-level emulations: close_settings_window has no native window here,
  * and pick_directory must browse the SERVER filesystem, so a modal
- * directory browser backed by tamer_list_directory serves it.
+ * directory browser backed by box_list_directory serves it.
  */
 import "./tauri-transport.js";
 
@@ -39,12 +39,12 @@ import "./tauri-transport.js";
   function pickServerDirectory(): Promise<string | null> {
     return new Promise((resolve) => {
       const overlay = document.createElement("div");
-      overlay.id = "tamer-dir-picker-overlay";
+      overlay.id = "box-dir-picker-overlay";
       overlay.style.cssText =
         "position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;" +
         "display:flex;align-items:center;justify-content:center;";
-      const box = document.createElement("div");
-      box.style.cssText =
+      const lumo_box = document.createElement("div");
+      lumo_box.style.cssText =
         "background:var(--bg-primary,#fff);color:var(--text-primary,#111);" +
         "border-radius:10px;padding:18px;width:min(560px,90vw);" +
         "max-height:75vh;display:flex;flex-direction:column;gap:10px;";
@@ -65,8 +65,8 @@ import "./tauri-transport.js";
       const actions = document.createElement("div");
       actions.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
       actions.append(cancel, rowBtn);
-      box.append(title, pathBar, list, actions);
-      overlay.append(box);
+      lumo_box.append(title, pathBar, list, actions);
+      overlay.append(lumo_box);
       document.body.append(overlay);
 
       const close = (value: string | null) => {
@@ -79,7 +79,7 @@ import "./tauri-transport.js";
       async function show(path: string) {
         let data: DirListing;
         try {
-          data = (await invokeFn<DirListing>("tamer_list_directory", {
+          data = (await invokeFn<DirListing>("box_list_directory", {
             path,
           })) as DirListing;
         } catch (e) {

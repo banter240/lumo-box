@@ -20,7 +20,7 @@ function findVersion(): string {
   const found = walkUp(6, (dir) => {
     try {
       const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
-      if (pkg.name === 'lumo-tamer') return pkg.version as string;
+      if (pkg.name === 'lumo-box') return pkg.version as string;
     } catch { /* try next */ }
     return null;
   });

@@ -122,7 +122,7 @@ export function createLogsRouter() {
           <button id="pauseBtn">Pause</button>
           <button id="clearBtn" class="secondary">Clear</button>
           <button id="scrollBtn" class="secondary">Auto-scroll</button>
-          <span class="hint muted" style="margin-left:auto;">Live feed from lumo-tamer</span>
+          <span class="hint muted" style="margin-left:auto;">Live feed from lumo-box</span>
         </div>
         <div class="log-feed" id="feed"></div>
       </div>
@@ -218,7 +218,7 @@ export function createLogsRouter() {
 
     res.send(
       htmlPage({
-        title: "Live Logs — lumo-tamer",
+        title: "Live Logs — lumo-box",
         body,
         page: "logs",
         wide: true,

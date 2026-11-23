@@ -14,7 +14,7 @@ import { logger } from "../../app/logger.js";
 import { getMetrics } from "../../app/metrics.js";
 import { TOOL_RESULT_PREFIX } from "../../lumo-client/types.js";
 
-/** Marker baked into call_ids that lumo-tamer invented (not issued by Lumo). */
+/** Marker baked into call_ids that lumo-box invented (not issued by Lumo). */
 const SYNTHETIC_TAG = "synth";
 const SYNTHETIC_ID_RE = new RegExp(`__${SYNTHETIC_TAG}__[a-f0-9]+$`);
 const CALL_ID_RE = new RegExp(`^(.+?)__(?:${SYNTHETIC_TAG}__)?([a-f0-9]+)$`);
@@ -33,7 +33,7 @@ export function generateCallId(toolName: string, synthetic = false): string {
 }
 
 /**
- * True when this call_id was minted by lumo-tamer for a text-extracted tool call.
+ * True when this call_id was minted by lumo-box for a text-extracted tool call.
  * Lumo never issued these IDs; echoing them back as function_call_output 400s.
  */
 export function isSyntheticCallId(callId: string): boolean {

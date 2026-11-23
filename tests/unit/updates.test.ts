@@ -36,8 +36,8 @@ import {
 afterEach(() => {
   resetUpdateCache();
   vi.unstubAllGlobals();
-  delete process.env.LUMO_TAMER_IMAGE;
-  delete process.env.LUMO_CONTAINER_NAME;
+  delete process.env.BOX_IMAGE;
+  delete process.env.BOX_CONTAINER_NAME;
 });
 
 function release(
@@ -47,7 +47,7 @@ function release(
   return {
     tag_name: tag,
     prerelease: tag.includes("dev"),
-    html_url: `https://github.com/banter240/lumo-tamer/releases/tag/${tag}`,
+    html_url: `https://github.com/banter240/lumo-box/releases/tag/${tag}`,
     published_at: extra.published_at ?? "2026-09-01T00:00:00Z",
     ...extra,
   };
@@ -55,19 +55,19 @@ function release(
 
 describe("parseRepository", () => {
   it("accepts owner/repo and github URLs", () => {
-    expect(parseRepository("banter240/lumo-tamer")).toBe(
-      "banter240/lumo-tamer",
+    expect(parseRepository("banter240/lumo-box")).toBe(
+      "banter240/lumo-box",
     );
-    expect(parseRepository("https://github.com/banter240/lumo-tamer")).toBe(
-      "banter240/lumo-tamer",
+    expect(parseRepository("https://github.com/banter240/lumo-box")).toBe(
+      "banter240/lumo-box",
     );
-    expect(parseRepository("https://github.com/banter240/lumo-tamer.git")).toBe(
-      "banter240/lumo-tamer",
+    expect(parseRepository("https://github.com/banter240/lumo-box.git")).toBe(
+      "banter240/lumo-box",
     );
   });
 
   it("rejects junk", () => {
-    expect(() => parseRepository("lumo-tamer")).toThrow(/owner\/repo/);
+    expect(() => parseRepository("lumo-box")).toThrow(/owner\/repo/);
   });
 });
 
@@ -85,11 +85,11 @@ describe("image tags", () => {
   it("maps channels and parses compose refs", () => {
     expect(channelImageTag("stable")).toBe("latest");
     expect(channelImageTag("dev")).toBe("dev");
-    expect(imageTagFromRef("ghcr.io/banter240/lumo-tamer:dev")).toBe("dev");
-    expect(imageTagFromRef("ghcr.io/banter240/lumo-tamer:latest")).toBe(
+    expect(imageTagFromRef("ghcr.io/banter240/lumo-box:dev")).toBe("dev");
+    expect(imageTagFromRef("ghcr.io/banter240/lumo-box:latest")).toBe(
       "latest",
     );
-    expect(imageTagFromRef("ghcr.io/banter240/lumo-tamer")).toBe("latest");
+    expect(imageTagFromRef("ghcr.io/banter240/lumo-box")).toBe("latest");
   });
 });
 

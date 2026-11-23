@@ -28,7 +28,7 @@ packages/lumo-webview synced from ProtonLumo/lumo-desktop (webview/) - DO NOT ED
 Repository: https://github.com/ProtonLumo/lumo-desktop
 Branch: $REF
 Commit: $COMMIT ($(date -u +%Y-%m-%d))
-License: GPL-3.0 (same as lumo-tamer)
+License: GPL-3.0 (same as lumo-box)
 
 Refresh: bash scripts/upstream/sync-webview.sh
 EOF

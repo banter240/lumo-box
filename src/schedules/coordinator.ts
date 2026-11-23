@@ -1,7 +1,7 @@
 /**
  * Schedule coordinator: books due occurrences, enforces missed-run policy
  * and maxConcurrency, and drives execution through the runner callback
- * (tamer's Lumo client). Started only when webapp.schedules.enabled is on.
+ * (lumo_box's Lumo client). Started only when webapp.schedules.enabled is on.
  */
 
 import { logger } from "../app/logger.js";

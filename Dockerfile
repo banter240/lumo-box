@@ -1,4 +1,4 @@
-# Lightweight Dockerfile for lumo-tamer (no browser dependencies)
+# Lightweight Dockerfile for lumo-box (no browser dependencies)
 # If needed, connects to remote browser via CDP, instead of bundling Chrome
 
 # ============================================================================
@@ -84,29 +84,29 @@ COPY config.defaults.yaml ./
 # Copy Go binary from go-builder
 COPY --from=go-builder /build/proton-auth ./dist/proton-auth
 
-# Make tamer available as command
+# Make lumo_box available as command
 RUN npm link
 
 
 
-# Command aliases for tamer subcommands auth, server, cli
-#   docker compose run --rm -it tamer auth
-#   docker compose run --rm -it tamer server
-#   docker compose run --rm -it tamer cli
+# Command aliases for lumo_box subcommands auth, server, cli
+#   docker compose run --rm -it lumo_box auth
+#   docker compose run --rm -it lumo_box server
+#   docker compose run --rm -it lumo_box cli
 ENTRYPOINT ["sh", "-c", "\
   case \"$1\" in \
-    auth)   shift; exec tamer auth \"$@\" ;; \
-    server) shift; exec tamer server \"$@\" ;; \
-    update) shift; exec tamer update \"$@\" ;; \
-    cli)    shift; exec tamer \"$@\" ;; \
-    '')     exec tamer server ;; \
+    auth)   shift; exec lumo_box auth \"$@\" ;; \
+    server) shift; exec lumo_box server \"$@\" ;; \
+    update) shift; exec lumo_box update \"$@\" ;; \
+    cli)    shift; exec lumo_box \"$@\" ;; \
+    '')     exec lumo_box server ;; \
     *)      exec \"$@\" ;; \
   esac", "--"]
 
 # Expose API port. Inside the container, listen on every interface so the
 # published port works (the config default is 127.0.0.1). The web UI still
 # asks for the API key from anything that is not the container itself.
-ENV LUMO_TAMER_HOST=0.0.0.0
+ENV BOX_HOST=0.0.0.0
 EXPOSE 3003
 
 CMD ["server"]

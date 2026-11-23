@@ -2,10 +2,10 @@
 #
 #   mkdir -p .local
 #   cp config.local.example.yaml .local/config.yaml
-#   LUMO_HOME=.local npm run dev:server
+#   BOX_HOME=.local npm run dev:server
 #
 # Open http://127.0.0.1:3003/auth once for live Lumo.
-# Logs: .local/lumo-tamer.log
+# Logs: .local/lumo-box.log
 
 auth:
   method: browser
@@ -16,7 +16,7 @@ auth:
 log:
   level: debug
   target: file
-  filePath: lumo-tamer.log
+  filePath: lumo-box.log
   # Keep off so prompts/emails never hit the log I grep.
   messageContent: false
   dumpApiPath: ""

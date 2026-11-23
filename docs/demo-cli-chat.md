@@ -1,9 +1,9 @@
 # Example chat
 
 ```
-$ tamer
+$ lumo_box
 
-Welcome to lumo-tamer cli
+Welcome to lumo-box cli
 Type /help for commands, /quit to exit.
 
 You: hi

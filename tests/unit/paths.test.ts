@@ -10,14 +10,14 @@ import {
 } from '../../src/app/paths.js';
 
 describe('paths', () => {
-  const prevHome = process.env.LUMO_HOME;
+  const prevHome = process.env.BOX_HOME;
 
   afterEach(() => {
     setDataDir(undefined);
     if (prevHome === undefined) {
-      delete process.env.LUMO_HOME;
+      delete process.env.BOX_HOME;
     } else {
-      process.env.LUMO_HOME = prevHome;
+      process.env.BOX_HOME = prevHome;
     }
   });
 

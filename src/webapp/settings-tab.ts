@@ -1,5 +1,5 @@
 /**
- * Tamer-owned addition to the injector: desktop opens a native settings
+ * Box-owned addition to the injector: desktop opens a native settings
  * window on open_settings_window; the proxied app navigates to the served
  * settings page instead, which claims the pending tab on load via
  * take_pending_settings_tab.

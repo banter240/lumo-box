@@ -48,20 +48,20 @@ describe("auth page", () => {
     expect(html).toContain("launch: false");
     expect(html).toContain("rm -f browser");
     expect(html).toContain(
-      "docker rmi $(docker images -q --filter reference='*lumo-tamer*browser*')",
+      "docker rmi $(docker images -q --filter reference='*lumo-box*browser*')",
     );
     expect(html).toContain("browser-data");
-    expect(html).toContain("lumo-tamer-browser");
+    expect(html).toContain("lumo-box-browser");
     expect(html).toContain("port 3003");
     expect(html).not.toContain("playwright install");
     expect(html).toContain('autocomplete="one-time-code"');
     expect(html).toContain('id="one-time-code"');
-    expect(html).toContain("tamer-nav");
+    expect(html).toContain("box-nav");
     expect(html).toContain("themeToggle");
-    expect(html).toContain("tamer-nav-host");
+    expect(html).toContain("box-nav-host");
     expect(html).toContain("updateChip");
     expect(html).toContain("/v1/update?refresh=1");
-    expect(html).toContain("github.com/banter240/lumo-tamer");
+    expect(html).toContain("github.com/banter240/lumo-box");
   });
 
   it("shows a re-login notice instead of the signed-in card when the session expired", async () => {

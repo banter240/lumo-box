@@ -23,7 +23,7 @@ The CLI is a proof of concept. Local actions work, but the UI is basic and it's 
 
 2. Start the CLI:
    ```bash
-   tamer
+   lumo_box
    ```
 
 3. Lumo can now read files, make edits, and execute code on your machine. You can ask Lumo to give you a demo of its CLI capabilities, or see this [demo chat](demo-cli-chat.md) for inspiration.

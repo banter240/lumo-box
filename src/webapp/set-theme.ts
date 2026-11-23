@@ -57,7 +57,7 @@ interface SerializedEnvelope {
 }
 
 /** GET + decrypt + patch theme + encrypt + PUT, all through the
- * authenticated ProtonApi so scopes, tokens and retries are tamer's. */
+ * authenticated ProtonApi so scopes, tokens and retries are lumo_box's. */
 export async function setWebappThemeMode(
   protonApi: ProtonApi,
   masterKeyBase64: string,
