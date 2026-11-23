@@ -449,3 +449,44 @@ describe("isQuietHour (wraparound)", () => {
     expect(isQuietHour(8, c)).toBe(false);
   });
 });
+
+describe("retry backoff (computeRetryDelay)", () => {
+  const retryCfg = (over: Partial<PacingConfig["retry"]> = {}) => ({
+    maxAttempts: 3,
+    initialDelayMs: 1000,
+    maxDelayMs: 30000,
+    jitterFraction: 0,
+    ...over,
+  });
+
+  it("doubles the base delay per attempt", async () => {
+    const { computeRetryDelay } = await import("../../src/lumo-client/pacer.js");
+    expect(computeRetryDelay(retryCfg(), 1)).toBe(1000);
+    expect(computeRetryDelay(retryCfg(), 2)).toBe(2000);
+    expect(computeRetryDelay(retryCfg(), 3)).toBe(4000);
+  });
+
+  it("caps the delay at maxDelayMs", async () => {
+    const { computeRetryDelay } = await import("../../src/lumo-client/pacer.js");
+    expect(computeRetryDelay(retryCfg(), 10)).toBe(30000);
+  });
+
+  it("applies symmetric jitter within the fraction", async () => {
+    const { computeRetryDelay } = await import("../../src/lumo-client/pacer.js");
+    const cfg = retryCfg({ jitterFraction: 0.5 });
+    const draws = new Set<number>();
+    for (let i = 0; i < 40; i++) draws.add(computeRetryDelay(cfg, 1));
+    const min = Math.min(...draws);
+    const max = Math.max(...draws);
+    expect(min).toBeGreaterThanOrEqual(500);
+    expect(max).toBeLessThanOrEqual(1500);
+    expect(draws.size).toBeGreaterThan(1);
+  });
+
+  it("stays within bounds even at attempt 0 overflow", async () => {
+    const { computeRetryDelay } = await import("../../src/lumo-client/pacer.js");
+    const delay = computeRetryDelay(retryCfg({ maxDelayMs: 2000, jitterFraction: 0.1 }), 30);
+    expect(delay).toBeGreaterThanOrEqual(1800);
+    expect(delay).toBeLessThanOrEqual(2200);
+  });
+});

@@ -54,21 +54,29 @@ const THEME_SUN =
   '<svg class="theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
 const THEME_MOON =
   '<svg class="theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 14.3A8.4 8.4 0 1 1 9.7 3 7 7 0 0 0 21 14.3z"/></svg>';
+const THEME_MONITOR =
+  '<svg class="theme-icon-monitor" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>';
 
 const GITHUB_URL = "https://github.com/banter240/lumo-tamer";
 
-/** Server actions per host. The tamer pages enable everything (lock only
- * when served to a remote browser); the web app gets the safe subset. */
+/** Refresh/update icon for the update chip. */
+const NAV_ICON_UPDATE = svg(
+  '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><polyline points="21 3 21 8 16 8"/><path d="M9 17V9"/><path d="M13 17v-4"/><path d="M17 17v-2"/>',
+);
+
+/** Server actions per host. Every host gets the SAME set — the sidebar has
+ * exactly one state on all pages; only the active item is highlighted. */
 function actionsMarkup(actions: NavAction[]): string {
   const parts: string[] = [];
   if (actions.includes("updates")) {
     parts.push(
-      '<button type="button" class="tamer-nav-item tamer-nav-chip" id="updateChip">Updates</button>',
+      `<button type="button" class="tamer-nav-item tamer-nav-chip" id="updateChip" aria-label="Updates" title="Updates">${NAV_ICON_UPDATE}<span class="tamer-nav-label">Updates</span></button>`,
     );
   }
   if (actions.includes("authstatus")) {
+    // Binding updates the SPAN (textContent would wipe the icon).
     parts.push(
-      '<button type="button" class="tamer-nav-item tamer-nav-chip" id="authChip" hidden>…</button>',
+      `<button type="button" class="tamer-nav-item tamer-nav-chip" id="authChip" hidden aria-label="Account" title="Account">${NAV_ICON_ACCOUNT}<span class="tamer-nav-label">…</span></button>`,
     );
   }
   parts.push(
@@ -77,7 +85,7 @@ function actionsMarkup(actions: NavAction[]): string {
   if (actions.includes("theme")) {
     parts.push(
       '<button type="button" class="tamer-nav-item" id="themeToggle" aria-label="Toggle theme"></button>',
-    );
+    ); // label comes from the theme binding
   }
   if (actions.includes("restart")) {
     parts.push(
@@ -115,6 +123,12 @@ const NAV_SHADOW_CSS = `
   box-sizing: border-box; overflow: hidden; transition: width .16s ease;
   background: var(--card, #1d1a26); border-right: 1px solid var(--line, #3b364a);
   font-family: system-ui, sans-serif; font-size: 14px; }
+/* Webapp host: the app owns the page; the nav follows the app theme via
+   data-navtheme set by the observer in buildMountJs (desktop theme.ts
+   pattern). Explicit palettes instead of inherited vars, which the app
+   page does not define. */
+:host([data-navtheme="light"]) { --card: #f5f4f8; --line: #d8d5e0; --muted: #6d6883; --purple: #6d4aff; --purple-soft: rgba(109,74,255,.14); }
+:host([data-navtheme="dark"]) { --card: #1d1a26; --line: #3b364a; --muted: #a39eb8; --purple: #8b7cff; --purple-soft: rgba(139,124,255,.18); }
 :host(.expanded) { width: 200px; }
 nav { display: contents; }
 .tamer-nav-item, #tamer-nav-toggle {
@@ -124,7 +138,8 @@ nav { display: contents; }
 .tamer-nav-item:hover, #tamer-nav-toggle:hover { background: var(--purple-soft, rgba(139,124,255,.18)); color: var(--purple, #8b7cff); }
 .tamer-nav-item.active { background: var(--purple-soft, rgba(139,124,255,.18)); color: var(--purple, #8b7cff); }
 .tamer-nav-item.tamer-nav-danger:hover { background: rgba(255,80,80,.18); color: #ff6b6b; }
-.tamer-nav-chip { justify-content: center; font-size: 12px; padding: 8px 10px; overflow: hidden; text-overflow: ellipsis; }
+.tamer-nav-chip { font-size: 12px; padding: 8px 10px; overflow: hidden; text-overflow: ellipsis; }
+.tamer-nav-chip .tamer-nav-label { text-overflow: ellipsis; }
 .tamer-nav-chip.ready { color: var(--purple, #8b7cff); }
 .tamer-nav-chip.err { color: #ff6b6b; }
 svg { width: 18px; height: 18px; flex: none; }
@@ -140,22 +155,29 @@ button.tamer-nav-item { width: 100%; }
  * global (documentElement), so its store/apply stays host-document-wide;
  * the chips and power actions talk to the same endpoints the old page
  * header buttons used, so no server code changed for them. */
-const ACTION_BINDINGS = `(function(sr){
+const ACTION_BINDINGS = `(function(sr,h){
 function $(id){return sr.getElementById(id);}
 var toast=function(msg,ok){var c=document.getElementById('toast-container');if(!c){ok?console.log(msg):console.warn(msg);return;}var el=document.createElement('div');el.className='toast '+(ok?'ok':'err');el.textContent=msg;el.title='Click to copy, then close';var gone=false;function bye(){if(gone)return;gone=true;el.style.opacity='0';el.style.transform='translateX(100%)';setTimeout(function(){el.remove();},300);}el.addEventListener('click',function(){try{navigator.clipboard.writeText(msg);}catch(e){}bye();});c.appendChild(el);if(ok)setTimeout(bye,4500);};window.__ltToast=window.__ltToast||toast;
-(function(){var btn=$('themeToggle');if(!btn)return;btn.innerHTML='${THEME_SUN}${THEME_MOON}';function paint(){var dark=document.documentElement.getAttribute('data-theme')==='dark';var sun=btn.querySelector('.theme-icon-sun');var moon=btn.querySelector('.theme-icon-moon');if(sun)sun.style.display=dark?'none':'';if(moon)moon.style.display=dark?'':'none';btn.setAttribute('aria-label',dark?'Dark mode':'Light mode');btn.title=dark?'Dark mode':'Light mode';}paint();btn.addEventListener('click',function(){var next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',next);try{localStorage.setItem('lumo-tamer-theme',next);}catch(e){}paint();});})();
+(function(){var btn=$('themeToggle');if(!btn)return;btn.innerHTML='${THEME_SUN}${THEME_MOON}${THEME_MONITOR}<span class="tamer-nav-label">Theme</span>';var isAppHost=h.getAttribute('data-active')==='lumo';function appKey(){try{var seg=location.pathname.split('/');for(var i=0;i<seg.length;i++){if(seg[i]==='u'&&seg[i+1]){return 'lumo-settings:'+seg[i+1];}}return 'lumo-settings';}catch(e){return 'lumo-settings';}}function readApp(){try{var raw=localStorage.getItem(appKey());return raw?JSON.parse(raw):{};}catch(e){return {};}}function writeApp(o){try{localStorage.setItem(appKey(),JSON.stringify(o));}catch(e){}}function icons(mode){var sun=btn.querySelector('.theme-icon-sun');var moon=btn.querySelector('.theme-icon-moon');var mon=btn.querySelector('.theme-icon-monitor');if(sun)sun.style.display=mode==='light'?'':'none';if(moon)moon.style.display=mode==='dark'?'':'none';if(mon)mon.style.display=mode==='system'?'':'none';}if(isAppHost){/* The app owns its theme via its E2E-encrypted SERVER user
+settings. Drive them through the tamer bridge (same write path as the
+app's own Appearance UI: decrypt -> patch theme -> encrypt -> PUT),
+then reload — the app boots with the new server-side mode.
+Two-state light<->dark on purpose: 'system' resolves like the current
+mode whenever the OS matches (a felt no-op); it stays settable in the
+app's own Appearance settings. */
+function paintApp(){var o=readApp();var cur=o.mode===1?'dark':(o.mode===2?'light':'system');/* Icon of what clicking switches TO (GitHub-style): light -> dark -> system, so every step is visibly different even when 'system' resolves to the current palette. */var order=['light','dark','system'];var target=order[(order.indexOf(cur)+1)%3];icons(target);var txt=target==='light'?'Switch to light mode':(target==='dark'?'Switch to dark mode':'Theme: follow system');btn.setAttribute('aria-label',txt);btn.title=txt;}paintApp();btn.addEventListener('click',function(){var o=readApp();var cur=o.mode===1?'dark':(o.mode===2?'light':'system');var order=['light','dark','system'];var next=order[(order.indexOf(cur)+1)%3];btn.disabled=true;btn.style.opacity='0.5';var inv=window.__TAURI_INTERNALS__&&window.__TAURI_INTERNALS__.invoke;var call=inv?window.__TAURI_INTERNALS__.invoke('set_web_theme',{mode:next}):Promise.reject(new Error('no bridge'));call.then(function(){location.reload();}).catch(function(e){btn.disabled=false;btn.style.opacity='';var t=window.__ltToast;t&&t('Theme change failed: are you signed in?',false);});});return;}var LS_KEY='lumo-tamer-mode';function modeKey(v){return v==='light'||v==='dark'||v==='system'?v:null;}function readMode(){try{var v=localStorage.getItem(LS_KEY);return modeKey(v)||'system';}catch(e){return 'system';}}function sysDark(){try{return matchMedia('(prefers-color-scheme: dark)').matches;}catch(e){return false;}}function resolve(m){return m==='system'?(sysDark()?'dark':'light'):m;}function paint(){var mode=readMode();icons(mode);var txt=mode==='light'?'Light mode':(mode==='dark'?'Dark mode':'Theme: follow system');btn.setAttribute('aria-label',txt);btn.title=txt;}function apply(mode,persist){document.documentElement.setAttribute('data-theme',resolve(mode));if(persist!==false){try{localStorage.setItem(LS_KEY,mode);}catch(e){}}paint();}var cur=readMode();if(document.documentElement.getAttribute('data-theme')!==resolve(cur)){document.documentElement.setAttribute('data-theme',resolve(cur));}paint();try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(readMode()==='system')apply('system',false);});}catch(e){}btn.addEventListener('click',function(){var order=['light','dark','system'];var next=order[(order.indexOf(readMode())+1)%3];apply(next);});})();
 (function(){var btn=$('uiLockBtn');if(!btn)return;btn.addEventListener('click',function(){var f=document.createElement('form');f.method='post';f.action='/ui-logout';document.body.appendChild(f);f.submit();});})();
 (function(){var btn=$('uiRestartBtn');if(!btn)return;btn.addEventListener('click',function(){if(btn.disabled)return;if(!confirm('Restart the server now?'))return;btn.disabled=true;btn.style.opacity='0.5';fetch('/v1/restart',{method:'POST'}).catch(function(){}).then(function(){var tries=0;(function poll(){tries++;if(tries>60){alert('Server did not come back. Docker should restart it; if you started it by hand, start it again, then press F5.');return;}setTimeout(function(){fetch('/health',{cache:'no-store'}).then(function(r){if(r.ok){location.reload();}else{poll();}}).catch(function(){poll();});},500);})();});});})();
 (function(){var btn=$('uiShutdownBtn');if(!btn)return;btn.addEventListener('click',function(){if(btn.disabled)return;if(!confirm('Shut the server down NOW?\\nIt will NOT come back on its own: no process respawns, scheduled runs stop, and the web app goes offline until you start tamer again by hand (or Docker recreates the container).'))return;btn.disabled=true;btn.style.opacity='0.5';toast('Shutting down…',true);fetch('/v1/shutdown',{method:'POST'}).catch(function(){}).then(function(){var tries=0;(function poll(){tries++;if(tries>8){document.title='(offline) '+document.title;alert('Server is down. Start tamer again to use it, then reload this page.');return;}setTimeout(function(){fetch('/health',{cache:'no-store'}).then(function(){poll();}).catch(function(){poll();});},750);})();});});})();
-(function(){var chip=$('authChip');if(!chip)return;chip.hidden=false;chip.addEventListener('click',function(){location.href='/auth';});var was=null;function poll(){fetch('/health',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){var valid=!!(d&&d.auth&&d.auth.valid);chip.textContent=valid?'Signed in':'Not signed in';chip.title=valid?'Signed in to Proton':'Waiting for authentication — click to open /auth';chip.classList.toggle('ready',valid);chip.classList.toggle('err',!valid);if(was===true&&!valid)toast('Signed out — waiting for authentication',false);was=valid;}).catch(function(){chip.textContent='No server';chip.classList.add('err');chip.classList.remove('ready');});}poll();setInterval(poll,5000);})();
-(function(){var chip=$('updateChip');if(!chip)return;var info=null;var busy=false;function paint(){chip.disabled=busy;chip.classList.toggle('ready',!!(info&&info.available));if(busy){chip.textContent='Checking…';return;}if(info&&info.available){var verb=info.action==='update'?'Update to ':'Switch to ';chip.textContent=verb+(info.latest||'');chip.title=info.canApply?(info.applyHint||'Apply the update'):(info.applyHint||'Cannot apply from this page');return;}if(info&&info.error){chip.textContent='Updates';chip.title=info.error+' — click to check again';return;}chip.textContent='Up to date';chip.title=(info&&info.current?'Running '+info.current+'. ':'')+'Click to check again';}function check(force){if(busy)return;busy=true;paint();var url=force?'/v1/update?refresh=1':'/v1/update';fetch(url,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){info=d;busy=false;paint();if(force&&info&&!info.available&&!info.error)toast('Up to date ('+(info.current||'?')+')',true);if(force&&info&&info.error)toast(info.error,false);}).catch(function(err){busy=false;info={error:err.message||'Update check failed'};paint();if(force)toast(info.error,false);});}function apply(){var latest=(info&&info.latest)||'the new image';if(!confirm('Update to '+latest+' and restart this server now? Chat pauses until it is back.'))return;busy=true;chip.textContent='Updating…';chip.disabled=true;fetch('/v1/update',{method:'POST'}).then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.message||d.error||'Update failed');return d;});}).then(function(){var tries=0;(function poll(){tries++;if(tries>360){location.reload();return;}setTimeout(function(){fetch('/health',{cache:'no-store'}).then(function(r){if(r.ok){location.reload();}else{poll();}}).catch(function(){poll();});},500);})();}).catch(function(err){toast(err.message||'Update failed',false);busy=false;paint();});}chip.addEventListener('click',function(ev){if(busy)return;if(ev.shiftKey){check(true);return;}if(info&&info.available&&info.canApply)apply();else if(info&&info.available)toast(info.applyHint||'Cannot apply from this page',false);else check(true);});check(false);})();
-})(sr);`;
+(function(){var chip=$('authChip');if(!chip)return;chip.hidden=false;chip.addEventListener('click',function(){location.href='/auth';});var label=chip.querySelector('.tamer-nav-label');function setText(t){chip.title=t;if(label){label.textContent=t;}else{chip.textContent=t;}}var was=null;function poll(){fetch('/health',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(d){var valid=!!(d&&d.auth&&d.auth.valid);setText(valid?'Signed in':'Not signed in');chip.classList.toggle('ready',valid);chip.classList.toggle('err',!valid);if(was===true&&!valid)toast('Signed out — waiting for authentication',false);was=valid;}).catch(function(){setText('No server');chip.classList.add('err');chip.classList.remove('ready');});}poll();setInterval(poll,5000);})();
+(function(){var chip=$('updateChip');if(!chip)return;var label=chip.querySelector('.tamer-nav-label');function setText(t){if(label){label.textContent=t;}else{chip.textContent=t;}}var info=null;var busy=false;function paint(){chip.disabled=busy;chip.classList.toggle('ready',!!(info&&info.available));if(busy){setText('Checking…');return;}if(info&&info.available){var verb=info.action==='update'?'Update to ':'Switch to ';setText(verb+(info.latest||''));chip.title=info.canApply?(info.applyHint||'Apply the update'):(info.applyHint||'Cannot apply from this page');return;}if(info&&info.error){setText('Updates');chip.title=info.error+' — click to check again';return;}setText('Up to date');chip.title=(info&&info.current?'Running '+info.current+'. ':'')+'Click to check again';}function check(force){if(busy)return;busy=true;paint();var url=force?'/v1/update?refresh=1':'/v1/update';fetch(url,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){info=d;busy=false;paint();if(force&&info&&!info.available&&!info.error)toast('Up to date ('+(info.current||'?')+')',true);if(force&&info&&info.error)toast(info.error,false);}).catch(function(err){busy=false;info={error:err.message||'Update check failed'};paint();if(force)toast(info.error,false);});}function apply(){var latest=(info&&info.latest)||'the new image';if(!confirm('Update to '+latest+' and restart this server now? Chat pauses until it is back.'))return;busy=true;setText('Updating…');chip.disabled=true;fetch('/v1/update',{method:'POST'}).then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.message||d.error||'Update failed');return d;});}).then(function(){var tries=0;(function poll(){tries++;if(tries>360){location.reload();return;}setTimeout(function(){fetch('/health',{cache:'no-store'}).then(function(r){if(r.ok){location.reload();}else{poll();}}).catch(function(){poll();});},500);})();}).catch(function(err){toast(err.message||'Update failed',false);busy=false;paint();});}chip.addEventListener('click',function(ev){if(busy)return;if(ev.shiftKey){check(true);return;}if(info&&info.available&&info.canApply)apply();else if(info&&info.available)toast(info.applyHint||'Cannot apply from this page',false);else check(true);});check(false);})();
+})(sr,h);`;
 
 /** Runs on both hosts verbatim: builds the shadow root, highlights the
  * active item from the host div's data-active, mounts the action buttons
  * listed in data-actions, and owns the toggle. */
 function buildMountJs(markup: string): string {
-  return `(function(){var h=document.getElementById('tamer-nav-host');if(!h||h.__tamerNav)return;h.__tamerNav=1;var sr=h.attachShadow({mode:'open'});sr.innerHTML=${JSON.stringify(`<style>${NAV_SHADOW_CSS}</style>${markup}`).replace(/</g, "\\u003c")};var btn=sr.getElementById('tamer-nav-toggle');var active=h.getAttribute('data-active');if(active){var el=sr.querySelector('.tamer-nav-item[data-id="'+active+'"]');if(el)el.classList.add('active');}var expanded=false;try{expanded=localStorage.getItem('tamer-nav-expanded')==='1';}catch(e){}function paint(){h.classList.toggle('expanded',expanded);document.body.classList.toggle('tamer-nav-expanded',expanded);}paint();btn.addEventListener('click',function(){expanded=!expanded;paint();try{localStorage.setItem('tamer-nav-expanded',expanded?'1':'0');}catch(e){}});(function(){var actions=(h.getAttribute('data-actions')||'').split(' ').filter(Boolean);var nodes=sr.querySelectorAll('[id]');for(var i=0;i<nodes.length;i++){var id=nodes[i].id;if(nodes[i].tagName!=='BUTTON')continue;if(id==='tamer-nav-toggle')continue;if(id==='updateChip'&&actions.indexOf('updates')===-1){nodes[i].remove();continue;}if(id==='authChip'&&actions.indexOf('authstatus')===-1){nodes[i].remove();continue;}if(id==='themeToggle'&&actions.indexOf('theme')===-1){nodes[i].remove();continue;}if(id==='uiRestartBtn'&&actions.indexOf('restart')===-1){nodes[i].remove();continue;}if(id==='uiShutdownBtn'&&actions.indexOf('shutdown')===-1){nodes[i].remove();continue;}if(id==='uiLockBtn'&&actions.indexOf('lock')===-1){nodes[i].remove();continue;}}${ACTION_BINDINGS}})();})();`;
+  return `(function(){var h=document.getElementById('tamer-nav-host');if(!h||h.__tamerNav)return;h.__tamerNav=1;var sr=h.attachShadow({mode:'open'});sr.innerHTML=${JSON.stringify(`<style>${NAV_SHADOW_CSS}</style>${markup}`).replace(/</g, "\\u003c")};var btn=sr.getElementById('tamer-nav-toggle');var active=h.getAttribute('data-active');if(active){var el=sr.querySelector('.tamer-nav-item[data-id="'+active+'"]');if(el)el.classList.add('active');}(function(){if(h.getAttribute('data-active')!=='lumo')return;function sniff(){var dark=document.getElementById('lumo-dark-theme');var light=document.getElementById('lumo-light-theme');var t=dark?'dark':(light?'light':(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));h.setAttribute('data-navtheme',t);}sniff();new MutationObserver(sniff).observe(document.body,{attributes:true,attributeFilter:['id'],childList:true,subtree:false});})();(function(){if(h.getAttribute('data-webapp')!=='off')return;var link=sr.querySelector('.tamer-nav-item[data-id="lumo"]');if(!link)return;link.title='The web app is disabled — click to open the settings page and enable it';link.addEventListener('click',function(ev){ev.preventDefault();var toast=window.__ltToast;if(toast)toast('Webapp is disabled — enable it on the settings page',false);location.href='/config';});})();var expanded=false;try{expanded=localStorage.getItem('tamer-nav-expanded')==='1';}catch(e){}function paint(){h.classList.toggle('expanded',expanded);document.body.classList.toggle('tamer-nav-expanded',expanded);}paint();btn.addEventListener('click',function(){expanded=!expanded;paint();try{localStorage.setItem('tamer-nav-expanded',expanded?'1':'0');}catch(e){}});(function(){var actions=(h.getAttribute('data-actions')||'').split(' ').filter(Boolean);var nodes=sr.querySelectorAll('[id]');for(var i=0;i<nodes.length;i++){var id=nodes[i].id;if(nodes[i].tagName!=='BUTTON')continue;if(id==='tamer-nav-toggle')continue;if(id==='updateChip'&&actions.indexOf('updates')===-1){nodes[i].remove();continue;}if(id==='authChip'&&actions.indexOf('authstatus')===-1){nodes[i].remove();continue;}if(id==='themeToggle'&&actions.indexOf('theme')===-1){nodes[i].remove();continue;}if(id==='uiRestartBtn'&&actions.indexOf('restart')===-1){nodes[i].remove();continue;}if(id==='uiShutdownBtn'&&actions.indexOf('shutdown')===-1){nodes[i].remove();continue;}if(id==='uiLockBtn'&&actions.indexOf('lock')===-1){nodes[i].remove();continue;}}${ACTION_BINDINGS}})();})();`;
 }
 
 const FULL_ACTIONS: NavAction[] = [
@@ -167,17 +189,27 @@ const FULL_ACTIONS: NavAction[] = [
   "lock",
 ];
 
-/** Tamer pages (/auth, /config, /logs): everything, minus lock on loopback. */
-export function renderNavHost(active?: NavActive, localUi?: boolean): string {
+/** Tamer pages (/auth, /config, /logs): everything, minus lock on loopback.
+ * `webappOn` reflects the live config so the nav can route the webapp item
+ * to the settings page (with a hint toast) while it is disabled. */
+export function renderNavHost(
+  active?: NavActive,
+  localUi?: boolean,
+  webappOn?: boolean,
+): string {
   const actions = localUi
     ? FULL_ACTIONS.filter((a) => a !== "lock")
     : FULL_ACTIONS;
-  return `<div id="tamer-nav-host" data-actions="${actions.join(" ")}"${active ? ` data-active="${active}"` : ""}></div>`;
+  return `<div id="tamer-nav-host" data-actions="${actions.join(" ")}"${active ? ` data-active="${active}"` : ""} data-webapp="${webappOn === false ? "off" : "on"}"></div>`;
 }
 
-/** The proxied web app: safe subset — no shutdown/restart/lock from there. */
+/** The proxied web app: same bar as the tamer pages minus `lock` (always
+ * a local session). The theme toggle writes the app's E2E-encrypted
+ * SERVER user settings via the bridge command (set_web_theme) — same
+ * authority as the app's own Appearance UI, survives every reload. */
 export function renderWebappNavHost(): string {
-  return `<div id="tamer-nav-host" data-active="lumo" data-actions="theme authstatus"></div>`;
+  const actions = FULL_ACTIONS.filter((a) => a !== "lock");
+  return `<div id="tamer-nav-host" data-active="lumo" data-actions="${actions.join(" ")}"></div>`;
 }
 
 export function navMountJs(): string {

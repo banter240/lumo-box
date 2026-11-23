@@ -1,36 +1,24 @@
 /**
  * Shared HTML shell for /auth, /config, and /logs.
  * Colors follow Proton's public site: purple CTA, light canvas, tight cards.
- * Theme is stored in localStorage (`lumo-tamer-theme`); first visit follows the OS.
+ * Theme mode (light/dark/system) is stored in localStorage
+ * (`lumo-tamer-mode`); system follows the OS preference.
  */
 
 import { NAV_MOUNT_JS, renderNavHost } from "../webapp/nav-shell.js";
+import { getWebappConfig } from "../app/config.js";
 import {
   BUILD_COMMIT,
   BUILD_AT,
   isBuildNewerThanProcess,
 } from "../app/version.js";
 
-const THEME_BOOT = `(function(){try{var t=localStorage.getItem('lumo-tamer-theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
-
-
+const THEME_BOOT = `(function(){try{var m=localStorage.getItem('lumo-tamer-mode');if(m!=='light'&&m!=='dark'&&m!=='system'){m='system';}var old=localStorage.getItem('lumo-tamer-theme');if(m==='system'){var dark=matchMedia('(prefers-color-scheme: dark)').matches;if(old==='light'||old==='dark')dark=(old==='dark');document.documentElement.setAttribute('data-theme',dark?'dark':'light');}else{document.documentElement.setAttribute('data-theme',m);}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
 
 const LOGOUT_BIND = `(function(){var btn=document.getElementById('logout');if(!btn)return;btn.addEventListener('click',function(){btn.disabled=true;btn.textContent='Signing out…';fetch('/auth/logout',{method:'POST'}).catch(function(){}).then(function(){location.href='/auth';});});})();`;
 
-
-
 // Shared browser helpers: one toast implementation for all BIND scripts.
 const WEB_HELPERS = `(function(){window.__ltToast=function(msg,ok){var c=document.getElementById('toast-container');if(!c)return;var el=document.createElement('div');el.className='toast '+(ok?'ok':'err');el.textContent=msg;el.title='Click to copy, then close';var gone=false;function bye(){if(gone)return;gone=true;el.style.opacity='0';el.style.transform='translateX(100%)';setTimeout(function(){el.remove();},300);}el.addEventListener('click',function(){try{navigator.clipboard.writeText(msg);}catch(e){}bye();});c.appendChild(el);if(ok)setTimeout(bye,4500);};})();`;
-
-
-
-
-
-
-
-
-
-
 
 export const protonUiCss = `
 :root {
@@ -198,6 +186,10 @@ export function htmlPage(options: {
   /** Served to this machine: the UI-lock button is meaningless (loopback
    *  is trusted without a key), so it is not rendered at all. */
   localUi?: boolean;
+  /** Live webapp.enabled; when false, the nav's webapp item routes to
+   * /config with a hint toast instead of the (dead) webapp. Defaults to
+   * the current config value so callers need not pass it explicitly. */
+  webappOn?: boolean;
 }): string {
   const width = options.wide ? "74rem" : "26rem";
   const verTag = options.version
@@ -218,10 +210,11 @@ export function htmlPage(options: {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${options.title}</title>
   <script>${THEME_BOOT}</script>
+  <script>fetch('/lumo-bridge/invoke',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:'get_server_theme',args:{}})}).then(function(r){return r.ok?r.json():null}).then(function(d){var m=d&&d.mode;if(m!=='light'&&m!=='dark'&&m!=='auto')return;var t=m==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):m;var prev=null;try{prev=localStorage.getItem('lumo-tamer-mode');}catch(e){}if(prev!==t){try{localStorage.setItem('lumo-tamer-mode',t);}catch(e){}document.documentElement.setAttribute('data-theme',t);}}).catch(function(){});</script>
   <style>:root { --page-width: ${width}; }${protonUiCss}${verCss}${NAV_HOST_CSS}${options.extraCss ?? ""}</style>
 </head>
 <body>
-  ${renderNavHost(options.page, options.localUi)}
+  ${renderNavHost(options.page, options.localUi, options.webappOn ?? getWebappConfig().enabled)}
   <div class="shell">
     <div class="brand">
       <a class="brand-home" href="/auth">

@@ -6,7 +6,25 @@ For CLI local actions (file operations, code execution), see [local-actions.md](
 
 ---
 
-## How the proxy works
+## Transport modes
+
+`server.customTools.mode` selects how client `tools[]` travel to Lumo. It is a dropdown in the config editor (**Tools → Tool transport**); each mode gates its own settings there.
+
+### `native` (default)
+
+Client tools ride the chat request as real OpenAI function schemas (the upstream `clientTools` support), and Lumo answers with structured `tool_calls`. No protocol instructions are injected: the model sees clean tool definitions, and its native module prompts (`customTools.native.instructions.modules`) carry domain/workflow knowledge only. Flat tool shapes (`{type:"function", name, parameters}` without the nested `function` wrapper) are accepted and normalized at the request boundary.
+
+Tool calls stream to the client in both transports: `delta.tool_calls` chunks on `/v1/chat/completions` and `response.function_call_arguments.*` events on `/v1/responses`.
+
+Requires the Lumo backend to accept client function tools. If Proton changes the wire, flip back to `legacy`.
+
+### `legacy` (rollback)
+
+The JSON-code-block protocol described below: battle-tested, works everywhere, at the cost of a large injected prompt and text-detection heuristics. Existing configs behave byte-identical; recovery bounces, routing and the flat `customTools.modules` prompts belong to this world and are inert in native mode.
+
+---
+
+## How the legacy proxy works
 
 The contract with Lumo: a custom tool is **text** — one JSON object, preferably in a ` ```json ` fence, name prefixed by `customTools.prefix`. Bounce is the same: if Lumo uses its native pipeline (or only announces an action in prose), ask it to emit that JSON again.
 
@@ -16,6 +34,8 @@ The contract with Lumo: a custom tool is **text** — one JSON object, preferabl
 If a call is not executed, the log says `[tools] not executed` and why.
 
 ## Warning
+
+This section applies to `legacy` mode. Native mode has no injected protocol and no text detection, so most of these failure modes disappear.
 
 Custom tool support is experimental. Tool calls can fail because of:
 
@@ -33,11 +53,11 @@ This requires trial and error. Experiment with `server.instructions` settings to
 
 ## Quick Start
 
-1. Client `tools[]` are on by default (`customTools.enabled: true`). Turn that off only if you want to ignore client tools.
+1. Native mode is the default: nothing to configure, the client's `tools[]` are forwarded as function schemas. Keep `customTools.enabled: true` (the default).
 2. Configure your API client (Home Assistant, Open WebUI, etc.) to use tools as normal.
-3. lumo-tamer intercepts Lumo's responses, detects tool calls, and returns them in OpenAI format for your client to execute.
+3. lumo-tamer returns Lumo's tool calls in OpenAI format for your client to execute.
 
-Client tool calls are not native Lumo tools. Whatever `call_id` the client echoes (`toolname__synth__…`, `call_…`, `fc-…`), the result is rewritten to a user message (`[Tool Result: name]` plus the output) before it goes to Proton. Sending the OpenAI tool protocol through would 400.
+In `legacy` mode, whatever `call_id` the client echoes (`toolname__synth__…`, `call_…`, `fc-…`), the result is rewritten to a user message (`[Tool Result: name]` plus the output) before it goes to Proton — sending the OpenAI tool protocol through would 400. In `native` mode the upstream wire carries tool results natively.
 
 ## Configuration
 
@@ -55,22 +75,22 @@ server:
     prefix: "user:"
 ```
 
-### Tool Routing (`customTools.routing`)
+### Tool Routing (`customTools.routing`) — legacy only
 
-How native Proton tools and client tools coexist:
+How native Proton tools and client tools coexist (legacy mode; native rides both tool families on the request):
 
 ```yaml
 server:
   customTools:
     routing:
-      nativeTools: "auto"   # auto | always | never
+      nativeTools: "auto" # auto | always | never
 ```
 
 - **auto** (default): native tools are advertised only when the request carries **no** custom tools. This avoids the tool-mix-up confusion while keeping web search etc. available for plain chats.
 - **always**: always advertise native tools (pre-fix behavior; can confuse Lumo when both tool families are present).
 - **never**: never advertise native tools — fully deterministic custom-tool-only behavior.
 
-### Reply Recovery (`customTools.recovery`)
+### Reply Recovery (`customTools.recovery`) — legacy only
 
 Lumo sometimes thinks about a tool call but never emits the JSON block: it ends a reply on a dangling colon, narrates the call in prose (`[Assistant tool call]: …`), or answers with no text at all (thinking-only loop). The recovery bounces send the reply back with a short correction so the model emits the fenced JSON:
 
@@ -78,18 +98,18 @@ Lumo sometimes thinks about a tool call but never emits the JSON block: it ends 
 server:
   customTools:
     recovery:
-      bounceDanglingColon: true              # reply ends on a dangling colon after announcing an action
-      bounceNarration: true                  # prose narration of a tool call
-      bounceBlankReply: true                 # no message text at all
-      danglingColonMaxLength: 2000           # max reply length still eligible
-      danglingColonLastLineMaxLength: 500    # max last-line length still eligible
+      bounceDanglingColon: true # reply ends on a dangling colon after announcing an action
+      bounceNarration: true # prose narration of a tool call
+      bounceBlankReply: true # no message text at all
+      danglingColonMaxLength: 2000 # max reply length still eligible
+      danglingColonLastLineMaxLength: 500 # max last-line length still eligible
 ```
 
 All bounces are on by default; the lengths cap how large a reply may be before a bounce is pointless (long prose would waste a roundtrip). The bounce text comes from `instructions.forAnnounceBounce`.
 
-### Instruction Modules (`customTools.modules`)
+### Instruction Modules (`customTools.modules`) — legacy
 
-Optional instruction packs appended to `forTools` when enabled — extend the protocol without editing the base template:
+Optional instruction packs appended to `forTools` when enabled — extend the protocol without editing the base template. Native mode has its own world under `customTools.native.instructions.modules` (domain/workflow knowledge, no protocol boilerplate).
 
 ```yaml
 server:
@@ -151,14 +171,14 @@ Follow-up turns use `forToolsCompact` instead of `forTools` (when there is more 
 
 Other instruction hooks:
 
-| Key | When injected |
-|---|---|
-| `forJsonFormat` | client sends `response_format` json_object/json_schema (`{{schema}}` interpolated) |
-| `forToolRequired` | `tool_choice: required` |
-| `forToolNamed` | `tool_choice: {type: function, function: {name}}` (`{{name}}` interpolated) |
-| `forToolBounce` | Lumo routed a call through the native pipeline (the actual call JSON is appended at runtime) |
-| `forAnnounceBounce` | dangling colon / narration / blank reply bounce |
-| `injectInto` | `first` or `last` user message — only applies when the request has **no** tools; with tools the proxy always injects last |
+| Key                 | When injected                                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `forJsonFormat`     | client sends `response_format` json_object/json_schema (`{{schema}}` interpolated)                                        |
+| `forToolRequired`   | `tool_choice: required`                                                                                                   |
+| `forToolNamed`      | `tool_choice: {type: function, function: {name}}` (`{{name}}` interpolated)                                               |
+| `forToolBounce`     | Lumo routed a call through the native pipeline (the actual call JSON is appended at runtime)                              |
+| `forAnnounceBounce` | dangling colon / narration / blank reply bounce                                                                           |
+| `injectInto`        | `first` or `last` user message — only applies when the request has **no** tools; with tools the proxy always injects last |
 
 ### Instruction Replace Patterns
 
@@ -181,28 +201,34 @@ The default pattern rewrites standalone prose mentions of "tool(s)" to "custom t
 ## Troubleshooting
 
 **Tool calls not detected**
+
 - Ensure `customTools.enabled: true`
 - Check that Lumo emits JSON in a ```json code block (`{"name":"user:…","arguments":{…}}`)
 - If the log says `name not in client tools[]`, Lumo shortened or invented the name. The prompt tells it to copy `name` from the list; a shorter name is not executed.
 - The proxy locates a tool blob in the stream, then extracts `{name, arguments}`: strict JSON, jammed objects, then a lenient parse. If it still fails, the log says `[tools] not executed` with the reason.
 
 **Only prose, no tool call** ("I would now edit the file…" and nothing happens)
+
 - Covered by the recovery bounces: dangling colon, narration, blank reply. Check `customTools.recovery.*` are on (they are by default).
 - If persistent, shorten instructions — very long system prompts make Lumo forget the protocol mid-reply.
 
 **Wrong tool names**
+
 - Check `customTools.prefix` — it's added to definitions and stripped from responses
 - If prefix is causing issues, set to `""` to disable
 
 **Lumo says "I don't have access to that tool"**
+
 - This is a misrouted call being bounced — should resolve automatically
 - If persistent, check logs for bounce failures
 
 **OpenCode / Responses API: 400 loop after a tool call**
+
 - Custom tools are detected from text, so the `call_id` is invented by lumo-tamer
 - Results are flattened to user text (see above). If you still see 400s, check the log for the Proton error body, not just the client retry.
 
 **Payloads containing triple backticks break the tool call**
+
 - Fixed in this fork: fenced tool calls survive string content that itself contains ``` sequences (string-aware scanner in `streaming-tool-detector.ts`). Older ZeroTricks builds corrupted such payloads.
 
 ---
@@ -211,13 +237,13 @@ The default pattern rewrites standalone prose mentions of "tool(s)" to "custom t
 
 Lumo has built-in tools executed server-side by Proton:
 
-| Tool | Description |
-|------|-------------|
-| `proton_info` | Proton product information (always enabled) |
-| `web_search` | Web search via Proton's backend |
-| `weather` | Weather data |
-| `stock` | Stock prices |
-| `cryptocurrency` | Cryptocurrency prices |
+| Tool             | Description                                 |
+| ---------------- | ------------------------------------------- |
+| `proton_info`    | Proton product information (always enabled) |
+| `web_search`     | Web search via Proton's backend             |
+| `weather`        | Weather data                                |
+| `stock`          | Stock prices                                |
+| `cryptocurrency` | Cryptocurrency prices                       |
 
 Image tools were removed from this fork (the upstream image infrastructure no longer exists).
 
@@ -247,7 +273,9 @@ Native and custom tools work together per `customTools.routing.nativeTools` (see
    {"name": "user:get_weather", "arguments": {"city": "Paris"}}
    ```
    ````
-   *If Lumo misroutes the call or only announces it, lumo-tamer bounces it — see [Misrouted Tool Calls](#misrouted-tool-calls).*
+
+   _If Lumo misroutes the call or only announces it, lumo-tamer bounces it — see [Misrouted Tool Calls](#misrouted-tool-calls)._
+
 5. **lumo-tamer detects and extracts** tool calls, strips the prefix, and returns in OpenAI format
 6. **Your client executes** the tool and sends results back
 

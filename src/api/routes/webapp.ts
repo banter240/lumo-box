@@ -276,6 +276,14 @@ function proxyHandler(upstream: string) {
         },
         "webapp proxy: upstream non-2xx",
       );
+      // Fork redemption failures are WHY a healed app falls back to the
+      // guest shell; surface them at info with the status for diagnosis.
+      if (FORK_RE.test(target.pathname)) {
+        logger.warn(
+          { status: upstreamRes.status },
+          "webapp signin: app fork redemption failed — the app will stay/become guest",
+        );
+      }
     }
 
     res.status(upstreamRes.status);

@@ -7,7 +7,6 @@ This guide walks you through setting up [Proton Lumo](https://lumo.proton.me/) a
 
 <img src="images/ha-lumo.png" alt="Lumo, Home Assistant's housecat" height="150px">
 
-
 **What you'll get:** Lumo as your housecat: a [privacy-friendly](https://proton.me/support/lumo-privacy) AI assistant that can answer questions and control your smart home devices.
 
 **Time:** 15-30 minutes
@@ -20,6 +19,7 @@ This guide walks you through setting up [Proton Lumo](https://lumo.proton.me/) a
 You should be comfortable with editing configuration files, running terminal commands, and basic Home Assistant administration.
 
 **Prerequisites**
+
 - Home Assistant installed and running
 - A Proton account (free works, [Lumo Plus](https://lumo.proton.me/) gives unlimited daily chats and more)
 - A computer or server to run lumo-tamer on the same private network or machine as Home Assistant
@@ -32,9 +32,9 @@ You should be comfortable with editing configuration files, running terminal com
 
 Choose your installation method for lumo-tamer. Docker is recommended if you're familiar with it.
 
-| Method | Requirements |
-|--------|--------------|
-| [Docker Setup](#docker-setup) | Docker, Git |
+| Method                        | Requirements                                |
+| ----------------------------- | ------------------------------------------- |
+| [Docker Setup](#docker-setup) | Docker, Git                                 |
 | [Native Setup](#native-setup) | Node.js 18+ (22 recommended), Go 1.25+, Git |
 
 ---
@@ -66,10 +66,10 @@ Create `config.yaml`:
 server:
   apiKey: "your-secret-api-key-here"
   customTools:
-    enabled: true  # default; needed for Assist device tools
+    enabled: true # default; needed for Assist device tools
   enableWebSearch: true # optional; Lumo's own web search (off in defaults)
   reasoning:
-    default: high  # HA omits effort; defaults file is none (compact)
+    default: high # HA omits effort; defaults file is none (compact)
 ```
 
 If you customize `instructions.forTools` with Home Assistant nested `ha_call_*` / Hass* examples, copy the same nesting into `forToolsCompact`. Follow-up turns only send the compact protocol; tool schemas stay in full.
@@ -117,16 +117,19 @@ docker compose logs -f tamer
 #### Step 1: Install dependencies
 
 **On Debian/Ubuntu:**
+
 ```bash
 sudo apt install -y nodejs golang git
 ```
 
 **On macOS (Homebrew):**
+
 ```bash
 brew install node go git
 ```
 
 **Verify:**
+
 ```bash
 node --version   # Should show v18.x or higher
 go version       # Should show go1.25 or higher
@@ -152,10 +155,10 @@ Create `config.yaml`:
 server:
   apiKey: "your-secret-api-key-here"
   customTools:
-    enabled: true  # default; needed for Assist device tools
+    enabled: true # default; needed for Assist device tools
   enableWebSearch: true # optional; Lumo's own web search (off in defaults)
   reasoning:
-    default: high  # HA omits effort; defaults file is none (compact)
+    default: high # HA omits effort; defaults file is none (compact)
 ```
 
 If you customize `instructions.forTools` with Home Assistant nested `ha_call_*` / Hass* examples, copy the same nesting into `forToolsCompact`. Follow-up turns only send the compact protocol; tool schemas stay in full.
@@ -193,11 +196,13 @@ chmod 600 /path/to/your/lumo-vault-key
 ```
 
 And add to `config.yaml`:
+
 ```yaml
 auth:
   vault:
     keyFilePath: "/path/to/your/lumo-vault-key"
 ```
+
 </details>
 
 #### Step 5: Start the server
@@ -223,17 +228,16 @@ curl http://localhost:3003/health
 
 lumo-tamer acts as an OpenAI compatible server, so we'll use an OpenAI integration in Home Assistant to connect to it. There are two options: the standard [OpenAI](https://www.home-assistant.io/integrations/openai_conversation/) integration, and the [Extended OpenAI Conversation](https://github.com/jekalmin/extended_openai_conversation). Which one you'll need depends on your Home Assistant installation:
 
-| Installation | Method |
-|--------------|--------|
-| Docker / Core | [Configure OpenAI using an environment variable](#standard-openai-conversation) |
-| Home Assistant OS | [Configure Extended OpenAI Conversation](#extended-openai-conversation) |
+| Installation      | Method                                                                          |
+| ----------------- | ------------------------------------------------------------------------------- |
+| Docker / Core     | [Configure OpenAI using an environment variable](#standard-openai-conversation) |
+| Home Assistant OS | [Configure Extended OpenAI Conversation](#extended-openai-conversation)         |
 
 > **Note:** Extended OpenAI Conversation has its own custom tool support which hasn't been tested thoroughly with lumo-tamer. If you can set environment variables, the standard OpenAI integration is recommended.
 
 ![OpenAI integrations in Home Assistant](images/ha-openai-integrations.png)
 
 ---
-
 
 ### Standard OpenAI integration
 
@@ -258,6 +262,7 @@ OPENAI_BASE_URL=http://YOUR_SERVER_IP:3003/v1
 6. Click **Submit**
 
 If you see an error, check that:
+
 - lumo-tamer is running
 - `OPENAI_BASE_URL` is correct
 - The API key matches `config.yaml`
@@ -329,6 +334,8 @@ Follow the [HACS installation guide](https://hacs.xyz/docs/setup/download).
 1. Go to **Settings** > **Voice Assistants** > **Expose** tab
 2. Select which entities Lumo can access
 
+> **Note:** This guide predates the native tool transport and describes settings relevant to `legacy` mode (the JSON-code-block protocol). `native` mode is the default now and needs none of the protocol tuning — but HA together with native mode has not been extensively tested yet; if device calls misbehave, set `server.customTools.mode: "legacy"` as the proven fallback.
+
 > **Tip:** Start with a few entities to test, add more later. Custom tool support is experimental, see [Custom Tools](custom-tools.md) for troubleshooting.
 
 ---
@@ -343,6 +350,7 @@ Follow the [HACS installation guide](https://hacs.xyz/docs/setup/download).
 ### Test device control
 
 Try:
+
 - "Turn on the living room light"
 - "What's the temperature in the bedroom?"
 - "Is the front door locked?"
@@ -364,6 +372,7 @@ Try:
 ### Slow responses
 
 Lumo taking a few seconds to answer is to be expected. If you encounter larger response times when calling tools:
+
 - Reduce the number of exposed entities.
 - Enable Home Assistant's built-in intent recognition to handle simple commands locally.
 - Lumo might [misroute](custom-tools.md#misrouted-tool-calls) tool calls, which lumo-tamer needs to redirect, adding to the latency. Enable debug logging for lumo-tamer (`server.log.level: debug`), look for "misrouted tool calls" and experiment with settings `server.instructions` to get better results.
@@ -382,10 +391,13 @@ This usually indicates Lumo has trouble understanding the exposed entities and t
 - Enable debug logging for lumo-tamer (`server.log.level: debug`) and check logs for errors
 
 ### Home Assistant still shows "OpenAI" in some messages
+
 This is expected. The integrations refer to OpenAI here and there (e.g., "Error talking to OpenAI"), while they're actually talking to Lumo through lumo-tamer.
 
 ### The Lumo (web) app shows many duplicated chats from Home Assistant
+
 If you enabled syncing your conversations with the Lumo app, set `conversations.deriveIdFromUser: true` to properly group messages per conversation:
+
 ```yaml
 conversations:
   enableSync: true

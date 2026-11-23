@@ -43,13 +43,21 @@ This tree is a fork of [ZeroTricks/lumo-tamer](https://github.com/ZeroTricks/lum
 
 ## Acknowledgements
 
-`packages/lumo-webview/` contains code vendored 1:1 from [ProtonLumo/lumo-desktop](https://github.com/ProtonLumo/lumo-desktop), the official Lumo desktop app: the webview bridges, shared modules, and the bundled local pages (login, search, and the full settings UI). It is refreshed via `scripts/upstream/sync-webview.sh` and kept pristine — tamer-specific code lives only in the transport and bridge layers around it. That code is © Proton / ProtonLumo contributors, licensed under GPL-3.0 (see `packages/lumo-webview/UPSTREAM` for the exact source commit and `LICENSE` for the full text).
+Proton-derived code lives in three places, each attributed at its location (see also [Upstream Files](docs/upstream.md), which carries the full map):
+
+- `packages/lumo-webview/` — vendored 1:1 from [ProtonLumo/lumo-desktop](https://github.com/ProtonLumo/lumo-desktop), the official Lumo desktop app: webview bridges, shared modules, and the bundled local pages (login, search, full settings UI). Refreshed via `scripts/upstream/sync-webview.sh`, kept pristine; provenance in `packages/lumo-webview/UPSTREAM`.
+- `packages/lumo/` and `packages/proton/` — synced from [ProtonMail/WebClients](https://github.com/ProtonMail/WebClients) via `npm run sync-upstream`, with documented shims and patches; provenance in each package's `UPSTREAM`.
+- `src/proton/` and derivatives such as `src/skills/` — local adapters and ports of Proton wire logic and desktop behaviour; each file carries a header naming the upstream source and every intentional divergence.
+
+All of that code is © Proton / ProtonLumo contributors, licensed under GPL-3.0 (the full text ships in each `LICENSE`).
 
 ## Features
 
-- The `/config` web editor: category sidebar with search, per-field Default/Undo, config **export/import** as portable JSON (secrets opt-in), live toasts, dark/light theme.
+- The `/config` web editor: category sidebar with search, per-field Default/Undo, config **export/import** as portable JSON (secrets opt-in), live toasts, light/dark/system theme.
 - The `/logs` live log viewer: redacted ring buffer, level filter, pause/clear/auto-scroll.
-- OpenAI-compatible API server with experimental tool support.
+- OpenAI-compatible API server with native function calling: client `tools[]` ride the request as real function schemas and tool calls stream back as `delta.tool_calls` (`legacy` text-protocol transport remains as a config rollback).
+- Proxied Lumo web app (`webapp.enabled`): the official web app served through this server, with single sign-in — the `/auth` login produces the app session via a server-side fork push, no second login. A guest shell with a live server session self-heals into the signed-in app automatically. The docked sidebar can switch the app's theme (light/dark/system) by writing its E2E-encrypted server user settings — the same store the app's own appearance UI uses. Server actions (restart, shutdown, updates) live in the docked side bar.
+- Desktop-parity skills bridge: skill bundles synced by the web app land in a validated, size-limited, account-isolated plaintext cache and execute through the shell connector's approval gate with a literal argument vector — the same IPC contract as the official desktop app (`skill_sync_bundle` / `skill_execute_script` / `skill_cache_retain`).
 - Select the Lumo 2.0 model tier (Lite/Max) and thinking mode per request, via the OpenAI `model` and `reasoning_effort` fields.
 - Interactive CLI, let Lumo help you execute commands, read, create and edit files.
 - Optional conversation sync to https://lumo.proton.me (needs a Lumo-scoped browser session, not `/auth`).
@@ -390,7 +398,7 @@ server:
 
 ### Context window
 
-Yes: the window is **128.0K tokens**. That is what the Lumo app shows as "context use for this conversation". The OpenAI facade has no such meter (`/v1/models` is only `id` / `owned_by`).
+Yes: the window is **256.0K tokens**. That is what the Lumo app shows as "context use for this conversation". The OpenAI facade has no such meter (`/v1/models` is only `id` / `owned_by`).
 
 Lumo's own copy:
 
@@ -398,17 +406,17 @@ Lumo's own copy:
 
 Example from the app:
 
-|                                 |       |
-| ------------------------------- | ----- |
-| **99.0K / 128.0K tokens (77%)** |       |
-| Conversation                    | 99.0K |
-| Files                           | 0     |
-| Reserved, to keep chatting      | 12.8K |
-| Free space                      | 16.2K |
+|                                 |        |
+| ------------------------------- | ------ |
+| **99.0K / 256.0K tokens (39%)** |        |
+| Conversation                    | 99.0K  |
+| Files                           | 0      |
+| Reserved, to keep chatting      | 25.6K  |
+| Free space                      | 131.4K |
 
-12.8K reserved + conversation + files + free = 128.0K. The reserve is 10% of the window, so chatting can continue; when the bar is full, Lumo summarizes older messages. lumo-tamer does not run that summarizer.
+25.6K reserved + conversation + files + free = 256.0K. The reserve is 10% of the window, so chatting can continue; when the bar is full, Lumo summarizes older messages. lumo-tamer does not run that summarizer.
 
-Client catalogs need integers. **128.0K = 131072** (128 × 1024). **12.8K = 13107**. Set those as OpenCode `limit.context` / `limit.output` or OpenClaw `contextWindow` / `maxTokens`. See [OpenCode](docs/opencode.md) and [OpenClaw](docs/openclaw.md).
+Client catalogs need integers. **256.0K = 262144** (256 × 1024). **25.6K = 26214**. Set those as OpenCode `limit.context` / `limit.output` or OpenClaw `contextWindow` / `maxTokens`. See [OpenCode](docs/opencode.md) and [OpenClaw](docs/openclaw.md).
 
 ### Instructions
 
@@ -471,7 +479,7 @@ The server implements a subset of OpenAI-compatible endpoints and has so far bee
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `POST /v1/chat/completions` | [OpenAI chat completions](https://platform.openai.com/docs/api-reference/chat/create) (`response_format` json_schema / json_object is emulated)                                                                              |
 | `POST /v1/responses`        | [OpenAI responses API](https://platform.openai.com/docs/api-reference/responses/create)                                                                                                                                      |
-| `GET /v1/models`            | List available models (`lumo`, `lumo-lite`, `lumo-max`, `apertus-15`; `-thinking` variants appear automatically when `reasoning.autoVariants` is on). Each entry includes `context_window` (131072) and `max_tokens` (13107) |
+| `GET /v1/models`            | List available models (`lumo`, `lumo-lite`, `lumo-max`, `apertus-15`; `-thinking` variants appear automatically when `reasoning.autoVariants` is on). Each entry includes `context_window` (262144) and `max_tokens` (26214) |
 | `GET /v1/models/:id`        | Single model                                                                                                                                                                                                                 |
 | `GET /health`               | Health check (`status`, version, queue, auth, update)                                                                                                                                                                        |
 | `GET /v1/update`            | GitHub update check (`?refresh=1` to bypass cache)                                                                                                                                                                           |
@@ -505,11 +513,11 @@ See the [full guide](docs/howto-home-assistant.md). TLDR:
 
 ### OpenClaw
 
-Add Lumo to `models.providers` in your OpenClaw config. Window is 128.0K (`contextWindow` 131072). [Example](docs/openclaw.md).
+Add Lumo to `models.providers` in your OpenClaw config. Window is 256.0K (`contextWindow` 262144). [Example](docs/openclaw.md).
 
 ### OpenCode
 
-Add Lumo to your `opencode.json` / `opencode.jsonc`. Set each model `limit.context` to 131072 (128.0K; required for auto-compaction) and `limit.output` to 13107 (12.8K reserved). [Example](docs/opencode.md). [Context window](#context-window).
+Add Lumo to your `opencode.json` / `opencode.jsonc`. Set each model `limit.context` to 262144 (256.0K; required for auto-compaction) and `limit.output` to 26214 (25.6K reserved). [Example](docs/opencode.md). [Context window](#context-window).
 
 ### Nanocoder
 
@@ -681,7 +689,7 @@ See [docs/](docs/) for detailed documentation:
 ## Full Disclaimer
 
 - **Unofficial project.** This project is not affiliated with, endorsed by, or related to Proton AG in any way.
-- **Terms of service.** A Proton support team member stated on Reddit that lumo-tamer-style clients are "fine to use" as unofficial, unsupported tools ([link](https://www.reddit.com/r/lumo/comments/1siwz4c/comment/og3upqf/)), but this is an informal remark, not an official policy or ToS amendment, and it does not protect against automated abuse detection or rate limiting. Use at your own risk.
+- **Terms of service.** A Proton support team member stated on Reddit that lumo-tamer-style clients are "fine to use" as unofficial, unsupported tools ([link](https://www.reddit.com/r/lumo/comments/1siwz4c/comment/og3upqf/)), but this is an informal remark, not an official policy or ToS amendment, and it does not protect against automated abuse detection or rate limiting. A follow-up clarification from Proton support (Nov 2026) confirmed that enforcement targets clearly non-human traffic patterns (sustained, round-the-clock or high-volume automated use), that conservative rate caps and human-in-the-loop defaults reduce problematic patterns, and that enforcement is graduated with appeal options — but the Terms govern wherever informal statements diverge. Use at your own risk.
 - **Rate limiting and token usage.** Although care was put into making the app behave, it may make many API calls, potentially getting you rate-limited, or burn through your allowed tokens quickly. I have not experienced either of these issues on Lumo Plus.
 - **Security.** This app handles Proton user secrets. Although the code is vetted to the best of my knowledge and follows best practices, this is not my area of expertise. Please verify for yourself.
 - **AI-assisted development.** This code was written with the extensive use of Claude Code.

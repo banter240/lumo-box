@@ -16,5 +16,6 @@ import "./notifications-shim.js";
 import "@lumo-webview/src/bridges/download-feedback.js";
 import "@lumo-webview/src/bridges/connectors.js";
 import "@lumo-webview/src/bridges/schedules.js";
+import "@lumo-webview/src/bridges/skills.js";
 import "@lumo-webview/src/bridges/account-identity.js";
 import "@lumo-webview/src/bridges/theme-reporter.js";

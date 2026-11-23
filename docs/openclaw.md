@@ -2,7 +2,7 @@
 
 Use `lumo-max` when you want thinking on by default. Client `tools[]` are honored unless you set `customTools.enabled: false`.
 
-Window is **128.0K** (`contextWindow` 131072) with **12.8K** reserved (`maxTokens` 13107). The Lumo app meter is not on the OpenAI facade. See [README: Context window](../README.md#context-window).
+Window is **256.0K** (`contextWindow` 262144) with **25.6K** reserved (`maxTokens` 26214). The Lumo app meter is not on the OpenAI facade. See [README: Context window](../README.md#context-window).
 
 Add Lumo to `models.providers` in your OpenClaw config:
 
@@ -21,8 +21,8 @@ Add Lumo to `models.providers` in your OpenClaw config:
                         "reasoning": true,
                         "input": ["text"],
                         "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-                        "contextWindow": 131072,
-                        "maxTokens": 13107
+                        "contextWindow": 262144,
+                        "maxTokens": 26214
                     },
                     {
                         "id": "lumo",
@@ -37,8 +37,8 @@ Add Lumo to `models.providers` in your OpenClaw config:
                             "cacheRead": 0,
                             "cacheWrite": 0
                         },
-                        "contextWindow": 131072,
-                        "maxTokens": 13107
+                        "contextWindow": 262144,
+                        "maxTokens": 26214
                     }
                 ]
             }

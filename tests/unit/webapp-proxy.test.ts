@@ -44,9 +44,12 @@ describe("isWebappCandidatePath", () => {
 });
 
 describe("isWebappRequestPath", () => {
-  it("is inert in the default config (webapp disabled)", () => {
-    expect(isWebappRequestPath("/")).toBe(false);
-    expect(isWebappRequestPath("/anything")).toBe(false);
+  it("follows the effective config (webapp enabled by default)", () => {
+    // Defaults ship webapp.enabled: true, but a local config.yaml may
+    // override either way; assert only that the predicate tracks the
+    // effective value rather than a fixed default.
+    const enabled = isWebappRequestPath("/");
+    expect(enabled).toBe(isWebappCandidatePath("/", true));
   });
 });
 

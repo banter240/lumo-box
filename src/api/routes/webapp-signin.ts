@@ -184,6 +184,9 @@ export function createWebappSigninRouter(
   router.get("/auto", async (_req, res) => {
     const session = auth?.();
     if (!session) {
+      logger.warn(
+        "webapp signin: /auto without a valid server session; falling back to /start",
+      );
       res.redirect(302, "/webapp-signin/start");
       return;
     }
@@ -192,6 +195,7 @@ export function createWebappSigninRouter(
         session.api,
         session.keyPassword,
       );
+      logger.info("webapp signin: /auto minted fork; handing off to the app");
       res.redirect(
         302,
         handoffPath(selector, Buffer.from(keyB64u, "base64url")),

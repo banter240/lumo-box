@@ -12,16 +12,34 @@ This document is for contributors maintaining the integration with Proton's WebC
   - `packages/` - Shared packages (`@proton/crypto`, `@proton/shared`, etc.)
 - **License:** GPLv3
 
+## Where does Proton code live? (the map)
+
+Every piece of Proton-derived code is attributable at its location. Find it
+by what you need to do with it:
+
+| You are looking at…                                          | It lives in…                         | Status                                                                                                 | Why it is not somewhere else                                                                                                       |
+| ------------------------------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Vendored WebClients code (1:1 syncs + shims)                 | `packages/lumo/`, `packages/proton/` | DO NOT EDIT; refreshed by `npm run sync-upstream`; provenance in each package's `UPSTREAM` + `LICENSE` | Separate npm workspace so the sync pipeline and path aliases (`@lumo/*`, `@proton/*`) stay machine-stable                          |
+| Vendored desktop webview bundles (bridges, bundled pages)    | `packages/lumo-webview/`             | DO NOT EDIT; refreshed by `scripts/upstream/sync-webview.sh`; provenance in `UPSTREAM`                 | Upstream refresh must overwrite tamer glue without touching adapters                                                               |
+| Our own wire adapters (protocol mirrors of WebClients logic) | `src/proton/`                        | Editable; each file carries an upstream-reference header                                               | Adapters intentionally diverge (scoped to what the proxy needs); mixing them into `packages/` would break the 1:1 sync guarantee   |
+| Derivative ports of desktop Rust code                        | e.g. `src/skills/skill-cache.ts`     | Editable; provenance header names the upstream file and every intentional divergence                   | Ported to the connector registry, not synced; kept next to the layer it plugs into                                                 |
+| Upstream research clones                                     | `dev/tmp/`                           | Disposable; never imported, never shipped                                                              | Scratch space only — the source of truth is GitHub, pinned per package in `UPSTREAM` files and `scripts/upstream/last-sync-commit` |
+
+**The rule:** `packages/` means "Proton land — don't edit, sync it"; anything under
+`src/` is ours, but when it mirrors or ports upstream logic, the file header
+must say exactly which upstream file it mirrors and how it diverges. When in
+doubt, this document plus the `UPSTREAM` files are the authoritative map.
+
 ## Strategy
 
 We prefer to pull files unchanged from upstream. When that's not possible:
 
-| Problem | Solution | Location |
-|---------|----------|----------|
-| `@proton/*` imports | tsconfig path alias | `packages/proton/` |
-| Relative import to missing file | Shim at that path | `packages/lumo/` |
-| Minor code tweaks | DEP-3 patch | `packages/lumo/patches/` |
-| Major rewrites | Shim (replace file) | `packages/lumo/` |
+| Problem                         | Solution            | Location                 |
+| ------------------------------- | ------------------- | ------------------------ |
+| `@proton/*` imports             | tsconfig path alias | `packages/proton/`       |
+| Relative import to missing file | Shim at that path   | `packages/lumo/`         |
+| Minor code tweaks               | DEP-3 patch         | `packages/lumo/patches/` |
+| Major rewrites                  | Shim (replace file) | `packages/lumo/`         |
 
 ## Directory Structure
 
@@ -82,6 +100,7 @@ npm run sync-upstream
 ```
 
 The script:
+
 1. Downloads files from GitHub and compares with local
 2. Shows changes to shim source files (with GitHub diff links)
 3. Prompts to sync
@@ -98,41 +117,41 @@ Pulled unchanged and optionally patched. See `sync.sh` for full list.
 
 ### Patched Files
 
-| File | Patch | Description |
-|------|-------|-------------|
-| `keys.ts` | `keys.patch` | Export for Node.js (no webpack DefinePlugin) |
-| `redux/selectors.ts` | `redux-selectors.patch` | Remove react-redux, @proton/account |
+| File                   | Patch                     | Description                                         |
+| ---------------------- | ------------------------- | --------------------------------------------------- |
+| `keys.ts`              | `keys.patch`              | Export for Node.js (no webpack DefinePlugin)        |
+| `redux/selectors.ts`   | `redux-selectors.patch`   | Remove react-redux, @proton/account                 |
 | `redux/sagas/index.ts` | `redux-sagas-index.patch` | Fix IDB transaction auto-commit in loadReduxFromIdb |
-| `indexedDb/db.ts` | `indexedDb-db.patch` | Fix IDB transaction auto-commit throughout DbApi |
+| `indexedDb/db.ts`      | `indexedDb-db.patch`      | Fix IDB transaction auto-commit throughout DbApi    |
 
 ### Shims in lumo/ (LUMO_SHIMS)
 
 Local implementations that replace upstream Lumo app files. The sync script warns when upstream changes.
 
-| File | Purpose |
-|------|---------|
-| `config.ts` | APP_NAME, APP_VERSION, API_URL |
-| `crypto/index.ts` | Local crypto barrel (also listed in `LUMO_FILES`) |
-| `lib/lumo-api-client/index.ts` | Minimal barrel (upstream imports too many modules) |
-| `mocks/handlers.ts` | Scenario generators (upstream uses MSW) |
-| `redux/slices/index.ts` | Core slices only (no UI slices) |
-| `redux/slices/lumoUserSettings.ts` | Stub for Node.js |
-| `redux/slices/attachmentLoadingState.ts` | Stub for saga compat |
-| `redux/store.ts` | Simplified for Node.js (no browser middleware) |
-| `redux/rootReducer.ts` | No @proton/redux-shared-store |
-| `util/safeLogger.ts` | Console logging |
-| `services/search/searchService.ts` | Stub |
+| File                                     | Purpose                                            |
+| ---------------------------------------- | -------------------------------------------------- |
+| `config.ts`                              | APP_NAME, APP_VERSION, API_URL                     |
+| `crypto/index.ts`                        | Local crypto barrel (also listed in `LUMO_FILES`)  |
+| `lib/lumo-api-client/index.ts`           | Minimal barrel (upstream imports too many modules) |
+| `mocks/handlers.ts`                      | Scenario generators (upstream uses MSW)            |
+| `redux/slices/index.ts`                  | Core slices only (no UI slices)                    |
+| `redux/slices/lumoUserSettings.ts`       | Stub for Node.js                                   |
+| `redux/slices/attachmentLoadingState.ts` | Stub for saga compat                               |
+| `redux/store.ts`                         | Simplified for Node.js (no browser middleware)     |
+| `redux/rootReducer.ts`                   | No @proton/redux-shared-store                      |
+| `util/safeLogger.ts`                     | Console logging                                    |
+| `services/search/searchService.ts`       | Stub                                               |
 
 ### Shims in proton/ (PROTON_SHIMS)
 
 Local implementations for `@proton/*` packages. The sync script warns when upstream changes.
 
-| File | Purpose |
-|------|---------|
-| `crypto/lib/proxy/proxy.ts` | CryptoProxy using standard openpgp |
-| `crypto/lib/utils.ts` | Partial (utf8/Uint8Array utils only) |
-| `shared/lib/apps/helper.ts` | APP_NAME stub |
-| `shared/lib/fetch/headers.ts` | UID/Authorization headers |
+| File                          | Purpose                              |
+| ----------------------------- | ------------------------------------ |
+| `crypto/lib/proxy/proxy.ts`   | CryptoProxy using standard openpgp   |
+| `crypto/lib/utils.ts`         | Partial (utf8/Uint8Array utils only) |
+| `shared/lib/apps/helper.ts`   | APP_NAME stub                        |
+| `shared/lib/fetch/headers.ts` | UID/Authorization headers            |
 
 ## Path Aliases
 
@@ -140,29 +159,29 @@ Two alias systems coexist:
 
 ### Package imports (for lumo-tamer code)
 
-| Import | Resolves To |
-|--------|-------------|
+| Import    | Resolves To           |
+| --------- | --------------------- |
 | `@lumo/*` | `packages/lumo/src/*` |
 
 ### Upstream-compatible imports (for synced code)
 
 Upstream code uses `@proton/*` imports. These are mapped in `tsconfig.json`:
 
-| Import | Resolves To | Note |
-|--------|-------------|------|
-| `@proton/*` | `packages/proton/src/*` | Wildcard for deep paths |
-| `@proton/crypto` | `packages/proton/src/crypto/index.ts` | Barrel export |
+| Import               | Resolves To                           | Note                                   |
+| -------------------- | ------------------------------------- | -------------------------------------- |
+| `@proton/*`          | `packages/proton/src/*`               | Wildcard for deep paths                |
+| `@proton/crypto`     | `packages/proton/src/crypto/index.ts` | Barrel export                          |
 | `@proton/crypto/lib` | `packages/proton/src/crypto/index.ts` | Upstream barrel imports WebWorker deps |
 
 ### Non-Proton aliases
 
-| Import | Resolves To |
-|--------|-------------|
-| `lodash/isNil` | `src/shims/lodash-isNil.ts` |
-| `lodash/isEqual` | `src/shims/lodash-isEqual.ts` |
-| `lodash/isObject` | `src/shims/lodash-isObject.ts` |
+| Import                  | Resolves To                          |
+| ----------------------- | ------------------------------------ |
+| `lodash/isNil`          | `src/shims/lodash-isNil.ts`          |
+| `lodash/isEqual`        | `src/shims/lodash-isEqual.ts`        |
+| `lodash/isObject`       | `src/shims/lodash-isObject.ts`       |
 | `json-stable-stringify` | `src/shims/json-stable-stringify.ts` |
-| `toposort` | `src/shims/toposort.ts` |
+| `toposort`              | `src/shims/toposort.ts`              |
 
 ## Patches
 
@@ -226,15 +245,15 @@ The directory structure mirrors `packages/` so file paths match upstream. Some f
 
 Non-Proton shims that don't need upstream tracking:
 
-| File | Purpose |
-|------|---------|
-| `console.ts` | Redirects console to pino logger |
-| `fetch-adapter.ts` | Bridges upstream API calls to lumo-tamer |
-| `indexeddb-polyfill.ts` | SQLite-backed IndexedDB for Node.js |
-| `uint8array-base64-polyfill.ts` | ES2024 Uint8Array.fromBase64/toBase64 |
-| `lodash-*.ts` | ESM wrappers for lodash functions |
-| `json-stable-stringify.ts` | CJS/ESM interop |
-| `toposort.ts` | CJS/ESM interop |
+| File                            | Purpose                                  |
+| ------------------------------- | ---------------------------------------- |
+| `console.ts`                    | Redirects console to pino logger         |
+| `fetch-adapter.ts`              | Bridges upstream API calls to lumo-tamer |
+| `indexeddb-polyfill.ts`         | SQLite-backed IndexedDB for Node.js      |
+| `uint8array-base64-polyfill.ts` | ES2024 Uint8Array.fromBase64/toBase64    |
+| `lodash-*.ts`                   | ESM wrappers for lodash functions        |
+| `json-stable-stringify.ts`      | CJS/ESM interop                          |
+| `toposort.ts`                   | CJS/ESM interop                          |
 
 ## Uint8Array.fromBase64 Polyfill
 

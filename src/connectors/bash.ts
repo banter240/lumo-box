@@ -28,6 +28,26 @@ const TOOL_DEFS: ConnectorTool[] = [
       required: ["language", "code"],
     },
   },
+  {
+    name: "script",
+    description:
+      "Execute a script file with a literal argument vector (no shell string). Used by the skill runtime; arguments are never interpolated.",
+    input_schema: {
+      type: "object",
+      properties: {
+        program: {
+          type: "string",
+          description: "Interpreter binary, e.g. python3 / node / bash",
+        },
+        args: {
+          type: "array",
+          items: { type: "string" },
+          description: "Literal argv: [scriptPath, ...arguments]",
+        },
+      },
+      required: ["program", "args"],
+    },
+  },
 ];
 
 const MAX_OUTPUT_CHARS = 200_000;
@@ -86,6 +106,20 @@ export class BashConnector {
   }
 
   async run(toolName: string, input: unknown): Promise<unknown> {
+    if (toolName === "script") {
+      const script = input as { program?: unknown; args?: unknown };
+      const program = typeof script?.program === "string" ? script.program : "";
+      const args = Array.isArray(script?.args)
+        ? script.args.filter((a): a is string => typeof a === "string")
+        : [];
+      if (!program || args.length === 0) {
+        throw new ConnectorError(
+          "program and args are required",
+          "invalid_input",
+        );
+      }
+      return this.spawnCapture(program, args);
+    }
     if (toolName !== "run") {
       throw new ConnectorError(`Unknown bash tool: ${toolName}`, "not_found");
     }
@@ -108,8 +142,13 @@ export class BashConnector {
     }
     const [cmd, ...rest] = executor;
 
+    return this.spawnCapture(cmd, [...rest, code]);
+  }
+
+  /** spawn with combined stdout/stderr capture and the configured timeout. */
+  private spawnCapture(cmd: string, argv: readonly string[]): Promise<unknown> {
     return new Promise((resolve) => {
-      const proc = spawn(cmd, [...rest, code], {
+      const proc = spawn(cmd, [...argv], {
         stdio: ["ignore", "pipe", "pipe"],
       });
       let output = "";

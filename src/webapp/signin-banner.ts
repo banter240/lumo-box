@@ -1,26 +1,65 @@
 /**
- * Tamer-owned addition to the injector: sign-in pill for the proxied app.
- * The app's own login button cannot work behind the proxy (its redirect
- * returns to the real lumo origin), so the fork sign-in route is the
- * supported path. Shown only when the SERVER session is dead; the app
- * may still look logged in — its own cookies outlive a server refresh
- * failure, and a logged-in app will not redeem a fork, so restoring is
- * a manual, user-paced step (sign out of the app first or just sign in).
+ * Sign-in pill for the proxied app. The app's own login button cannot
+ * work behind the proxy (its redirect returns to the real lumo origin),
+ * so the fork sign-in route is the supported path.
+ *
+ * Self-heal: a guest shell with a LIVE server session (classic case:
+ * /auth login while the webapp was disabled) auto-navigates to
+ * /webapp-signin/auto, which mints the fork from the server session.
+ * Heals are throttled to one per HEAL_THROTTLE_MS: a FAILED redemption
+ * bounces through non-guest routes we cannot distinguish from success,
+ * so a fresh guard would loop guest→auto forever. After the window the
+ * pill shows (and a later guest landing heals again).
  */
 
 (function () {
   "use strict";
 
-  /** Server replied; false means the live in-memory session is gone. */
-  async function sessionMissing(): Promise<boolean> {
+  const HEAL_THROTTLE_MS = 60_000;
+  const HEAL_KEY = "tamer-guest-heal-at";
+
+  /** True when the bridge reports a live server session. */
+  async function serverSignedIn(): Promise<boolean> {
     try {
       const invoke = window.__TAURI_INTERNALS__?.invoke;
       if (!invoke) return false;
-      const signedIn = await invoke<boolean>("is_account_signed_in");
-      return signedIn === false;
+      return (await invoke<boolean>("is_account_signed_in")) === true;
     } catch {
       return false;
     }
+  }
+
+  function healedRecently(): boolean {
+    try {
+      const at = Number(sessionStorage.getItem(HEAL_KEY));
+      return Number.isFinite(at) && Date.now() - at < HEAL_THROTTLE_MS;
+    } catch {
+      return false;
+    }
+  }
+
+  function autoHeal(): void {
+    try {
+      sessionStorage.setItem(HEAL_KEY, String(Date.now()));
+    } catch {}
+    window.location.href = "/webapp-signin/auto";
+  }
+
+  function evaluate(): void {
+    void (async () => {
+      if (onLoginPath()) return;
+      const inGuest = window.location.pathname.startsWith("/guest");
+      const signedIn = await serverSignedIn();
+      if (!signedIn) {
+        showPill("Sign in with Proton");
+        return;
+      }
+      if (inGuest && !healedRecently()) {
+        autoHeal();
+        return;
+      }
+      if (inGuest) showPill("Sign in with Proton");
+    })();
   }
 
   function onLoginPath(): boolean {
@@ -59,12 +98,6 @@
     const add = () => document.body?.appendChild(bar);
     if (document.body) add();
     else document.addEventListener("DOMContentLoaded", add, { once: true });
-  }
-
-  function evaluate(): void {
-    void sessionMissing().then((missing) => {
-      if (missing) showPill("Sign in with Proton");
-    });
   }
 
   evaluate();

@@ -1,0 +1,19 @@
+Proton WebClients upstream code (packages/lumo + packages/proton) - DO NOT EDIT MANUALLY
+
+Repository: https://github.com/ProtonMail/WebClients
+Branch: main (files pulled by scripts/upstream/sync.sh)
+Last synced commit: see scripts/upstream/last-sync-commit
+Upstream paths:
+  - applications/lumo/src/app/  -> packages/lumo/src/
+  - packages/                   -> packages/proton/src/
+
+License: GPL-3.0 (same as lumo-tamer; see LICENSE in this directory)
+
+Contents:
+  - Most files in packages/lumo/src are 1:1 syncs from upstream.
+  - Files marked as shims in docs/upstream.md are local adaptations
+    (missing-module replacements and Node.js adjustments).
+  - packages/lumo/patches/ carries DEP-3 patches applied after sync.
+
+Refresh: npm run sync-upstream
+The full strategy table (shim vs patch vs sync) lives in docs/upstream.md.

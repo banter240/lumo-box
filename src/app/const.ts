@@ -113,8 +113,8 @@ export const ENUMS = {
 export const MODELS = {
   /** Stable fake epoch: clients sort by it, we never change it. */
   CREATED_EPOCH: 1700000000,
-  CONTEXT_WINDOW: 131072,
-  MAX_OUTPUT_TOKENS: 13107,
+  CONTEXT_WINDOW: 262144,
+  MAX_OUTPUT_TOKENS: 26214,
 } as const;
 
 /** Conversation dirty-sync cadence (not YAML-configurable). */

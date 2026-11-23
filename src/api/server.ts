@@ -174,6 +174,19 @@ export class APIServer {
       `/${BRIDGE_PREFIX}`,
       createLumoBridgeRouter({
         isAuthenticated: () => this.app.isAuthenticated(),
+        protonApi: () => {
+          const provider = this.app.getAuthManager()?.getProvider();
+          return provider?.isValid() ? provider.createApi() : undefined;
+        },
+        keyPassword: () =>
+          this.app.getAuthManager()?.getProvider().getKeyPassword(),
+        cachedKeys: () => {
+          const provider = this.app.getAuthManager()?.getProvider();
+          return {
+            userKeys: provider?.getCachedUserKeys?.(),
+            masterKeys: provider?.getCachedMasterKeys?.(),
+          };
+        },
         ...(scheduleRunner
           ? {
               scheduleRunner,
@@ -183,19 +196,20 @@ export class APIServer {
       }),
     );
 
-    if (getWebappConfig().enabled) {
-      this.expressApp.use(
-        "/webapp-signin",
-        createWebappSigninRouter(() => {
-          const manager = this.app.getAuthManager();
-          const provider = manager?.getProvider();
-          if (!provider || !provider.isValid()) return undefined;
-          const keyPassword = provider.getKeyPassword();
-          if (!keyPassword) return undefined;
-          return { api: provider.createApi(), keyPassword };
-        }),
-      );
-    }
+    // Always mounted: the router self-guards on the live webapp.enabled
+    // value (hot-reload activation must make /auto reachable without a
+    // server restart; a disabled webapp just redirects to /start harmlessly).
+    this.expressApp.use(
+      "/webapp-signin",
+      createWebappSigninRouter(() => {
+        const manager = this.app.getAuthManager();
+        const provider = manager?.getProvider();
+        if (!provider || !provider.isValid()) return undefined;
+        const keyPassword = provider.getKeyPassword();
+        if (!keyPassword) return undefined;
+        return { api: provider.createApi(), keyPassword };
+      }),
+    );
 
     const webappRouter = createWebappRouter();
     this.expressApp.use((req, res, next) => {

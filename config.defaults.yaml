@@ -119,7 +119,7 @@ updates:
 # through this server: page traffic is proxied to Proton, login happens inside
 # the page as usual, and /v1 keeps working unchanged. Off = no change.
 webapp:
-  enabled: false
+  enabled: true
   # Where page traffic is proxied to. Host-only: change in config.yaml, never
   # via /config (changing it would tunnel the browser's Proton session elsewhere).
   upstream: "https://lumo.proton.me"
@@ -129,7 +129,6 @@ webapp:
   schedules:
     enabled: false
     maxConcurrency: 1
-
 
 # Connector backends shared by every host that executes tools on this machine
 # (the web app bridge AND the CLI tool loop). One security surface: roots,

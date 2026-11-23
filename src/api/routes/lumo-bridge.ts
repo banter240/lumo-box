@@ -23,6 +23,7 @@ import { logger } from "../../app/logger.js";
 import { insertAfterHead } from "../../webapp/head-inject.js";
 import { resolveDataPath, resolveProjectPath } from "../../app/paths.js";
 import { ConnectorRegistry } from "../../connectors/registry.js";
+import { SkillCache } from "../../skills/skill-cache.js";
 import type {
   ApprovalRequest,
   ConnectorManifest,
@@ -210,6 +211,28 @@ function wireArg(args: Record<string, unknown>, ...names: string[]): string {
   return "";
 }
 
+/** Build a one-off KeyManager-backed session for user-settings access
+ * (theme read/write). Same path the conversation store init uses. */
+async function themeSession(options: BridgeOptions): Promise<{
+  protonApi: import("../../lumo-client/types.js").ProtonApi;
+  keyManager: import("../../conversations/key-manager.js").KeyManager;
+}> {
+  const protonApi = options.protonApi?.();
+  const keyPassword = options.keyPassword?.();
+  if (!protonApi || !keyPassword) {
+    throw new Error("Requires a signed-in account");
+  }
+  const cached = options.cachedKeys?.();
+  const { KeyManager } = await import("../../conversations/key-manager.js");
+  const keyManager = new KeyManager({
+    protonApi,
+    cachedUserKeys: cached?.userKeys as never,
+    cachedMasterKeys: cached?.masterKeys as never,
+  });
+  await keyManager.initialize(keyPassword);
+  return { protonApi, keyManager };
+}
+
 interface BridgeOptions {
   config?: () => ConnectorsConfig;
   scheduleStorePath?: string;
@@ -218,6 +241,17 @@ interface BridgeOptions {
   /** Live in-memory session; the vault file may lag (deleted while the
    * server holds tokens, or rewritten on the next refresh). */
   isAuthenticated?: () => boolean;
+  /** Authenticated API for server-side protocol calls (user settings). */
+  protonApi?: () => import("../../lumo-client/types.js").ProtonApi | undefined;
+  /** keyPassword when the session can decrypt keys; else undefined. */
+  keyPassword?: () => string | undefined;
+  /** Cached userKeys/masterKeys from the vault, if any. */
+  cachedKeys?: () =>
+    | {
+        userKeys?: unknown[];
+        masterKeys?: unknown[];
+      }
+    | undefined;
 }
 
 export function createLumoBridgeRouter(options: BridgeOptions = {}): Router {
@@ -239,6 +273,13 @@ export function createLumoBridgeRouter(options: BridgeOptions = {}): Router {
   const scheduleStore = new ScheduleStore(
     options.scheduleStorePath ?? resolveDataPath(SCHEDULE_STORE_FILE),
   );
+
+  // Skill runtime cache (desktop skills.rs contract): plaintext bundles,
+  // account-bound, cleared on sign-out. One account today (the vault);
+  // the id changes with sign-in state so plaintext never crosses sessions.
+  const skillCache = new SkillCache(resolveDataPath("skill-cache"));
+  const skillAccount = () => (options.isAuthenticated?.() ? "vault" : null);
+  skillCache.activate(skillAccount());
   const coordinator = options.scheduleRunner
     ? new ScheduleCoordinator(
         scheduleStore,
@@ -274,6 +315,99 @@ export function createLumoBridgeRouter(options: BridgeOptions = {}): Router {
         );
       // Native envelope: only {value, file_transport} crosses the boundary.
       return { value: output, file_transport: false };
+    },
+    // --- stubs for window-less desktop features (quick-ask popup, file
+    // manager reveal): the proxied app has no OS window/file manager. ---
+    take_quick_ask: () => null,
+    reveal_download: () => ({}),
+
+    // --- skills (skills.rs contract) ---
+    skill_sync_bundle: async (args) => {
+      const account = skillAccount();
+      if (!account) throw new Error("Skill sync requires a signed-in account");
+      const files = Array.isArray(args.files)
+        ? (args.files as Record<string, unknown>[])
+        : [];
+      await skillCache.materialize(
+        account,
+        {
+          skillId: String(args.skillId ?? ""),
+          revision: String(args.revision ?? ""),
+        },
+        files.map((f) => ({
+          path: String(f.path ?? ""),
+          data: String(f.data ?? ""),
+        })),
+      );
+      return {};
+    },
+    skill_execute_script: async (args) => {
+      const account = skillAccount();
+      if (!account)
+        throw new Error("Skill execution requires a signed-in account");
+      const request = (args.request ?? {}) as Record<string, unknown>;
+      const { input, release } = await skillCache.scriptInput(account, {
+        skillId: String(request.skillId ?? ""),
+        revision: String(request.revision ?? ""),
+        skillPath: String(request.skillPath ?? ""),
+        scriptPath: String(request.scriptPath ?? ""),
+        args: Array.isArray(request.args)
+          ? request.args.map((a) => String(a))
+          : [],
+      });
+      try {
+        // Normal shell readiness, approval, disabled/read-only policy, and
+        // account result scope apply (skills.rs: registry.dispatch("bash")).
+        const output = await bridge.sync().invoke("bash", "script", input);
+        return { value: output, file_transport: false };
+      } finally {
+        release();
+      }
+    },
+    skill_cache_retain: (args) => {
+      const account = skillAccount();
+      if (!account)
+        throw new Error("Skill retention requires a signed-in account");
+      const skills = Array.isArray(args.skills)
+        ? (args.skills as Record<string, unknown>[])
+        : [];
+      skillCache.retain(
+        account,
+        skills.map((s) => ({ skillId: String(s.skillId ?? "") })),
+      );
+      return {};
+    },
+    // --- theme (server user settings — the app's own theme store) ---
+    get_server_theme: async () => {
+      const protonApi = options.protonApi?.();
+      const keyPassword = options.keyPassword?.();
+      if (!protonApi || !keyPassword) {
+        throw new Error("Requires a signed-in account");
+      }
+      const { getWebappThemeMode } = await import("../../webapp/set-theme.js");
+      const { KeyManager } = await import("../../conversations/key-manager.js");
+      const keyManager = new KeyManager({ protonApi });
+      await keyManager.initialize(keyPassword);
+      return {
+        mode: await getWebappThemeMode(
+          protonApi,
+          keyManager.getMasterKeyBase64(),
+        ),
+      };
+    },
+    set_web_theme: async (args) => {
+      const mode = args.mode;
+      if (mode !== "light" && mode !== "dark" && mode !== "auto") {
+        throw new Error("mode must be light, dark or auto");
+      }
+      const { protonApi, keyManager } = await themeSession(options);
+      const { setWebappThemeMode } = await import("../../webapp/set-theme.js");
+      await setWebappThemeMode(
+        protonApi,
+        keyManager.getMasterKeyBase64(),
+        mode,
+      );
+      return {};
     },
     respond_tool_approval: (args) => {
       const requestId = String(args.requestId ?? "");
