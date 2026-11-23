@@ -1,6 +1,6 @@
 {
   "name": "lumo-box",
-  "version": "0.10.1",
+  "version": "1.0.0",
   "description": "Use Proton's Lumo AI through OpenAI-compatible API and CLI",
   "main": "dist/src/box.js",
   "type": "module",

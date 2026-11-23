@@ -1,3 +1,66 @@
+## [1.0.0](https://github.com/banter240/lumo-box/compare/v0.10.1...v1.0.0) (2026-11-23)
+
+### ⚠ BREAKING CHANGES
+
+* rename to lumo-box (breaking: CLI command, env vars, storage keys)
+
+* chore!: rename to lumo-box (breaking: CLI command, env vars, storage keys)
+
+  Product name lumo-tamer -> lumo-box, CLI command -> lumo_box (bin),
+  LUMO_TAMER_* / LUMO_HOME / LUMO_CONTAINER_NAME / LUMO_VAULT_KEY_FILE
+  env vars -> BOX_* / BOX_HOME / BOX_CONTAINER_NAME / BOX_VAULT_KEY_FILE,
+  UI cookie lumo_tamer_ui -> lumo_box_ui, localStorage keys -> lumo-box-*.
+
+  Migrations for existing installs: keychain service lumo-tamer is read
+  and re-saved under lumo-box on first unlock; config exports tagged
+  lumo-tamer-config stay importable.
+
+  Kept: ZeroTricks/lumo-tamer provenance (README fork lines, CHANGELOG,
+  packages/ vendored trees), Proton service env names (LUMO_API etc.).
+
+### Features
+
+* feat(api): native tools mode with real function calling
+
+  Client tools[] ride the request as real function schemas and tool calls
+  stream back as delta.tool_calls for streaming clients; a legacy
+  text-protocol transport stays available as a config rollback for
+  clients that cannot consume native function calling.
+* feat(auth): single sign-in and canonical host for the proxied web app
+
+  The /auth login produces the app session via a server-side fork push,
+  so the proxied web app needs no second login; the app is served from a
+  canonical host so its session scoping stays intact.
+* feat(cli): tool loop over the shared connector registry
+
+  The interactive CLI executes tool calls from any backend through the
+  same connector registry the API uses, streaming native client tool
+  calls back to the model instead of flattening them into text.
+* feat(webapp): desktop-parity skills bridge, self-heal sign-in, nav and theme fixes
+
+  Skills: bundles synced by the web app land in a validated, size-limited,
+  account-isolated plaintext cache and execute through the shell
+  connector approval gate with a literal argument vector - the same IPC
+  contract as the official desktop app (skill_sync_bundle /
+  skill_execute_script / skill_cache_retain).
+
+  Webapp UX: a guest shell with a live server session self-heals into the
+  signed-in app (throttled to one attempt per 60s); /webapp-signin mounts
+  unconditionally; the docked sidebar gains auth/update status chips and
+  a theme toggle that cycles light/dark/system; server pages boot with
+  the effective theme.
+
+  Docs: native tool transport, context window, single sign-in, disabled
+  backends.
+* feat(webapp): proxied lumo web app with vendored desktop bridges
+
+  Serve the official Lumo web app through this server behind
+  webapp.enabled: a request-level proxy for the app bundle plus a docked
+  sidebar (nav shell) injected into both server pages and the proxied
+  app. Desktop-parity bridges from lumo-desktop (Tauri IPC surface) are
+  vendored and reimplemented where the transport differs. Login works
+  against the real server through the packaged login page.
+
 ## [0.10.1](https://github.com/banter240/lumo-tamer/compare/v0.10.0...v0.10.1) (2026-11-15)
 
 ### Bug Fixes
