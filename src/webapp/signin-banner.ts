@@ -53,7 +53,7 @@
     );
     bar.textContent = text;
     bar.addEventListener("click", () => {
-      window.location.href = "/webapp-signin/start";
+      window.location.href = "/webapp-signin/auto";
     });
 
     const add = () => document.body?.appendChild(bar);

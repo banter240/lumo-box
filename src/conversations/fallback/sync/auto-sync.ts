@@ -254,6 +254,13 @@ export class AutoSyncService {
 // Singleton instance
 let autoSyncInstance: AutoSyncService | null = null;
 
+/** The live auto-sync instance when one exists, undefined otherwise.
+ * Unlike getAutoSyncService this never constructs (and thus never throws
+ * when the sync stack was never initialized). */
+export function peekAutoSyncService(): AutoSyncService | undefined {
+  return autoSyncInstance ?? undefined;
+}
+
 /**
  * Get or create the global AutoSyncService instance
  */

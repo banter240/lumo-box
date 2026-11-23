@@ -164,8 +164,46 @@ function injectInjectorScript(html: string, src: string): string {
 /** The app's fork redemption endpoint (consuming GET). */
 const FORK_RE = /^\/api\/auth\/v4\/sessions\/forks\/([^/]+)$/;
 
+/** The host the proxied app must run on: its SPA derives same-origin
+ * URLs by rewriting the first hostname label (127.0.0.1 -> lumo.0.0.1,
+ * lumo.lumo.localhost -> wrong origin), so navigations are held to this
+ * one canonical host. */
+const CANONICAL_WEBAPP_HOST = "lumo.localhost";
+
+/** Redirect target for a navigation arriving on the wrong host, or undefined
+ * when the host is already canonical or the request is not a navigation.
+ * Pure: also used by the unit tests. */
+export function webappCanonicalLocation(
+  host: string | undefined,
+  method: string,
+  accept: string | undefined,
+  originalUrl: string,
+): string | undefined {
+  if (!host) return undefined;
+  const colon = host.indexOf(":");
+  const hostname = colon === -1 ? host : host.slice(0, colon);
+  if (hostname === CANONICAL_WEBAPP_HOST) return undefined;
+  if (method !== "GET" || !(accept ?? "").includes("text/html")) {
+    return undefined;
+  }
+  // The browser carries the request's #fragment over to a redirect target
+  // without one, so /login#selector&sk redemptions survive the hop.
+  const port = colon === -1 ? "" : host.slice(colon);
+  return `http://${CANONICAL_WEBAPP_HOST}${port}${originalUrl}`;
+}
+
 function proxyHandler(upstream: string) {
   return async (req: Request, res: ExpressResponse): Promise<void> => {
+    const canonical = webappCanonicalLocation(
+      req.get("host"),
+      req.method,
+      req.headers.accept,
+      req.originalUrl,
+    );
+    if (canonical) {
+      res.redirect(302, canonical);
+      return;
+    }
     let target: URL;
     try {
       target = new URL(req.originalUrl, upstream);

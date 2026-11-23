@@ -16,13 +16,22 @@ import { randomBytes } from "crypto";
 import { getWebappConfig } from "../../app/config.js";
 import { logger } from "../../app/logger.js";
 import { reserveFork, forkTokens } from "../../auth/desktop-login.js";
+import {
+  produceWebappFork,
+  FORK_CHILD_CLIENT_ID,
+} from "../../auth/webapp-fork.js";
 import { hasProtonSyncKeys } from "../../auth/sync-capability.js";
+import type { AuthManager } from "../../auth/manager.js";
+import type { ProtonApi } from "../../lumo-client/types.js";
+
+/** Server session pieces /auto needs; undefined when not signed in. */
+export type WebappAutoSession = { api: ProtonApi; keyPassword: string };
 
 const TTL_MS = 10 * 60 * 1000;
 
 /** The web app stores the fork under its own client ID; a mismatch
  * surfaces as "Invalid selector", so this must stay web-lumo. */
-const CHILD_CLIENT_ID = "web-lumo";
+/** /login#selector=…&sk=… handoff the web app redeems the fork with. */
 
 interface Pending {
   selector: string;
@@ -160,8 +169,41 @@ export function observeForkRedemption(
     );
 }
 
-export function createWebappSigninRouter(): Router {
+/**
+ * Single sign-in: mint the webapp fork from the RUNNING tamer session
+ * (pushForkSession, Independent:1 — separate app tokens, no refresh race)
+ * and hand the browser straight to the app's /login#selector&sk redemption.
+ * Falls back to /start (account.proton.me round trip) when the server has
+ * no valid session.
+ */
+export function createWebappSigninRouter(
+  auth?: () => WebappAutoSession | undefined,
+): Router {
   const router = Router();
+
+  router.get("/auto", async (_req, res) => {
+    const session = auth?.();
+    if (!session) {
+      res.redirect(302, "/webapp-signin/start");
+      return;
+    }
+    try {
+      const { selector, keyB64u } = await produceWebappFork(
+        session.api,
+        session.keyPassword,
+      );
+      res.redirect(
+        302,
+        handoffPath(selector, Buffer.from(keyB64u, "base64url")),
+      );
+    } catch (error) {
+      logger.warn(
+        { error: String(error) },
+        "webapp signin: server fork push failed; falling back to account flow",
+      );
+      res.redirect(302, "/webapp-signin/start");
+    }
+  });
 
   router.get("/start", async (_req, res) => {
     dropExpired();
@@ -179,7 +221,7 @@ export function createWebappSigninRouter(): Router {
         accountUrlForUpstream(getWebappConfig().upstream),
         userCode,
         key,
-        CHILD_CLIENT_ID,
+        FORK_CHILD_CLIENT_ID,
       );
       logger.info("webapp signin: fork reserved, holding page served");
       res.type("html").send(holdingPage(url, state));

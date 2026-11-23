@@ -184,7 +184,17 @@ export class APIServer {
     );
 
     if (getWebappConfig().enabled) {
-      this.expressApp.use("/webapp-signin", createWebappSigninRouter());
+      this.expressApp.use(
+        "/webapp-signin",
+        createWebappSigninRouter(() => {
+          const manager = this.app.getAuthManager();
+          const provider = manager?.getProvider();
+          if (!provider || !provider.isValid()) return undefined;
+          const keyPassword = provider.getKeyPassword();
+          if (!keyPassword) return undefined;
+          return { api: provider.createApi(), keyPassword };
+        }),
+      );
     }
 
     const webappRouter = createWebappRouter();

@@ -7,8 +7,8 @@ import { createProtonApi } from "./api-factory.js";
 import { fetchKeys } from "./fetch-keys.js";
 import { hasProtonSyncKeys } from "./sync-capability.js";
 import type { StoredTokens } from "./types.js";
+import { FORK_CHILD_CLIENT_ID } from "./webapp-fork.js";
 
-const CLIENT_ID = "web-lumo";
 const TTL_MS = 10 * 60 * 1000;
 
 const ENDPOINTS = [
@@ -58,7 +58,7 @@ export function desktopLoginUrl(
   app: string,
   redirectUrl?: string,
 ): string {
-  const fragment = `0:${userCode}:${key.toString("base64")}:${CLIENT_ID}`;
+  const fragment = `0:${userCode}:${key.toString("base64")}:${FORK_CHILD_CLIENT_ID}`;
   const u = new URL("https://account.proton.me/desktop/login");
   u.searchParams.set("app", app);
   u.searchParams.set("pv", "3");

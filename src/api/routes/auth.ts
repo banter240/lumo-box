@@ -13,7 +13,7 @@
 import { existsSync } from "fs";
 import { Router, Request, Response } from "express";
 import { EndpointDependencies } from "../types.js";
-import { getAutoSyncService } from "../../conversations/index.js";
+import { peekAutoSyncService } from "../../conversations/index.js";
 import { logger } from "../../app/logger.js";
 import { runLoginAuthentication } from "../../auth/login/authenticate.js";
 import { ProtonAuthError } from "../../auth/login/proton-auth-cli.js";
@@ -36,7 +36,7 @@ import { sendAuthRequired } from "../error-handler.js";
 import { htmlPage } from "../web-ui.js";
 import { isLocalRequest } from "../access.js";
 import { VERSION } from "../../app/version.js";
-import { getConversationsConfig } from "../../app/config.js";
+import { getConversationsConfig, getWebappConfig } from "../../app/config.js";
 import { clientIp, createAttemptGate } from "../attempt-limit.js";
 import { APP, AUTH, PORTS } from "../../app/const.js";
 
@@ -269,6 +269,10 @@ function renderAuthPage(state: {
           if (fail) fail.open = true;
           return;
         }
+        if (data.webappAuto) {
+          location.href = '/webapp-signin/auto';
+          return;
+        }
         location.reload();
       } catch (err) {
         msg.textContent = 'Network error';
@@ -298,7 +302,13 @@ function renderAuthPage(state: {
         try {
           const res = await fetch('/auth/sign-in/status?id=' + encodeURIComponent(id));
           const data = await res.json();
-          if (data.ready) location.reload();
+          if (data.ready) {
+            if (data.webappAuto) {
+              location.href = '/webapp-signin/auto';
+              return;
+            }
+            location.reload();
+          }
           if (data.expired) {
             clearInterval(signInTimer);
             msg.textContent = 'This sign-in link expired. Tap “New link” and try again.';
@@ -430,7 +440,7 @@ export function createAuthRouter(
 
   router.post("/auth/logout", async (_req: Request, res: Response) => {
     try {
-      getAutoSyncService()?.stop();
+      peekAutoSyncService()?.stop();
       if (deps.authManager) {
         await deps.authManager.logout();
       } else if (deps.vaultPath) {
@@ -502,6 +512,7 @@ export function createAuthRouter(
         method: login.method,
         message: copy.message,
         detail: copy.detail,
+        webappAuto: getWebappConfig().enabled,
       });
     } catch (error) {
       if (
@@ -580,7 +591,12 @@ export function createAuthRouter(
         );
       }
       await hooks.onAuthenticated?.();
-      res.json({ ready: true, sync: result.sync, method: result.method });
+      res.json({
+        ready: true,
+        sync: result.sync,
+        method: result.method,
+        webappAuto: getWebappConfig().enabled,
+      });
     } catch (error) {
       logger.error({ error }, "GET /auth/sign-in/status failed");
       res.status(502).json({
@@ -617,7 +633,7 @@ export function createAuthRouter(
       }
 
       // Stop auto-sync if running
-      const autoSync = getAutoSyncService();
+      const autoSync = peekAutoSyncService();
       autoSync?.stop();
 
       // Perform logout (stops refresh timer, revokes session, deletes tokens)

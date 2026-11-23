@@ -10,29 +10,30 @@
 
 // Store
 export {
-    FallbackStore,
-    getFallbackStore,
-    resetFallbackStore,
-} from './store.js';
+  FallbackStore,
+  getFallbackStore,
+  resetFallbackStore,
+} from "./store.js";
 
 // Sync services
 export {
-    SyncService,
-    getSyncService,
-    resetSyncService,
-    type SyncServiceConfig,
-} from './sync/index.js';
+  SyncService,
+  getSyncService,
+  resetSyncService,
+  type SyncServiceConfig,
+} from "./sync/index.js";
 
 export {
-    AutoSyncService,
-    getAutoSyncService,
-    resetAutoSyncService,
-} from './sync/index.js';
+  AutoSyncService,
+  getAutoSyncService,
+  peekAutoSyncService,
+  resetAutoSyncService,
+} from "./sync/index.js";
 
 export {
-    SpaceManager,
-    type SpaceManagerConfig,
-    type SpaceContext,
-} from './sync/index.js';
+  SpaceManager,
+  type SpaceManagerConfig,
+  type SpaceContext,
+} from "./sync/index.js";
 
-export { EncryptionCodec } from './sync/index.js';
+export { EncryptionCodec } from "./sync/index.js";
