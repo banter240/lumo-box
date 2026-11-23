@@ -89,6 +89,12 @@ export const CONFIG_CATEGORIES: ConfigCategory[] = [
       "Experimental passthrough for the official Lumo web app (webapp.enabled).",
   },
   {
+    id: "connectors",
+    title: "Connectors",
+    blurb:
+      "Tool backends (filesystem, bash, browser) for the web app AND the CLI. Off by default.",
+  },
+  {
     id: "pacing",
     title: "Pacing",
     parent: "server",
@@ -543,58 +549,58 @@ const COPY: Record<string, FieldCopy> = {
     hint: "Where web app traffic is proxied to. Change only in config.yaml on the host.",
     more: "Host-only on purpose: raising this to a third-party URL would tunnel the browser's Proton login through that third party.",
   },
-  "webapp.connectors.filesystem.enabled": {
+  "connectors.filesystem.enabled": {
     label: "Filesystem connector",
     hint: "Let the web app read and edit files in configured directories.",
     more: "Off by default. Tools fs_read, fs_search, fs_write, fs_edit execute on this server. Reads follow the read policy, writes the write policy.",
   },
-  "webapp.connectors.filesystem.roots": {
+  "connectors.filesystem.roots": {
     label: "Allowed directories",
     hint: "Directories Lumo may touch. Change only in config.yaml on the host.",
     more: "Empty means the connector refuses everything. Paths on this machine — editable only in config.yaml, like the upstream URL.",
   },
-  "webapp.connectors.filesystem.read": {
+  "connectors.filesystem.read": {
     label: "Read policy",
     hint: "auto runs fs_read and fs_search without asking.",
     choices: ["auto", "ask", "deny"],
   },
-  "webapp.connectors.filesystem.write": {
+  "connectors.filesystem.write": {
     label: "Write policy",
     hint: "auto runs fs_write and fs_edit without asking. Deny is enforced on the server.",
     more: "Defaults to deny: writing files on the host should always be an explicit decision.",
     choices: ["auto", "ask", "deny"],
   },
-  "webapp.connectors.bash.enabled": {
+  "connectors.bash.enabled": {
     label: "Bash connector",
     hint: "Let the web app run shell commands on this server.",
     more: "Off by default. Every bash__run call follows the bash policy.",
   },
-  "webapp.connectors.bash.policy": {
+  "connectors.bash.policy": {
     label: "Bash policy",
     hint: "auto runs bash__run without asking, ask shows an approval card.",
     more: "Executes arbitrary shell commands — keep ask or deny unless you have a reason.",
     choices: ["auto", "ask", "deny"],
   },
-  "webapp.connectors.bash.executors": {
+  "connectors.bash.executors": {
     label: "Executors",
     hint: "Language tag -> command list, code appended as last argument. Change only in config.yaml on the host.",
     more: "These executables run on this machine, so the mapping is host-only like the filesystem roots.",
   },
-  "webapp.connectors.bash.timeoutSec": {
+  "connectors.bash.timeoutSec": {
     label: "Bash timeout (seconds)",
     hint: "Kill a run after this many seconds.",
   },
-  "webapp.connectors.browser.enabled": {
+  "connectors.browser.enabled": {
     label: "Browser connector",
     hint: "Let the web app fetch pages server-side (no CORS limits).",
     more: "Off by default. browser__fetch runs on this server and returns page text into chat.",
   },
-  "webapp.connectors.browser.policy": {
+  "connectors.browser.policy": {
     label: "Fetch policy",
     hint: "auto fetches without asking, ask shows an approval card first.",
     choices: ["auto", "ask", "deny"],
   },
-  "webapp.connectors.approvals.timeoutSec": {
+  "connectors.approvals.timeoutSec": {
     label: "Approval timeout (seconds)",
     hint: "How long an ask approval waits for an answer before it is denied.",
   },
@@ -1014,7 +1020,7 @@ const COPY: Record<string, FieldCopy> = {
   "cli.localActions.enabled": {
     label: "Run local code blocks",
     hint: "Let the CLI run bash/read/edit/create blocks on this machine. Confirmations still apply.",
-    more: "Interactive tamer CLI only, not the API server or web app — those use webapp.connectors. When on, fenced bash/python/read/edit/create in the model output can run on this machine. You still get a confirm prompt except for ```read if fileReads is on.",
+    more: "Interactive tamer CLI only, not the API server or web app — those use connectors. When on, fenced bash/python/read/edit/create in the model output can run on this machine. You still get a confirm prompt except for ```read if fileReads is on.",
   },
   "cli.localActions.fileReads.enabled": {
     label: "Allow ```read without confirm",
@@ -1177,47 +1183,38 @@ export const FIELD_DEPENDENCIES: Record<string, FieldDependency> = {
       "server.customTools.native.instructions.modules.homeAssistant.enabled",
     showValues: [true],
   },
-  "webapp.connectors.filesystem.enabled": {
-    parent: "webapp.enabled",
+
+  "connectors.filesystem.roots": {
+    parent: "connectors.filesystem.enabled",
     showValues: [true],
   },
-  "webapp.connectors.filesystem.roots": {
-    parent: "webapp.connectors.filesystem.enabled",
+  "connectors.filesystem.read": {
+    parent: "connectors.filesystem.enabled",
     showValues: [true],
   },
-  "webapp.connectors.filesystem.read": {
-    parent: "webapp.connectors.filesystem.enabled",
+  "connectors.filesystem.write": {
+    parent: "connectors.filesystem.enabled",
     showValues: [true],
   },
-  "webapp.connectors.filesystem.write": {
-    parent: "webapp.connectors.filesystem.enabled",
+
+  "connectors.bash.policy": {
+    parent: "connectors.bash.enabled",
     showValues: [true],
   },
-  "webapp.connectors.bash.enabled": {
-    parent: "webapp.enabled",
+  "connectors.bash.executors": {
+    parent: "connectors.bash.enabled",
     showValues: [true],
   },
-  "webapp.connectors.bash.policy": {
-    parent: "webapp.connectors.bash.enabled",
+  "connectors.bash.timeoutSec": {
+    parent: "connectors.bash.enabled",
     showValues: [true],
   },
-  "webapp.connectors.bash.executors": {
-    parent: "webapp.connectors.bash.enabled",
+
+  "connectors.browser.policy": {
+    parent: "connectors.browser.enabled",
     showValues: [true],
   },
-  "webapp.connectors.bash.timeoutSec": {
-    parent: "webapp.connectors.bash.enabled",
-    showValues: [true],
-  },
-  "webapp.connectors.browser.enabled": {
-    parent: "webapp.enabled",
-    showValues: [true],
-  },
-  "webapp.connectors.browser.policy": {
-    parent: "webapp.connectors.browser.enabled",
-    showValues: [true],
-  },
-  "webapp.connectors.approvals.timeoutSec": {
+  "connectors.approvals.timeoutSec": {
     parent: "webapp.enabled",
     showValues: [true],
   },
@@ -1498,6 +1495,7 @@ export function fieldCategory(path: string): string {
   if (path === "server.enableWebSearch" || path === "server.enableImageTools")
     return "toolsGeneral";
   if (path.startsWith("server.metrics.")) return "metrics";
+  if (path.startsWith("connectors.")) return "connectors";
   if (path.startsWith("webapp.")) return "webapp";
   if (path.startsWith("server.compaction.")) return "compaction";
   if (path.startsWith("server.reasoning.")) return "reasoning";

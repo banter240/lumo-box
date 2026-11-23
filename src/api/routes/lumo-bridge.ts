@@ -12,7 +12,11 @@ import { randomUUID } from "crypto";
 import { resolve as pathResolve, dirname, join as pathJoin } from "path";
 import { existsSync, readdirSync } from "fs";
 import { readFile } from "fs/promises";
-import { authConfig, getWebappConfig } from "../../app/config.js";
+import {
+  authConfig,
+  getConnectorsConfig,
+  getWebappConfig,
+} from "../../app/config.js";
 import { updateConfigYaml } from "../../app/config-file.js";
 import { readJsonFile, writeJsonFileAtomic } from "../../app/json-file.js";
 import { logger } from "../../app/logger.js";
@@ -23,7 +27,7 @@ import type {
   ApprovalRequest,
   ConnectorManifest,
 } from "../../connectors/types.js";
-import type { WebappConfig } from "../../app/config.js";
+import type { ConnectorsConfig } from "../../app/config.js";
 import {
   ScheduleCoordinator,
   type ScheduleRunner,
@@ -53,7 +57,7 @@ class Bridge {
   private configKey: string;
   private clients = new Set<SseClient>();
 
-  constructor(private readonly readConfig: () => WebappConfig["connectors"]) {
+  constructor(private readonly readConfig: () => ConnectorsConfig) {
     this.configKey = JSON.stringify(readConfig());
     this.registry = this.build();
   }
@@ -207,7 +211,7 @@ function wireArg(args: Record<string, unknown>, ...names: string[]): string {
 }
 
 interface BridgeOptions {
-  config?: () => WebappConfig["connectors"];
+  config?: () => ConnectorsConfig;
   scheduleStorePath?: string;
   scheduleRunner?: ScheduleRunner;
   maxConcurrency?: number;
@@ -217,7 +221,7 @@ interface BridgeOptions {
 }
 
 export function createLumoBridgeRouter(options: BridgeOptions = {}): Router {
-  const readConfig = options.config ?? (() => getWebappConfig().connectors);
+  const readConfig = options.config ?? getConnectorsConfig;
   const bridge = new Bridge(readConfig);
   const router = Router();
 
@@ -308,7 +312,7 @@ export function createLumoBridgeRouter(options: BridgeOptions = {}): Router {
 
     // --- settings page (settings/commands.rs contract) ---
     get_app_settings: () => {
-      const c = getWebappConfig().connectors;
+      const c = getConnectorsConfig();
       return {
         search_shortcut: "",
         search_shortcut_enabled: false,
@@ -331,7 +335,7 @@ export function createLumoBridgeRouter(options: BridgeOptions = {}): Router {
         (r): r is string => typeof r === "string" && r.trim().length > 0,
       );
       updateConfigYaml((doc) => {
-        doc.setIn(["webapp", "connectors", "filesystem", "roots"], roots);
+        doc.setIn(["connectors", "filesystem", "roots"], roots);
         doc.setIn(
           ["webapp", "connectors", "filesystem", "write"],
           s.filesystem_write_enabled === true && roots.length > 0

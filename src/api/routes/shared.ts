@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import type { Response } from "express";
 import { getCustomToolsConfig } from "../../app/config.js";
 import type { FunctionTool } from "../../proton/chat-completions-body.js";
+import { generateCallId } from "../tools/call-id.js";
 import { shouldRequestTitle } from "../request-prep.js";
 import { getMetrics } from "../../app/metrics";
 import { logger } from "../../app/logger.js";
@@ -45,6 +46,22 @@ export function mapToolCallsForPersistence(
     name: tc.function.name,
     arguments: tc.function.arguments,
     call_id: tc.id,
+  }));
+}
+
+/** Native-path client tool calls from the LumoClient result as OpenAI
+ * tool calls; the routes map legacy processor emissions elsewhere. */
+export function mapClientToolCalls(
+  calls: Array<{ name: string; arguments: unknown }> | undefined,
+): OpenAIToolCall[] | undefined {
+  if (!calls?.length) return undefined;
+  return calls.map((tc) => ({
+    id: generateCallId(tc.name),
+    type: "function" as const,
+    function: {
+      name: tc.name,
+      arguments: JSON.stringify(tc.arguments),
+    },
   }));
 }
 

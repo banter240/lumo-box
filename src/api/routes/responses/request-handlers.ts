@@ -25,6 +25,7 @@ import {
   generateResponseId,
   generateItemId,
   mapToolCallsForPersistence,
+  mapClientToolCalls,
   tryExecuteCommand,
   setSSEHeaders,
   nowEpoch,
@@ -313,15 +314,27 @@ export async function handleRequest(
       toolCallsForPersist = mapToolCallsForPersistence(
         processor.toolCallsEmitted.length > 0
           ? processor.toolCallsEmitted
-          : (result.clientToolCalls?.map((tc) => ({
-              id: generateCallId(tc.name),
-              type: "function" as const,
-              function: {
-                name: tc.name,
-                arguments: JSON.stringify(tc.arguments),
-              },
-            })) ?? []),
+          : (mapClientToolCalls(result.clientToolCalls) ?? []),
       );
+      // Native-path client tool calls accumulate in the client result and
+      // bypass the processor's emitToolCall callback, so their function_call
+      // events were never sent on this stream. The legacy path already
+      // emitted live (toolCallsEmitted non-empty).
+      if (
+        emitter &&
+        processor.toolCallsEmitted.length === 0 &&
+        toolCallsForPersist
+      ) {
+        for (const tc of toolCallsForPersist) {
+          emitter.emitFunctionCallEvents(
+            tc.call_id,
+            tc.call_id,
+            tc.name,
+            tc.arguments,
+            nextOutputIndex++,
+          );
+        }
+      }
       completionTokens = result.usage?.completion_tokens;
     } catch (error) {
       logger.error({ error }, "Response error");

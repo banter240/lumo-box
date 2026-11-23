@@ -657,7 +657,11 @@ export class LumoClient {
     // Native mode turns off the legacy heuristics. These config sections are
     // server-only; the CLI gets undefined and falls back to the defaults.
     const serverConfig = tryGetServerConfig();
-    const nativeMode = serverConfig?.customTools.mode === "native";
+    // Native transport when the server config says so; the CLI opts in per
+    // call by passing clientTools (nothing to honor otherwise).
+    const nativeMode =
+      clientTools !== undefined &&
+      (serverConfig?.customTools.mode ?? "native") === "native";
     const activeClientTools = nativeMode ? clientTools : undefined;
     const coachAnnounce = coachAnnounceWithoutTool && !isBounce && !nativeMode;
 

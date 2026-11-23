@@ -4,7 +4,7 @@
  * /v1 tool path can reuse the same surface.
  */
 
-import type { WebappConfig } from "../app/config.js";
+import type { ConnectorsConfig } from "../app/config.js";
 import { ApprovalGate } from "./approval-gate.js";
 import { BashConnector } from "./bash.js";
 import { FilesystemConnector } from "./filesystem.js";
@@ -34,7 +34,7 @@ export class ConnectorRegistry {
   private readonly enabledById = new Map<string, boolean>();
 
   constructor(
-    config: WebappConfig["connectors"],
+    config: ConnectorsConfig,
     onAsk: ApprovalResponder = () => {},
     onSettled: (
       requestId: string,

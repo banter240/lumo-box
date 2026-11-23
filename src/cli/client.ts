@@ -36,17 +36,28 @@ import {
 } from "./local-actions/code-block-detector.js";
 import { buildCliInstructions } from "./instructions.js";
 import { createLinePrompt } from "./prompt.js";
+import {
+  cliClientTools,
+  createCliRegistry,
+  runCliToolCalls,
+} from "./tool-loop.js";
+import type { ConnectorRegistry } from "../connectors/registry.js";
 
 interface LumoResponse {
   /** Assistant message data ready for persistence */
   message: AssistantMessageData;
   blocks: CodeBlock[];
+  /** Native client tool calls the model made (connector loop). */
+  toolCalls: Array<{ name: string; arguments: unknown }>;
   title?: string;
 }
 
 export class CLIClient {
   private conversationId: string;
   private store;
+  /** Shared connector registry: same backends/policies as the web app bridge.
+   * Lazily created; carries no tools until a connector is enabled. */
+  private registry: ConnectorRegistry | null = null;
 
   constructor(private app: Application) {
     this.conversationId = randomUUID();
@@ -84,6 +95,11 @@ export class CLIClient {
     const turns = this.store.toTurns(this.conversationId);
     const instructions = buildCliInstructions();
     const { injectInto } = getCliInstructionsConfig();
+    // Connector tools: same registry the web app bridge uses. Native client
+    // tools replace the code-block protocol when a connector is enabled;
+    // native Proton tools stay off in that case (one tool world per turn).
+    this.registry ??= createCliRegistry();
+    const { tools } = cliClientTools(this.registry);
     const result = await this.app.getLumoClient().chatWithHistory(
       turns,
       (chunk) => {
@@ -102,6 +118,9 @@ export class CLIClient {
         requestTitle: options.requestTitle,
         instructions,
         injectInstructionsInto: injectInto,
+        ...(tools.length > 0
+          ? { clientTools: tools, useNativeTools: false }
+          : {}),
       },
     );
 
@@ -124,6 +143,7 @@ export class CLIClient {
     return {
       message: result.message,
       blocks,
+      toolCalls: result.clientToolCalls ?? [],
       title: result.title,
     };
   }
@@ -252,6 +272,24 @@ export class CLIClient {
         this.conversationId,
         lumoResponse.message,
       );
+
+      // Connector tool loop: same registry/policies as the web app bridge.
+      // Tool results go back as synthetic tool-result turns, keyed by
+      // call_id for dedupe, until the model replies without a call.
+      while (lumoResponse.toolCalls.length > 0) {
+        this.registry ??= createCliRegistry();
+        const results = await runCliToolCalls(
+          this.registry,
+          lumoResponse.toolCalls,
+        );
+        this.store.appendMessages(this.conversationId, results);
+        print("─── Connector results sent to Lumo ───\n");
+        lumoResponse = await this.sendToLumo();
+        this.store.appendAssistantResponse(
+          this.conversationId,
+          lumoResponse.message,
+        );
+      }
 
       // Execute blocks until none remain (or user skips all)
       while (lumoResponse.blocks.length > 0) {

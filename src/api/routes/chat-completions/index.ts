@@ -37,6 +37,7 @@ import {
   toOpenAIChatUsage,
   nowEpoch,
   runCompletionAndPersist,
+  mapClientToolCalls,
 } from "../shared.js";
 import {
   conversationIdFromUserField,
@@ -315,14 +316,25 @@ async function handleChatRequest(
       toolCalls =
         processor.toolCallsEmitted.length > 0
           ? processor.toolCallsEmitted
-          : result.clientToolCalls?.map((tc) => ({
-              id: generateCallId(tc.name),
-              type: "function" as const,
-              function: {
-                name: tc.name,
-                arguments: JSON.stringify(tc.arguments),
-              },
-            }));
+          : mapClientToolCalls(result.clientToolCalls);
+      // Native-path client tool calls accumulate in the client result and
+      // bypass the streaming processor's emitToolCall callback, so their
+      // delta chunks were never sent. Emit them before finish; the legacy
+      // path already streamed its calls live (toolCallsEmitted non-empty).
+      if (emitter && toolCalls && processor.toolCallsEmitted.length === 0) {
+        for (const tc of toolCalls) {
+          let parsedArgs: Record<string, unknown> = {};
+          try {
+            parsedArgs = JSON.parse(tc.function.arguments) as Record<
+              string,
+              unknown
+            >;
+          } catch {
+            parsedArgs = {};
+          }
+          emitter.emitToolCallDelta(tc.id, tc.function.name, parsedArgs);
+        }
+      }
       usage = toOpenAIChatUsage(result.usage);
     } catch (error) {
       logger.error({ error }, "Chat completion error");

@@ -50,6 +50,20 @@ const liftServerSections = (merged: Record<string, unknown>): void => {
   }
 };
 
+/** Pre-rename migration: overrides under the legacy webapp.connectors path
+ * lift into the top-level connectors section (users keep their config.yaml). */
+const liftConnectorsSection = (merged: Record<string, unknown>): void => {
+  const webapp = merged.webapp as Record<string, unknown> | undefined;
+  const legacy = webapp?.connectors as Record<string, unknown> | undefined;
+  if (legacy) {
+    merged.connectors = mergeConfigLayers(
+      legacy,
+      (merged.connectors as Record<string, unknown> | undefined) ?? {},
+    );
+    delete (webapp as Record<string, unknown>).connectors;
+  }
+};
+
 // ============================================
 // Schemas (validation only, no defaults)
 // ============================================
@@ -231,29 +245,34 @@ const webappConfigSchema = z.object({
     enabled: z.boolean(),
     maxConcurrency: z.number().int().positive(),
   }),
-  connectors: z.object({
-    filesystem: z.object({
-      enabled: z.boolean(),
-      roots: z.array(z.string()),
-      read: toolPolicySchema,
-      write: toolPolicySchema,
-    }),
-    bash: z.object({
-      enabled: z.boolean(),
-      policy: toolPolicySchema,
-      executors: z.record(z.string(), z.array(z.string())),
-      timeoutSec: z.number().int().positive(),
-    }),
-    browser: z.object({
-      enabled: z.boolean(),
-      policy: toolPolicySchema,
-    }),
-    approvals: z.object({
-      timeoutSec: z.number().int().positive(),
-    }),
-  }),
 });
 export type WebappConfig = z.infer<typeof webappConfigSchema>;
+
+/** Connector backends shared by the web app bridge AND the CLI tool loop:
+ * one security surface (roots, policies, approvals) for every host that
+ * executes tools on this machine. */
+export const connectorsConfigSchema = z.object({
+  filesystem: z.object({
+    enabled: z.boolean(),
+    roots: z.array(z.string()),
+    read: toolPolicySchema,
+    write: toolPolicySchema,
+  }),
+  bash: z.object({
+    enabled: z.boolean(),
+    policy: toolPolicySchema,
+    executors: z.record(z.string(), z.array(z.string())),
+    timeoutSec: z.number().int().positive(),
+  }),
+  browser: z.object({
+    enabled: z.boolean(),
+    policy: toolPolicySchema,
+  }),
+  approvals: z.object({
+    timeoutSec: z.number().int().positive(),
+  }),
+});
+export type ConnectorsConfig = z.infer<typeof connectorsConfigSchema>;
 
 // Outgoing-request pacing: minimum interval + human-like jitter so agent
 // tool loops don't hammer Proton back-to-back. Shared between server and CLI.
@@ -356,6 +375,7 @@ const sharedMergedFields = {
   pacing: pacingConfigSchema,
   compaction: compactionConfigSchema,
   webapp: webappConfigSchema,
+  connectors: connectorsConfigSchema,
   enableWebSearch: z.boolean(),
   enableImageTools: z.boolean(),
 };
@@ -445,6 +465,7 @@ function loadMergedConfig(mode: ConfigMode): MergedConfig {
     );
 
     liftServerSections(merged as Record<string, unknown>);
+    liftConnectorsSection(merged as Record<string, unknown>);
 
     // Stage 2: apply user mode overrides for shared keys only
     for (const key of SHARED_KEYS) {
@@ -503,6 +524,7 @@ export function parseServerUserConfig(
   );
   const mergedRecord = merged as Record<string, unknown>;
   liftServerSections(mergedRecord);
+  liftConnectorsSection(mergedRecord);
   for (const key of SHARED_KEYS) {
     if (userModeConfig?.[key]) {
       merged[key] = mergeConfigLayers(merged[key], userModeConfig[key]);
@@ -612,6 +634,12 @@ export function getReasoningConfig() {
 
 export function getWebappConfig(): z.infer<typeof webappConfigSchema> {
   return getConfig().webapp;
+}
+
+/** The one connector config: top-level `connectors:` (shared by server and
+ * CLI). loadMergedConfig lifts legacy `webapp.connectors` overrides into it. */
+export function getConnectorsConfig(): ConnectorsConfig {
+  return getConfig().connectors;
 }
 
 // CLI-specific getters
