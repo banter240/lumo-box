@@ -38,7 +38,7 @@ import {
 } from "../../error-handler.js";
 import { getMetrics } from "../../../app/metrics.js";
 import { resolveRequestTier } from "../../request-prep.js";
-import type { FunctionTool } from "../../../lumo-client/v2-body.js";
+import type { FunctionTool } from "../../../proton/chat-completions-body.js";
 
 // ── Output building ────────────────────────────────────────────────
 

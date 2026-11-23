@@ -17,7 +17,7 @@ export { Role } from "@lumo/types-api.js";
 
 export const TOOL_RESULT_PREFIX = "[Tool Result:";
 import type { ToolName } from "@lumo/lib/lumo-api-client/core/types.js";
-import type { FunctionTool } from "./v2-body.js";
+import type { FunctionTool } from "../proton/chat-completions-body.js";
 // Local-only types
 
 // API adapter interface

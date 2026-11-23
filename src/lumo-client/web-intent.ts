@@ -9,7 +9,7 @@
  */
 
 import type { Turn } from "./types.js";
-import { latestUserRequestText } from "./images.js";
+import { latestUserRequestText } from "../proton/image-encryption.js";
 
 const w = (list: string[]) => "(?<!\\p{L})(?:" + list.join("|") + ")(?!\\p{L})";
 

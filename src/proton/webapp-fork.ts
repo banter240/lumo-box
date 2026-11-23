@@ -7,7 +7,7 @@
  * the web app (mirrors upstream fork/produce.ts), so server and app never
  * share rotating refresh tokens.
  *
- * Upstream mirror: WebClients shared/lib/authentication/fork/{blob,produce}.ts,
+ * Upstream mirror: WebClients packages/shared/lib/authentication/fork/{blob,produce}.ts,
  * sessionBlobCryptoHelper.ts (V3 blob: AES-GCM, 12-byte IV, AD "fork").
  */
 

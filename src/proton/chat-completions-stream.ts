@@ -3,7 +3,7 @@
  *
  * Normalizes the OpenAI-style stream returned by `ai/v1/chat/completions` into
  * a small message union the LumoClient consumes. Mirrors the dispatch logic of
- * ProtonMail/WebClients applications/lumo/src/app/lib/lumo-api-client/core/streaming.ts
+ * ProtonMail/WebClients packages/lumo-api-client/core/streaming.ts
  * (processOpenAiChunk / processDelta / processToolCallDelta / chat.tool_call|result),
  * kept as a local adapter scoped to what this proxy needs.
  *
@@ -11,7 +11,7 @@
  * using the per-request AD; this parser only surfaces the `encrypted` flag.
  */
 
-import type { LumoUsage } from './types.js';
+import type { LumoUsage } from '../lumo-client/types.js';
 
 function pickString(value: unknown): string | undefined {
     return typeof value === 'string' && value.length > 0 ? value : undefined;

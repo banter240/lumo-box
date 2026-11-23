@@ -12,7 +12,7 @@ import {
   imagePayloadChars,
   shouldOfferImageTools,
   selectImageTools,
-} from "../../src/lumo-client/images.js";
+} from "../../src/proton/image-encryption.js";
 import { selectNativeTools } from "../../src/lumo-client/native-tools.js";
 import { Role, type Turn } from "../../src/lumo-client/types.js";
 import { decryptUint8Array } from "@lumo/crypto/index.js";

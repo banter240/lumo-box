@@ -16,7 +16,7 @@ import {
   extractGeneratedImages,
   parseImageUrl,
   lumoImageMarker,
-} from "../../lumo-client/images.js";
+} from "../../proton/image-encryption.js";
 import { nowEpoch } from "./shared.js";
 
 interface GenerationsRequestBody {

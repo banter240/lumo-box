@@ -38,9 +38,9 @@ import {
   LUMO_CHAT_ENDPOINT,
   type LumoCompletionTarget,
   type FunctionTool,
-} from "./v2-body.js";
-import { decryptToolCallFrame } from "./tool-call-frame.js";
-import { V2StreamProcessor } from "./v2-stream.js";
+} from "../proton/chat-completions-body.js";
+import { decryptToolCallFrame } from "../proton/tool-call-frame.js";
+import { V2StreamProcessor } from "../proton/chat-completions-stream.js";
 import { selectNativeTools } from "./native-tools.js";
 import {
   backoffSleep,
@@ -86,7 +86,7 @@ import {
   lumoImageMarker,
   stripImages,
   selectImageTools,
-} from "./images.js";
+} from "../proton/image-encryption.js";
 import { compactTurns } from "./compaction.js";
 
 /** Native image tool arguments (describe/edit take an image_id) written as text. */

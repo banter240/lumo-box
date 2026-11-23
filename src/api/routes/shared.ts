@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import type { Response } from "express";
 import { getCustomToolsConfig } from "../../app/config.js";
-import type { FunctionTool } from "../../lumo-client/v2-body.js";
+import type { FunctionTool } from "../../proton/chat-completions-body.js";
 import { shouldRequestTitle } from "../request-prep.js";
 import { getMetrics } from "../../app/metrics";
 import { logger } from "../../app/logger.js";

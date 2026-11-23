@@ -7,7 +7,7 @@ import { createProtonApi } from "./api-factory.js";
 import { fetchKeys } from "./fetch-keys.js";
 import { hasProtonSyncKeys } from "./sync-capability.js";
 import type { StoredTokens } from "./types.js";
-import { FORK_CHILD_CLIENT_ID } from "./webapp-fork.js";
+import { FORK_CHILD_CLIENT_ID } from "../proton/webapp-fork.js";
 
 const TTL_MS = 10 * 60 * 1000;
 

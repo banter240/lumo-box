@@ -8,7 +8,7 @@
  * on the nested shape.
  */
 
-import type { OpenAITool } from "../types.js";
+import type { OpenAITool } from "../api/types.js";
 
 export function normalizeClientTools(
   tools: OpenAITool[] | undefined,

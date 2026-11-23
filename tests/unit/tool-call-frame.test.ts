@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { decryptToolCallFrame } from "../../src/lumo-client/tool-call-frame.js";
+import { decryptToolCallFrame } from "../../src/proton/tool-call-frame.js";
 
 const okDecrypt = async (text: string) => `dec(${text})`;
 const failingDecrypt = async () => null;

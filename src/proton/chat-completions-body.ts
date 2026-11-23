@@ -2,7 +2,7 @@
  * Lumo 2.0 chat/completions request body builder.
  *
  * Mirrors the wire format produced by Proton's web client:
- * ProtonMail/WebClients applications/lumo/src/app/lib/lumo-api-client/core/chat-completions.ts
+ * ProtonMail/WebClients packages/lumo-api-client/core/chat-completions.ts
  * (toChatCompletionsBody / resolveChatModel / buildLumoExtension / serializeMessages).
  *
  * Kept as a small local adapter (rather than syncing the upstream parser, which
@@ -12,9 +12,9 @@
  * from the legacy generation_request path.
  */
 
-import { Role, type Turn, type ToolName, type LumoModelTier } from "./types.js";
+import { Role, type Turn, type ToolName, type LumoModelTier } from "../lumo-client/types.js";
 import type { WireImage } from "@lumo/types-api.js";
-import { inferImageMimeType } from "./images.js";
+import { inferImageMimeType } from "../proton/image-encryption.js";
 
 export type { LumoModelTier };
 

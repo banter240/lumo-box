@@ -19,7 +19,7 @@ import {
   extractGeneratedImages,
   lumoImageMarker,
   parseImageUrl,
-} from "../lumo-client/images.js";
+} from "../proton/image-encryption.js";
 import { logger } from "../app/logger.js";
 
 /**

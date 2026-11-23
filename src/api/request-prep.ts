@@ -24,7 +24,7 @@ import {
   resolveReasoning,
 } from "../lumo-client/model-tier.js";
 import type { LumoModelTier } from "../lumo-client/types.js";
-import type { FunctionTool } from "../lumo-client/v2-body.js";
+import type { FunctionTool } from "../proton/chat-completions-body.js";
 import {
   buildInstructions,
   buildNativeModuleInstructions,
@@ -34,7 +34,7 @@ import {
   toolChoiceInstruction,
   toolsForChoice,
 } from "./tools/tool-choice.js";
-import { normalizeClientTools } from "./tools/normalize.js";
+import { normalizeClientTools } from "../proton/client-tools-normalize.js";
 import type { ConversationId } from "../conversations/types.js";
 import type { EndpointDependencies, OpenAITool } from "./types.js";
 import type { Turn } from "../lumo-client/index.js";

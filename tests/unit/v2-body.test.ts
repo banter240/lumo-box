@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildChatCompletionsBody, resolveChatModel } from '../../src/lumo-client/v2-body.js';
+import { buildChatCompletionsBody, resolveChatModel } from '../../src/proton/chat-completions-body.js';
 import { Role } from '../../src/lumo-client/types.js';
 
 describe('resolveChatModel', () => {

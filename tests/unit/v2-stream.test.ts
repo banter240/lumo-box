@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { V2StreamProcessor, type V2StreamMessage } from '../../src/lumo-client/v2-stream.js';
+import { V2StreamProcessor, type V2StreamMessage } from '../../src/proton/chat-completions-stream.js';
 
 /** Feed whole input then finalize, returning all emitted messages. */
 function run(input: string): V2StreamMessage[] {

@@ -15,7 +15,7 @@
 import { createHash } from "node:crypto";
 import type { WireImage } from "@lumo/types-api.js";
 import type { RequestEncryptionParams } from "@lumo/lib/lumo-api-client/core/encryptionParams.js";
-import { Role, type ToolName, type Turn, TOOL_RESULT_PREFIX } from "./types.js";
+import { Role, type ToolName, type Turn, TOOL_RESULT_PREFIX } from "../lumo-client/types.js";
 
 /** Upstream MAX_IMAGES_PER_REQUEST: older images beyond this are dropped. */
 export const MAX_IMAGES_PER_REQUEST = 10;

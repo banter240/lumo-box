@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { buildChatCompletionsBody } from "../../src/lumo-client/v2-body.js";
+import { buildChatCompletionsBody } from "../../src/proton/chat-completions-body.js";
 import type { Turn } from "../../src/lumo-client/types.js";
 import { Role } from "../../src/lumo-client/types.js";
 import { NativeToolCallProcessor } from "../../src/api/tools/native-tool-call-processor.js";

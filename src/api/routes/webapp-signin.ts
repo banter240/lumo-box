@@ -19,7 +19,7 @@ import { reserveFork, forkTokens } from "../../auth/desktop-login.js";
 import {
   produceWebappFork,
   FORK_CHILD_CLIENT_ID,
-} from "../../auth/webapp-fork.js";
+} from "../../proton/webapp-fork.js";
 import { hasProtonSyncKeys } from "../../auth/sync-capability.js";
 import type { AuthManager } from "../../auth/manager.js";
 import type { ProtonApi } from "../../lumo-client/types.js";

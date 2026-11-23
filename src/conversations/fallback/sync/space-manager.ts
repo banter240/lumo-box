@@ -14,7 +14,7 @@ import type { LumoApi } from '@lumo/remote/api.js';
 import type { RemoteSpace } from '@lumo/remote/types.js';
 import type { KeyManager } from '../../key-manager.js';
 import type { SpaceId, RemoteId, ProjectSpace } from '../../types.js';
-import { EncryptionCodec } from './encryption-codec.js';
+import { EncryptionCodec } from '../../../proton/sync-encryption-codec.js';
 
 // HKDF parameters matching Proton's implementation
 const SPACE_KEY_DERIVATION_SALT = Buffer.from('Xd6V94/+5BmLAfc67xIBZcjsBPimm9/j02kHPI7Vsuc=', 'base64');

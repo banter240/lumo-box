@@ -18,7 +18,7 @@ import {
 import { getMetrics } from "../../../app/metrics.js";
 import { ChatCompletionEventEmitter } from "./events.js";
 import type { Turn } from "../../../lumo-client/index.js";
-import type { FunctionTool } from "../../../lumo-client/v2-body.js";
+import type { FunctionTool } from "../../../proton/chat-completions-body.js";
 import type { ConversationId } from "../../../conversations/types.js";
 import {
   flattenAndTrackClientTools,

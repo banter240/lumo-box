@@ -14,7 +14,7 @@ export {
 } from "./sync-service.js";
 
 // Encryption codec
-export { EncryptionCodec } from "./encryption-codec.js";
+export { EncryptionCodec } from "../../../proton/sync-encryption-codec.js";
 
 // Space manager (for external use if needed)
 export {
