@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumo Settings</title>
+    <link rel="stylesheet" href="styles/settings.css">
+    <script src="scripts/theme.js"></script>
+</head>
+<body>
+
+<div class="settings-shell">
+    <aside class="settings-sidebar">
+        <div class="sidebar-header">
+            <button class="back-btn" id="back-btn" aria-label="Back to Lumo" title="Back to Lumo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+            </button>
+            <img src="images/lumo-mark.svg" alt="" class="sidebar-logo" width="28" height="28">
+            <h1 class="sidebar-title">Settings</h1>
+        </div>
+        <nav class="sidebar-nav">
+            <button class="nav-item active" data-tab="general">General</button>
+            <button class="nav-item" data-tab="connectors">Connectors</button>
+        </nav>
+    </aside>
+
+    <div class="settings-main">
+        <div class="settings-content">
+            <div class="content-inner">
+                <div id="tab-general" class="tab-panel active">
+                    <div class="page-header">
+                        <h2 class="page-title">General</h2>
+                        <p class="page-subtitle">Configure how Lumo behaves on your device.</p>
+                    </div>
+                    <div class="setting-rows">
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <div class="setting-name">Search shortcut</div>
+                                <div class="setting-hint">Ask Lumo questions from anywhere, instantly.</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="shortcut-container">
+                                    <input type="text" id="search-shortcut" class="shortcut-input" readonly placeholder="Click to record shortcut">
+                                    <button id="reset-shortcut" class="secondary small">Reset</button>
+                                </div>
+                                <p class="current-shortcut">Current: <span id="current-shortcut">Ctrl+L</span></p>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="search-shortcut-enabled">
+                                    <label for="search-shortcut-enabled">Enable the search shortcut</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <div class="setting-name">Settings shortcut</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="settings-hotkey">
+                                    <label for="settings-hotkey">Enable the settings shortcut</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <div class="setting-name">Launch at startup</div>
+                                <div class="setting-hint">Open Lumo automatically when you sign in to your computer.</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="launch-startup">
+                                    <label for="launch-startup">Launch Lumo when computer starts</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <div class="setting-name">Reset account configuration</div>
+                                <div class="setting-hint">Reset tool permissions and remove connector configurations for your current account on this device.</div>
+                            </div>
+                            <div class="setting-control">
+                                <button id="reset-configuration" class="secondary" type="button" disabled>Reset and restart…</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-connectors" class="tab-panel">
+                    <div class="page-header connectors-header">
+                        <div>
+                            <h2 class="page-title">Connectors</h2>
+                            <p class="page-subtitle">Connect knowledge sources to give Lumo more context in your chats.</p>
+                        </div>
+                    </div>
+                    <div class="connectors-custom-mcp" id="connectors-custom-mcp">
+                        <div class="connectors-custom-mcp__copy">
+                            <p class="connectors-custom-mcp__title">Add a custom MCP server</p>
+                            <p class="connectors-custom-mcp__hint">Use any MCP server not listed below — local (stdio) or remote (HTTP).</p>
+                        </div>
+                        <button id="add-mcp-btn" class="connectors-custom-mcp__btn" type="button">Add MCP server…</button>
+                    </div>
+                    <div class="connector-search" id="connector-search-bar">
+                        <svg class="connector-search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7"/>
+                            <path d="m20 20-3.5-3.5"/>
+                        </svg>
+                        <input type="search" id="connector-search" class="connector-search__input" placeholder="Search connectors" aria-label="Search connectors" autocomplete="off" spellcheck="false">
+                        <kbd class="connector-search__hint" aria-hidden="true">/</kbd>
+                    </div>
+                    <div class="connector-filters" id="connector-filters" role="tablist" aria-label="Filter connectors by category"></div>
+                    <div class="connector-list-panel">
+                        <div class="connector-list" id="connector-list"></div>
+                    </div>
+                    <p id="connectors-signed-out" class="signed-out-note">
+                        Sign in to configure connectors. They belong to your Proton account, so
+                        each account keeps its own.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button id="save-settings">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Connector detail modal -->
+<div class="modal-backdrop" id="connector-modal">
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <div class="modal-title-block">
+                <div class="connector-icon" id="modal-icon"></div>
+                <div>
+                    <h2 id="modal-title">Connector</h2>
+                    <div class="modal-status">
+                        <span class="status-dot" id="modal-status-dot"></span>
+                        <span id="modal-status-text">Not connected</span>
+                    </div>
+                </div>
+            </div>
+            <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="modal-tabs">
+            <button class="modal-tab active" data-modal-tab="overview">Overview</button>
+            <button class="modal-tab" data-modal-tab="functions">Functions</button>
+        </div>
+
+        <div class="modal-body">
+            <div id="panel-overview" class="modal-panel active">
+                <div class="field-row">
+                    <label>Reference</label>
+                    <div class="value">
+                        <span id="modal-reference">—</span>
+                        <button class="copy-btn" id="copy-reference" title="Copy">⧉</button>
+                    </div>
+                </div>
+                <p class="modal-description" id="modal-description"></p>
+                <div id="modal-auth-fields"></div>
+                <div class="status-msg" id="modal-status-msg"></div>
+                <div class="privacy-note">
+                    <span>🔒</span>
+                    <span>Credentials are stored in your OS keychain. Lumo never sends them to the webapp.</span>
+                </div>
+            </div>
+
+            <div id="panel-functions" class="modal-panel">
+                <div class="functions-toolbar hidden" id="refresh-tools-wrap">
+                    <button class="ghost small" id="refresh-tools">↻ Refresh tools</button>
+                </div>
+                <div class="functions-section-title" id="tools-section-title">Tools</div>
+                <div id="modal-tools-list"></div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="secondary small hidden" id="modal-disconnect">Disconnect</button>
+            <button class="danger small hidden" id="modal-remove">Remove</button>
+            <div class="spacer"></div>
+            <button class="secondary" id="modal-cancel">Close</button>
+            <button id="modal-primary">Connect</button>
+        </div>
+    </div>
+</div>
+
+<script src="scripts/settings.js"></script>
+</body>
+</html>

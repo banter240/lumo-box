@@ -1,17 +1,28 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import express from 'express';
-import type { Server } from 'http';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
-import { createConfigRouter } from '../../src/api/routes/config.js';
-import { setupAuthMiddleware, setupReadyMiddleware } from '../../src/api/middleware.js';
-import { setDataDir } from '../../src/app/paths.js';
-import { getUpdatesConfig } from '../../src/app/config.js';
-import { listen, closeServer } from '../helpers/listen.js';
-import type { Application } from '../../src/app/index.js';
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from "vitest";
+import express from "express";
+import type { Server } from "http";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "fs";
+import { join } from "path";
+import { tmpdir } from "os";
+import { createConfigRouter } from "../../src/api/routes/config.js";
+import {
+  setupAuthMiddleware,
+  setupReadyMiddleware,
+} from "../../src/api/middleware.js";
+import { setDataDir } from "../../src/app/paths.js";
+import { getUpdatesConfig } from "../../src/app/config.js";
+import { listen, closeServer } from "../helpers/listen.js";
+import type { Application } from "../../src/app/index.js";
 
-describe('config page', () => {
+describe("config page", () => {
   let server: Server;
   let baseUrl: string;
   let tmpDir: string;
@@ -19,16 +30,22 @@ describe('config page', () => {
   let mockApp: Application;
 
   beforeAll(async () => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'lumo-config-ui-'));
+    tmpDir = mkdtempSync(join(tmpdir(), "lumo-config-ui-"));
     setDataDir(tmpDir);
     mockApp = {
       isAuthenticated: () => false,
     } as unknown as Application;
     const app = express();
     app.use(express.json());
-    app.use(setupAuthMiddleware('test-key'));
+    app.use(setupAuthMiddleware("test-key"));
     app.use(setupReadyMiddleware(() => false));
-    app.use(createConfigRouter(mockApp, { onSaved: () => { saved = true; } }));
+    app.use(
+      createConfigRouter(mockApp, {
+        onSaved: () => {
+          saved = true;
+        },
+      }),
+    );
     ({ server, baseUrl } = await listen(app));
   });
 
@@ -40,145 +57,168 @@ describe('config page', () => {
 
   beforeEach(() => {
     saved = false;
-    writeFileSync(join(tmpDir, 'config.yaml'), [
-      'server:',
-      '  apiKey: "super-secret-key"',
-      '  enableWebSearch: false',
-      '',
-    ].join('\n'));
+    writeFileSync(
+      join(tmpDir, "config.yaml"),
+      [
+        "server:",
+        '  apiKey: "super-secret-key"',
+        "  enableWebSearch: false",
+        "",
+      ].join("\n"),
+    );
   });
 
   afterEach(() => {
     saved = false;
   });
 
-  it('serves the form without an API key', async () => {
+  it("serves the form without an API key", async () => {
     const res = await fetch(`${baseUrl}/config`);
     expect(res.status).toBe(200);
-    expect(res.headers.get('content-type')).toMatch(/html/);
+    expect(res.headers.get("content-type")).toMatch(/html/);
     const html = await res.text();
-    expect(html).toContain('leave blank to keep');
-    expect(html).toContain('Prompts');
-    expect(html).toContain('data-help');
-    expect(html).toContain('extraBlock');
-    expect(html).toContain('field.examples');
-    expect(html).toContain('data-copy');
-    expect(html).toContain('waitUntilUp');
+    expect(html).toContain("leave blank to keep");
+    expect(html).toContain("Prompts");
+    expect(html).toContain("data-help");
+    expect(html).toContain("extraBlock");
+    expect(html).toContain("field.examples");
+    expect(html).toContain("data-copy");
+    expect(html).toContain("waitUntilUp");
     expect(html).toContain("location.reload()");
-    expect(html).toContain('lumo-tamer-theme');
-    expect(html).toContain('btn-default');
-    expect(html).toContain('data-undo');
+    expect(html).toContain("lumo-tamer-theme");
+    expect(html).toContain("btn-default");
+    expect(html).toContain("data-undo");
     expect(html).toContain("field.kind !== 'secret'");
-    expect(html).toContain('data-cat');
+    expect(html).toContain("data-cat");
     expect(html).toContain('href="/auth"');
-    expect(html).toContain('github.com/banter240/lumo-tamer');
-    expect(html).toContain('Reset to defaults');
-    expect(html).toContain('id="updateChip"');
-    expect(html).toContain('/v1/update');
-    expect(html).toContain('lumo-tamer-config-saved');
-    expect(html).toContain('Reset all visible fields to defaults? This does not save');
-    expect(html).not.toContain('super-secret-key');
+    expect(html).toContain("github.com/banter240/lumo-tamer");
+    expect(html).toContain("updateChip");
+    expect(html).toContain("/v1/update");
+    expect(html).toContain("lumo-tamer-config-saved");
+    expect(html).toContain(
+      "Reset all visible fields to defaults? This does not save",
+    );
+    expect(html).not.toContain("super-secret-key");
   });
 
-  it('never returns the API key', async () => {
+  it("never returns the API key", async () => {
     const res = await fetch(`${baseUrl}/v1/config`);
     expect(res.status).toBe(200);
     const body = await res.json();
     const dumped = JSON.stringify(body);
-    expect(dumped).not.toContain('super-secret-key');
-    const key = body.fields.find((f: { path: string }) => f.path === 'server.apiKey');
-    expect(key.kind).toBe('secret');
+    expect(dumped).not.toContain("super-secret-key");
+    const key = body.fields.find(
+      (f: { path: string }) => f.path === "server.apiKey",
+    );
+    expect(key.kind).toBe("secret");
     expect(key.value).toBeNull();
     expect(body.current.server.apiKey).toBeNull();
   });
 
-  it('refuses web edits of host-only settings (update source, executables, paths)', async () => {
+  it("refuses web edits of host-only settings (update source, executables, paths)", async () => {
     for (const changes of [
-      { 'updates.repository': 'attacker/evil' },
-      { 'updates.dockerSocket': '/tmp/other.sock' },
-      { 'auth.login.binaryPath': '/bin/sh' },
-      { 'log.filePath': '/etc/cron.d/x' },
-      { 'log.messageContent': true },
-      { 'server.host': '0.0.0.0' },
+      { "updates.repository": "attacker/evil" },
+      { "updates.dockerSocket": "/tmp/other.sock" },
+      { "auth.login.binaryPath": "/bin/sh" },
+      { "log.filePath": "/etc/cron.d/x" },
+      { "log.messageContent": true },
+      { "server.host": "0.0.0.0" },
     ]) {
       const res = await fetch(`${baseUrl}/v1/config`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ changes }),
       });
       expect(res.status, Object.keys(changes)[0]).toBe(403);
     }
-    const yaml = readFileSync(join(tmpDir, 'config.yaml'), 'utf8');
-    expect(yaml).not.toContain('attacker/evil');
-    expect(yaml).not.toContain('/bin/sh');
+    const yaml = readFileSync(join(tmpDir, "config.yaml"), "utf8");
+    expect(yaml).not.toContain("attacker/evil");
+    expect(yaml).not.toContain("/bin/sh");
 
-    const fields = (await (await fetch(`${baseUrl}/v1/config`)).json()).fields as Array<{ path: string; hostOnly?: boolean }>;
-    expect(fields.find((f) => f.path === 'updates.repository')?.hostOnly).toBe(true);
-    expect(fields.find((f) => f.path === 'updates.channel')?.hostOnly).toBeUndefined();
+    const fields = (await (await fetch(`${baseUrl}/v1/config`)).json())
+      .fields as Array<{ path: string; hostOnly?: boolean }>;
+    expect(fields.find((f) => f.path === "updates.repository")?.hostOnly).toBe(
+      true,
+    );
+    expect(
+      fields.find((f) => f.path === "updates.channel")?.hostOnly,
+    ).toBeUndefined();
   });
 
-  it('import skips host-only settings', async () => {
+  it("import skips host-only settings", async () => {
     const snapshot = {
-      $format: 'lumo-tamer-config',
-      version: '0.7.0',
+      $format: "lumo-tamer-config",
+      version: "0.7.0",
       exportedAt: new Date().toISOString(),
-      changes: { 'updates.repository': 'attacker/evil', 'updates.channel': 'dev' },
+      changes: {
+        "updates.repository": "attacker/evil",
+        "updates.channel": "dev",
+      },
     };
     const res = await fetch(`${baseUrl}/v1/config/import`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ snapshot }),
     });
     const body = await res.json();
     expect(res.status).toBe(200);
-    expect(body.report.hostOnlySkipped).toContain('updates.repository');
-    expect(readFileSync(join(tmpDir, 'config.yaml'), 'utf8')).toContain('channel: dev');
-    expect(readFileSync(join(tmpDir, 'config.yaml'), 'utf8')).not.toContain('attacker/evil');
+    expect(body.report.hostOnlySkipped).toContain("updates.repository");
+    expect(readFileSync(join(tmpDir, "config.yaml"), "utf8")).toContain(
+      "channel: dev",
+    );
+    expect(readFileSync(join(tmpDir, "config.yaml"), "utf8")).not.toContain(
+      "attacker/evil",
+    );
   });
 
-  it('saves a toggle and keeps the existing API key', async () => {
+  it("saves a toggle and keeps the existing API key", async () => {
     const res = await fetch(`${baseUrl}/v1/config`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ changes: { 'server.enableWebSearch': true, 'server.apiKey': '' } }),
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        changes: { "server.enableWebSearch": true, "server.apiKey": "" },
+      }),
     });
     expect(res.status).toBe(200);
-    const yaml = readFileSync(join(tmpDir, 'config.yaml'), 'utf8');
-    expect(yaml).toContain('enableWebSearch: true');
-    expect(yaml).toContain('super-secret-key');
+    const yaml = readFileSync(join(tmpDir, "config.yaml"), "utf8");
+    expect(yaml).toContain("enableWebSearch: true");
+    expect(yaml).toContain("super-secret-key");
   });
 
-  it('hot-reloads updates.channel on save without restart', async () => {
+  it("hot-reloads updates.channel on save without restart", async () => {
     const res = await fetch(`${baseUrl}/v1/config`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ changes: { 'updates.channel': 'dev' } }),
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ changes: { "updates.channel": "dev" } }),
     });
     expect(res.status).toBe(200);
-    expect(getUpdatesConfig().channel).toBe('dev');
+    expect(getUpdatesConfig().channel).toBe("dev");
   });
 
-  it('resets every override except the API key', async () => {
-    writeFileSync(join(tmpDir, 'config.yaml'), [
-      'server:',
-      '  apiKey: "super-secret-key"',
-      '  port: 9999',
-      '  enableWebSearch: true',
-      'conversations:',
-      '  enableSync: true',
-      '',
-    ].join('\n'));
+  it("resets every override except the API key", async () => {
+    writeFileSync(
+      join(tmpDir, "config.yaml"),
+      [
+        "server:",
+        '  apiKey: "super-secret-key"',
+        "  port: 9999",
+        "  enableWebSearch: true",
+        "conversations:",
+        "  enableSync: true",
+        "",
+      ].join("\n"),
+    );
 
     const res = await fetch(`${baseUrl}/v1/config`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resetAll: true }),
     });
     expect(res.status).toBe(200);
-    const yaml = readFileSync(join(tmpDir, 'config.yaml'), 'utf8');
-    expect(yaml).toContain('super-secret-key');
-    expect(yaml).not.toContain('9999');
-    expect(yaml).not.toContain('enableWebSearch');
-    expect(yaml).not.toContain('enableSync');
+    const yaml = readFileSync(join(tmpDir, "config.yaml"), "utf8");
+    expect(yaml).toContain("super-secret-key");
+    expect(yaml).not.toContain("9999");
+    expect(yaml).not.toContain("enableWebSearch");
+    expect(yaml).not.toContain("enableSync");
   });
 });

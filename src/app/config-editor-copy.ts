@@ -83,6 +83,12 @@ export const CONFIG_CATEGORIES: ConfigCategory[] = [
     blurb: "Prometheus /metrics endpoint and runtime counters.",
   },
   {
+    id: "webapp",
+    title: "Lumo Web App",
+    blurb:
+      "Experimental passthrough for the official Lumo web app (webapp.enabled).",
+  },
+  {
     id: "pacing",
     title: "Pacing",
     parent: "server",
@@ -515,6 +521,81 @@ const COPY: Record<string, FieldCopy> = {
     hint: "Optional PAT. Raises the release-check rate limit from 60 to 5000 req/h. Env GITHUB_TOKEN works too.",
     more: "Anonymous GitHub API is limited to ~60 requests per hour per IP; the periodic release check can exhaust that and the chip shows a 403. A fine-grained read-only token (no scopes needed for public repos) fixes it. Saved into config.yaml, which is never synced by updates. This page never displays the current value; saving with the field empty keeps the existing token — use Clear to remove it.",
     kind: "secret",
+  },
+  "webapp.enabled": {
+    label: "Serve the Lumo web app",
+    hint: "Proxy the official Lumo web app through this server and open it at the root URL.",
+    more: "Off by default. When on, requests that match no tamer route are proxied to the Lumo web app: you browse and sign in to Proton inside the page, chats run client-side with Lumo's own encryption. The /v1 API, /auth, /config keep working unchanged. The page's own Proton session lives in your browser cookies, not on this server.",
+  },
+  "webapp.upstream": {
+    label: "Web app upstream",
+    hint: "Where web app traffic is proxied to. Change only in config.yaml on the host.",
+    more: "Host-only on purpose: raising this to a third-party URL would tunnel the browser's Proton login through that third party.",
+  },
+  "webapp.connectors.filesystem.enabled": {
+    label: "Filesystem connector",
+    hint: "Let the web app read and edit files in configured directories.",
+    more: "Off by default. Tools fs_read, fs_search, fs_write, fs_edit execute on this server. Reads follow the read policy, writes the write policy.",
+  },
+  "webapp.connectors.filesystem.roots": {
+    label: "Allowed directories",
+    hint: "Directories Lumo may touch. Change only in config.yaml on the host.",
+    more: "Empty means the connector refuses everything. Paths on this machine — editable only in config.yaml, like the upstream URL.",
+  },
+  "webapp.connectors.filesystem.read": {
+    label: "Read policy",
+    hint: "auto runs fs_read and fs_search without asking.",
+    choices: ["auto", "ask", "deny"],
+  },
+  "webapp.connectors.filesystem.write": {
+    label: "Write policy",
+    hint: "auto runs fs_write and fs_edit without asking. Deny is enforced on the server.",
+    more: "Defaults to deny: writing files on the host should always be an explicit decision.",
+    choices: ["auto", "ask", "deny"],
+  },
+  "webapp.connectors.bash.enabled": {
+    label: "Bash connector",
+    hint: "Let the web app run shell commands on this server.",
+    more: "Off by default. Every bash__run call follows the bash policy.",
+  },
+  "webapp.connectors.bash.policy": {
+    label: "Bash policy",
+    hint: "auto runs bash__run without asking, ask shows an approval card.",
+    more: "Executes arbitrary shell commands — keep ask or deny unless you have a reason.",
+    choices: ["auto", "ask", "deny"],
+  },
+  "webapp.connectors.bash.executors": {
+    label: "Executors",
+    hint: "Language tag -> command list, code appended as last argument. Change only in config.yaml on the host.",
+    more: "These executables run on this machine, so the mapping is host-only like the filesystem roots.",
+  },
+  "webapp.connectors.bash.timeoutSec": {
+    label: "Bash timeout (seconds)",
+    hint: "Kill a run after this many seconds.",
+  },
+  "webapp.connectors.browser.enabled": {
+    label: "Browser connector",
+    hint: "Let the web app fetch pages server-side (no CORS limits).",
+    more: "Off by default. browser__fetch runs on this server and returns page text into chat.",
+  },
+  "webapp.connectors.browser.policy": {
+    label: "Fetch policy",
+    hint: "auto fetches without asking, ask shows an approval card first.",
+    choices: ["auto", "ask", "deny"],
+  },
+  "webapp.connectors.approvals.timeoutSec": {
+    label: "Approval timeout (seconds)",
+    hint: "How long an ask approval waits for an answer before it is denied.",
+  },
+  "webapp.schedules.enabled": {
+    label: "Scheduled tasks",
+    hint: "Run schedules server-side via this server's Lumo session, even when the app is closed.",
+    more: "Off by default. The web app edits the timings; tamer books and executes the runs itself and reports history back. Scheduled runs mark connectors read-only. Needs a logged-in session on /auth.",
+  },
+  "webapp.schedules.maxConcurrency": {
+    label: "Max concurrent runs",
+    hint: "How many scheduled runs may execute at the same time.",
+    more: "Additional due runs wait until a slot frees up. Keep low — each run consumes Lumo request quota.",
   },
   "commands.wakeword": {
     label: "Wakeword",
@@ -1046,6 +1127,58 @@ export const FIELD_DEPENDENCIES: Record<string, FieldDependency> = {
     parent: "server.customTools.modules.homeAssistant.enabled",
     showValues: [true],
   },
+  "webapp.connectors.filesystem.enabled": {
+    parent: "webapp.enabled",
+    showValues: [true],
+  },
+  "webapp.connectors.filesystem.roots": {
+    parent: "webapp.connectors.filesystem.enabled",
+    showValues: [true],
+  },
+  "webapp.connectors.filesystem.read": {
+    parent: "webapp.connectors.filesystem.enabled",
+    showValues: [true],
+  },
+  "webapp.connectors.filesystem.write": {
+    parent: "webapp.connectors.filesystem.enabled",
+    showValues: [true],
+  },
+  "webapp.connectors.bash.enabled": {
+    parent: "webapp.enabled",
+    showValues: [true],
+  },
+  "webapp.connectors.bash.policy": {
+    parent: "webapp.connectors.bash.enabled",
+    showValues: [true],
+  },
+  "webapp.connectors.bash.executors": {
+    parent: "webapp.connectors.bash.enabled",
+    showValues: [true],
+  },
+  "webapp.connectors.bash.timeoutSec": {
+    parent: "webapp.connectors.bash.enabled",
+    showValues: [true],
+  },
+  "webapp.connectors.browser.enabled": {
+    parent: "webapp.enabled",
+    showValues: [true],
+  },
+  "webapp.connectors.browser.policy": {
+    parent: "webapp.connectors.browser.enabled",
+    showValues: [true],
+  },
+  "webapp.connectors.approvals.timeoutSec": {
+    parent: "webapp.enabled",
+    showValues: [true],
+  },
+  "webapp.schedules.enabled": {
+    parent: "webapp.enabled",
+    showValues: [true],
+  },
+  "webapp.schedules.maxConcurrency": {
+    parent: "webapp.schedules.enabled",
+    showValues: [true],
+  },
   "server.compaction.keepRecentTurns": {
     parent: "server.compaction.enabled",
     showValues: [true],
@@ -1315,6 +1448,7 @@ export function fieldCategory(path: string): string {
   if (path === "server.enableWebSearch" || path === "server.enableImageTools")
     return "toolsGeneral";
   if (path.startsWith("server.metrics.")) return "metrics";
+  if (path.startsWith("webapp.")) return "webapp";
   if (path.startsWith("server.compaction.")) return "compaction";
   if (path.startsWith("server.reasoning.")) return "reasoning";
   if (

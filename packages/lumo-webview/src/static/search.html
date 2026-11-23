@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search</title>
+  <link rel="stylesheet" href="styles/search.css">
+  <script src="scripts/theme.js"></script>
+</head>
+<body>
+<div class="search-pill stowed" id="pill">
+  <img src="images/lumo-mark.svg" class="logo" alt="">
+  <div class="field">
+    <input type="text" id="search" placeholder="Ask me confidentially..." aria-label="Ask Lumo" aria-describedby="hint" autocomplete="off" spellcheck="false" autofocus>
+    <p class="search-error" id="hint" role="alert" hidden></p>
+  </div>
+  <button type="button" class="enter-key" id="ask" title="Ask (Enter)" aria-label="Ask">&#x21B5;</button>
+</div>
+<script src="scripts/search.js"></script>
+</body>
+</html>

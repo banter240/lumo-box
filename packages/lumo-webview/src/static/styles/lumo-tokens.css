@@ -1,0 +1,113 @@
+/* Shared Lumo desktop UI tokens (settings, search overlay, etc.) */
+:root {
+    --lumo-purple: #6D4AFF;
+    --lumo-purple-hover: #5A3AE6;
+    --lumo-purple-dark: #4A2DC5;
+    --lumo-purple-deep: #372580;
+    --lumo-purple-muted: #E8E1F9;
+    --lumo-purple-subtle: rgba(109, 74, 255, 0.1);
+    --lumo-purple-ring: rgba(109, 74, 255, 0.22);
+    --lumo-accent-text: var(--lumo-purple);
+
+    --lumo-bg: #FFFFFF;
+    --lumo-bg-page: #FAFAFC;
+    --lumo-bg-elevated: #FFFFFF;
+
+    --lumo-sidebar-bg: #FFFFFF;
+    --lumo-sidebar-border: var(--lumo-border);
+    --lumo-sidebar-text: var(--lumo-text-secondary);
+    --lumo-sidebar-text-hover: var(--lumo-text);
+    --lumo-sidebar-active-bg: var(--lumo-purple-muted);
+    --lumo-sidebar-active-text: var(--lumo-purple-dark);
+
+    --lumo-text: #1A1523;
+    --lumo-text-secondary: #5C5469;
+    --lumo-text-muted: #8A8299;
+
+    --lumo-border: #E8E4F0;
+    --lumo-border-strong: #D4CFE6;
+
+    --lumo-radius-sm: 8px;
+    --lumo-radius-md: 12px;
+    --lumo-radius-lg: 16px;
+    --lumo-radius-pill: 50px;
+
+    --lumo-shadow-sm: 0 1px 3px rgba(55, 37, 128, 0.06);
+    --lumo-shadow-md: 0 8px 24px rgba(55, 37, 128, 0.1);
+    --lumo-shadow-lg: 0 20px 50px rgba(20, 16, 24, 0.25);
+
+    --lumo-success: #22c55e;
+    --lumo-warning: #f59e0b;
+    --lumo-danger: #ef4444;
+
+    --lumo-danger-text: #b42318;
+    --lumo-danger-title: #912018;
+    --lumo-danger-body: #7a271a;
+    --lumo-danger-bg: #fef3f2;
+    --lumo-danger-border: #fecdca;
+
+    --lumo-card-bg: rgba(255, 255, 255, 0.94);
+    --lumo-card-border: rgba(255, 255, 255, 0.65);
+    --lumo-card-footer-bg: rgba(250, 248, 255, 0.92);
+    --lumo-card-connected-footer-bg: rgba(240, 253, 244, 0.95);
+    --lumo-chip-bg: rgba(255, 255, 255, 0.85);
+    --lumo-icon-tile-from: #FFFFFF;
+    --lumo-icon-tile-to: var(--lumo-purple-muted);
+    --lumo-pre-bg: rgba(255, 255, 255, 0.7);
+
+    --lumo-content-max: 920px;
+    --lumo-gutter: 24px;
+
+    --lumo-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+    color-scheme: light;
+}
+
+/* `data-theme` is set by scripts/theme.js: the web app's theme, else the OS preference. */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    /* Button fill stays deep enough for white labels (>= 4.5:1); purple text uses the lighter accent. */
+    --lumo-purple: #6D4AFF;
+    --lumo-purple-hover: #7556FF;
+    --lumo-purple-dark: #B9A6FF;
+    --lumo-purple-deep: #D6CBFF;
+    --lumo-purple-muted: rgba(139, 111, 255, 0.24);
+    --lumo-purple-subtle: rgba(139, 111, 255, 0.12);
+    --lumo-purple-ring: rgba(139, 111, 255, 0.4);
+    --lumo-accent-text: #A994FF;
+
+    --lumo-bg: #1E1A26;
+    --lumo-bg-page: #15131B;
+    --lumo-bg-elevated: #252030;
+
+    --lumo-sidebar-bg: #1A1721;
+
+    --lumo-text: #F2EFF8;
+    --lumo-text-secondary: #B8B0C8;
+    --lumo-text-muted: #A39CB2;
+
+    --lumo-border: #3A3448;
+    /* Input and button outlines: >= 3:1 against their fill. */
+    --lumo-border-strong: #6E6682;
+
+    --lumo-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --lumo-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --lumo-shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.6);
+
+    --lumo-danger-text: #FDA29B;
+    --lumo-danger-title: #FECDCA;
+    --lumo-danger-body: #FDA29B;
+    --lumo-danger-bg: rgba(239, 68, 68, 0.12);
+    --lumo-danger-border: rgba(239, 68, 68, 0.35);
+
+    --lumo-card-bg: var(--lumo-bg-elevated);
+    --lumo-card-border: var(--lumo-border);
+    --lumo-card-footer-bg: rgba(255, 255, 255, 0.03);
+    --lumo-card-connected-footer-bg: rgba(34, 197, 94, 0.08);
+    --lumo-chip-bg: rgba(255, 255, 255, 0.05);
+    /* Light even in dark mode: many connector logos are dark marks. */
+    --lumo-icon-tile-from: #F7F4FF;
+    --lumo-icon-tile-to: #E4DBFF;
+    --lumo-pre-bg: rgba(0, 0, 0, 0.3);
+}

@@ -55,6 +55,8 @@ const allowSave = createAttemptGate(AUTH.CONFIG_SAVE_MAX_ATTEMPTS);
 
 export interface ConfigRouterHooks {
   onSaved?: () => void;
+  /** Stop the server for good — no respawn, unlike onSaved's restart. */
+  onShutdown?: () => void;
 }
 
 function renderConfigPage(isAuthenticated: boolean, localUi: boolean): string {
@@ -1268,6 +1270,23 @@ export function createConfigRouter(
         logger.error({ e }, "Restart hook failed");
       }
     }, 100);
+  });
+
+  /** Graceful stop for good: the process ends and nothing respawns it.
+   * Supervisors (Docker restart policy) may still recreate the container;
+   * a hand-started process simply terminates. The exit happens after the
+   * response reached the client, via the onShutdown hook. */
+  router.post("/v1/shutdown", (_req: Request, res: Response) => {
+    logger.info("Shutdown requested via /v1/shutdown — stopping for good");
+    res.json({ success: true, message: "Shutting down…" });
+    res.on("finish", () => {
+      if (!hooks.onShutdown) return;
+      try {
+        hooks.onShutdown();
+      } catch (e) {
+        logger.error({ e }, "Shutdown hook failed");
+      }
+    });
   });
 
   return router;

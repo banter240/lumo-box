@@ -1,0 +1,8 @@
+packages/lumo-webview synced from ProtonLumo/lumo-desktop (webview/) - DO NOT EDIT MANUALLY
+
+Repository: https://github.com/ProtonLumo/lumo-desktop
+Branch: bd5e2c6
+Commit: bd5e2c608bac61f215d4a2094e26ef88cb7bc1e0 (2026-11-19)
+License: GPL-3.0 (same as lumo-tamer)
+
+Refresh: bash scripts/upstream/sync-webview.sh

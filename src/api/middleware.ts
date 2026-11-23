@@ -13,6 +13,11 @@ import {
   uiSessionClearCookie,
   uiSessionCookie,
 } from "./access.js";
+import {
+  isWebappRequestPath,
+  isBridgeRequestPath,
+  isWebappOwnedPath,
+} from "./routes/webapp.js";
 
 function isOpenUiPath(path: string): boolean {
   return (
@@ -26,6 +31,7 @@ function isOpenUiPath(path: string): boolean {
     path === "/v1/config/import" ||
     path === "/v1/restart" ||
     path === "/v1/update" ||
+    path === "/v1/shutdown" ||
     path === "/logs" ||
     path === "/v1/logs"
   );
@@ -51,14 +57,43 @@ function wantsHtml(req: Request): boolean {
  * API routes need the Bearer key. UI routes (/config, /auth, /logs, /health,
  * /metrics, restart, update) are open from this machine only, or to a browser
  * unlocked with the API key at /ui-login. See ./access.ts.
+ *
+ * Proxied web app paths (webapp.enabled) use that same gate: the page
+ * carries its own Proton session, but the tunnel must not be open to the
+ * network. The path predicate is injectable for tests.
  */
-export function setupAuthMiddleware(apiKey: string): RequestHandler {
+export function setupAuthMiddleware(
+  apiKey: string,
+  webappPath: (path: string) => boolean = (path) =>
+    isWebappRequestPath(path) ||
+    isBridgeRequestPath(path) ||
+    isWebappOwnedPath(path),
+): RequestHandler {
   return (req, res, next) => {
     if (req.path === UI_LOGIN_PATH || req.path === UI_LOGOUT_PATH) {
       if (isCrossSiteWrite(req)) {
         return res.status(403).json({ error: "Cross-site request blocked" });
       }
       return next();
+    }
+
+    if (webappPath(req.path)) {
+      if (isCrossSiteWrite(req)) {
+        return res.status(403).json({ error: "Cross-site request blocked" });
+      }
+      if (isLocalRequest(req) || hasValidUiSession(req, apiKey)) {
+        return next();
+      }
+      getMetrics()?.authFailuresTotal.inc();
+      if (wantsHtml(req)) {
+        return res.redirect(
+          302,
+          `${UI_LOGIN_PATH}?next=${encodeURIComponent(req.originalUrl)}`,
+        );
+      }
+      return res.status(401).json({
+        error: `This page only opens from this machine. From another device, unlock it with the API key at ${UI_LOGIN_PATH}.`,
+      });
     }
 
     if (hasValidBearer(req, apiKey)) {
@@ -89,6 +124,11 @@ export function setupAuthMiddleware(apiKey: string): RequestHandler {
     }
 
     getMetrics()?.authFailuresTotal.inc();
+    // A browser hitting an unknown path (e.g. "/") deserves the UI, not
+    // a JSON auth error. /config chains to /ui-login for remote devices.
+    if (wantsHtml(req)) {
+      return res.redirect(302, "/config");
+    }
     return res.status(401).json({ error: "Invalid API key" });
   };
 }
@@ -174,7 +214,11 @@ export function setupReadyMiddleware(isReady: () => boolean): RequestHandler {
       req.path === "/v1/models" ||
       req.path === "/v1/restart" ||
       req.path === "/v1/update" ||
-      req.path.startsWith("/v1/models/")
+      req.path === "/v1/shutdown" ||
+      req.path.startsWith("/v1/models/") ||
+      isWebappRequestPath(req.path) ||
+      isBridgeRequestPath(req.path) ||
+      isWebappOwnedPath(req.path)
     ) {
       return next();
     }

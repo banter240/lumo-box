@@ -17,6 +17,8 @@
     "baseUrl": ".",
     "paths": {
       "@lumo/*": ["packages/lumo/src/*"],
+      "@lumo-webview/src/*": ["packages/lumo-webview/src/*"],
+      "@tauri-apps/plugin-log": ["src/webapp/log-plugin.ts"],
       "@proton/*": ["packages/proton/src/*"],
       "@proton/crypto": ["packages/proton/src/crypto/index.ts"],
       "@proton/crypto/lib": ["packages/proton/src/crypto/index.ts"],
@@ -29,10 +31,7 @@
     }
   },
   "include": ["src/**/*", "packages/**/*"],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
+  "exclude": ["node_modules", "dist"],
   "tsc-alias": {
     "resolveFullPaths": true,
     "verbose": false

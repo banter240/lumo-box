@@ -41,6 +41,10 @@ Need help, want to share a setup, or report something quickly? Join the [Discord
 
 This tree is a fork of [ZeroTricks/lumo-tamer](https://github.com/ZeroTricks/lumo-tamer). Credit for the original project belongs there.
 
+## Acknowledgements
+
+`packages/lumo-webview/` contains code vendored 1:1 from [ProtonLumo/lumo-desktop](https://github.com/ProtonLumo/lumo-desktop), the official Lumo desktop app: the webview bridges, shared modules, and the bundled local pages (login, search, and the full settings UI). It is refreshed via `scripts/upstream/sync-webview.sh` and kept pristine — tamer-specific code lives only in the transport and bridge layers around it. That code is © Proton / ProtonLumo contributors, licensed under GPL-3.0 (see `packages/lumo-webview/UPSTREAM` for the exact source commit and `LICENSE` for the full text).
+
 ## Features
 
 - The `/config` web editor: category sidebar with search, per-field Default/Undo, config **export/import** as portable JSON (secrets opt-in), live toasts, dark/light theme.

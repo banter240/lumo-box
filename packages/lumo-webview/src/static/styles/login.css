@@ -1,0 +1,81 @@
+@import url("lumo-tokens.css");
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--lumo-bg-page);
+    color: var(--lumo-text);
+    font-family: var(--lumo-font-sans);
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 380px;
+    padding: 40px 32px;
+    margin: 0 var(--lumo-gutter);
+    background: var(--lumo-bg-elevated);
+    border: 1px solid var(--lumo-border);
+    border-radius: var(--lumo-radius-lg);
+    box-shadow: var(--lumo-shadow-md);
+    text-align: center;
+}
+
+.login-logo {
+    display: block;
+    margin: 0 auto 16px;
+}
+
+.login-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.login-subtitle {
+    margin: 4px 0 28px;
+    font-size: 13px;
+    color: var(--lumo-text-secondary);
+}
+
+.login-card button {
+    background: var(--lumo-purple);
+    color: #fff;
+    border: none;
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: var(--lumo-radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.login-card button:hover:not(:disabled) {
+    background: var(--lumo-purple-hover);
+    box-shadow: 0 2px 8px var(--lumo-purple-ring);
+}
+
+.login-card button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.login-hint {
+    margin: 20px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--lumo-text-muted);
+}
+
+.login-hint.waiting { color: var(--lumo-purple-dark); }
+.login-hint.failed { color: var(--lumo-danger); }

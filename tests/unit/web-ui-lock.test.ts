@@ -10,15 +10,13 @@ describe("htmlPage local lock-button suppression", () => {
       localUi,
     });
 
-  it("omits the lock button and its binding for local requests", () => {
+  it("omits the lock action for local requests", () => {
     const html = page(true);
-    expect(html).not.toContain("uiLockBtn");
-    expect(html).not.toContain("ui-logout");
+    expect(html).toMatch(/data-actions="(?![^"]*lock)/);
   });
 
-  it("renders the lock button and its binding for remote requests", () => {
+  it("renders the lock action for remote requests", () => {
     const html = page(false);
-    expect(html).toContain("uiLockBtn");
-    expect(html).toContain("/ui-logout");
+    expect(html).toMatch(/data-actions="[^"]*lock/);
   });
 });

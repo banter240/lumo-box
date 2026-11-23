@@ -197,6 +197,43 @@ const commandsConfigSchema = z.object({
   wakeword: z.string(),
 });
 
+// Lumo web app passthrough (experimental). See src/api/routes/webapp.ts.
+export const toolPolicySchema = z.enum(["auto", "ask", "deny"]);
+export type ToolPolicy = z.infer<typeof toolPolicySchema>;
+
+const webappConfigSchema = z.object({
+  enabled: z.boolean(),
+  // Host-only in practice: changing it would tunnel the browser's Proton
+  // session to a third party. Listed in HOST_ONLY_PATHS.
+  upstream: z.string().url(),
+  schedules: z.object({
+    enabled: z.boolean(),
+    maxConcurrency: z.number().int().positive(),
+  }),
+  connectors: z.object({
+    filesystem: z.object({
+      enabled: z.boolean(),
+      roots: z.array(z.string()),
+      read: toolPolicySchema,
+      write: toolPolicySchema,
+    }),
+    bash: z.object({
+      enabled: z.boolean(),
+      policy: toolPolicySchema,
+      executors: z.record(z.string(), z.array(z.string())),
+      timeoutSec: z.number().int().positive(),
+    }),
+    browser: z.object({
+      enabled: z.boolean(),
+      policy: toolPolicySchema,
+    }),
+    approvals: z.object({
+      timeoutSec: z.number().int().positive(),
+    }),
+  }),
+});
+export type WebappConfig = z.infer<typeof webappConfigSchema>;
+
 // Outgoing-request pacing: minimum interval + human-like jitter so agent
 // tool loops don't hammer Proton back-to-back. Shared between server and CLI.
 const pacingConfigSchema = z
@@ -297,6 +334,7 @@ const sharedMergedFields = {
   updates: updatesConfigSchema,
   pacing: pacingConfigSchema,
   compaction: compactionConfigSchema,
+  webapp: webappConfigSchema,
   enableWebSearch: z.boolean(),
   enableImageTools: z.boolean(),
 };
@@ -540,6 +578,10 @@ export function getMetricsConfig() {
 export function getReasoningConfig() {
   const cfg = getServerConfig();
   return cfg.reasoning;
+}
+
+export function getWebappConfig(): z.infer<typeof webappConfigSchema> {
+  return getConfig().webapp;
 }
 
 // CLI-specific getters

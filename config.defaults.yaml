@@ -115,6 +115,50 @@ updates:
   # Leave empty to use anonymous access (or the GITHUB_TOKEN env var).
   githubToken: ""
 
+# Lumo web app passthrough (experimental). Serves the official Lumo web app
+# through this server: page traffic is proxied to Proton, login happens inside
+# the page as usual, and /v1 keeps working unchanged. Off = no change.
+webapp:
+  enabled: false
+  # Where page traffic is proxied to. Host-only: change in config.yaml, never
+  # via /config (changing it would tunnel the browser's Proton session elsewhere).
+  upstream: "https://lumo.proton.me"
+
+  # Connector backend for the web app bridge (Phase 3 engine; HTTP bridge
+  # wiring lands with the Tauri shim). All connectors default off.
+  connectors:
+    filesystem:
+      enabled: false
+      # Directories Lumo may touch. Empty = the connector refuses everything.
+      # Host-only: paths on this machine, not editable via the web UI.
+      roots: []
+      # Policy for reads: auto | ask | deny
+      read: "auto"
+      # Policy for writes (fs_write, fs_edit): auto | ask | deny
+      write: "deny"
+    bash:
+      enabled: false
+      # Policy for every bash__run call: auto | ask | deny
+      policy: "ask"
+      # Language tag -> [command, ...args], code appended as last arg.
+      # Host-only: these executables run on this machine.
+      executors:
+        bash: ["bash", "-c"]
+      # Kill a run after this many seconds
+      timeoutSec: 60
+    browser:
+      enabled: false
+      # Policy for browser__fetch (server-side fetch, no CORS limits): auto | ask | deny
+      policy: "auto"
+    # How long an "ask" approval waits for an answer before it is denied.
+    approvals:
+      timeoutSec: 120
+  # Server-side schedule runner (Phase 4). Runs execute via tamer's Lumo
+  # client with connectors forced read-only; the PWA only edits timings.
+  schedules:
+    enabled: false
+    maxConcurrency: 1
+
 # Server Configuration
 server:
   # Address to listen on. "127.0.0.1" = this machine only (default).

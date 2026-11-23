@@ -6,6 +6,7 @@ import { parseDocument } from "yaml";
 import {
   getServerConfig,
   getMetricsConfig,
+  getWebappConfig,
   authConfig,
   reloadConfig,
   parseServerUserConfig,
@@ -16,6 +17,8 @@ import { isInstallStale, isBuildStale } from "../app/staleness.js";
 import { getConfigPath } from "../app/config-file.js";
 import { logger } from "../app/logger.js";
 import { isLoopbackHostname } from "./access.js";
+import { isWebappRequestPath } from "./routes/webapp.js";
+import { createWebappSigninRouter } from "./routes/webapp-signin.js";
 import {
   createUiLoginRouter,
   setupAuthMiddleware,
@@ -33,6 +36,10 @@ import { createAuthRouter } from "./routes/auth.js";
 import { createConfigRouter } from "./routes/config.js";
 import { createUpdatesRouter } from "./routes/updates.js";
 import { createLogsRouter } from "./routes/logs.js";
+import { createWebappRouter } from "./routes/webapp.js";
+import { createLumoBridgeRouter, BRIDGE_PREFIX } from "./routes/lumo-bridge.js";
+import type { ScheduleRunner } from "../schedules/coordinator.js";
+import type { StoredSchedule } from "../schedules/types.js";
 import { setGitRestartHook, startUpdateChecker } from "../app/updates.js";
 import { EndpointDependencies } from "./types.js";
 import { RequestQueue } from "./queue.js";
@@ -73,8 +80,19 @@ export class APIServer {
   }
 
   private setupMiddleware(): void {
-    this.expressApp.use(express.json({ limit: this.serverConfig.bodyLimit }));
-    this.expressApp.use(express.urlencoded({ extended: false }));
+    // Proxied webapp requests must keep their raw body stream; both parsers
+    // are skipped for those paths (checked live, so toggling config.yaml
+    // applies on hot-reload).
+    const skipForWebapp =
+      (parser: express.RequestHandler): express.RequestHandler =>
+      (req, res, next) => {
+        if (isWebappRequestPath(req.path)) return next();
+        parser(req, res, next);
+      };
+    this.expressApp.use(
+      skipForWebapp(express.json({ limit: this.serverConfig.bodyLimit })),
+    );
+    this.expressApp.use(skipForWebapp(express.urlencoded({ extended: false })));
     this.expressApp.use(setupAuthMiddleware(this.serverConfig.apiKey));
     this.expressApp.use(setupReadyMiddleware(() => this.app.isAuthenticated()));
     this.expressApp.use(setupLoggingMiddleware());
@@ -117,8 +135,63 @@ export class APIServer {
         onSaved: () => {
           restartAfterConfigSave(this.httpServer);
         },
+        onShutdown: () => {
+          gracefulShutdown(this.httpServer);
+        },
       }),
     );
+
+    // Scheduled runs go through the plain completion path: no custom-tool
+    // world, no native tools — deterministic output for the Schedules UI.
+    const scheduleRunner: ScheduleRunner | undefined = (() => {
+      try {
+        if (!getWebappConfig().schedules.enabled) return undefined;
+      } catch {
+        return undefined;
+      }
+      return async (schedule) => {
+        if (!this.app.isAuthenticated()) {
+          throw new Error("Not authenticated — log in at /auth first");
+        }
+        // prompt is a documented tamer extension on the stored record; the
+        // desktop wire contract never carries it.
+        const prompt = (
+          schedule as StoredSchedule & { prompt?: string }
+        ).prompt?.trim();
+        if (!prompt) {
+          throw new Error("Schedule has no prompt text");
+        }
+        const client = this.app.getLumoClient();
+        const result = await client.chat(prompt, undefined, {
+          useNativeTools: false,
+          requestTitle: false,
+        });
+        return result.message.content;
+      };
+    })();
+
+    this.expressApp.use(
+      `/${BRIDGE_PREFIX}`,
+      createLumoBridgeRouter({
+        isAuthenticated: () => this.app.isAuthenticated(),
+        ...(scheduleRunner
+          ? {
+              scheduleRunner,
+              maxConcurrency: getWebappConfig().schedules.maxConcurrency,
+            }
+          : {}),
+      }),
+    );
+
+    if (getWebappConfig().enabled) {
+      this.expressApp.use("/webapp-signin", createWebappSigninRouter());
+    }
+
+    const webappRouter = createWebappRouter();
+    this.expressApp.use((req, res, next) => {
+      if (!getWebappConfig().enabled) return next();
+      webappRouter(req, res, next);
+    });
 
     this.expressApp.use(setupApiErrorHandler());
   }
@@ -261,6 +334,26 @@ function restartAfterConfigSave(httpServer?: Server): void {
   }
   httpServer.close(respawn);
   setTimeout(respawn, 2000).unref();
+}
+
+/** Stop the server for good: unlike restartAfterConfigSave this never
+ * respawns. A supervisor (Docker restart policy) may still recreate the
+ * container; a hand-started process simply ends — no orphaned workers. */
+function gracefulShutdown(httpServer?: Server): void {
+  logger.info("Shutting down for good — no respawn");
+  let exited = false;
+  const exit = (): void => {
+    if (exited) return;
+    exited = true;
+    process.exit(0);
+  };
+  try {
+    httpServer?.closeAllConnections();
+  } catch {
+    /* pre-18.2 Node */
+  }
+  httpServer?.close(exit);
+  setTimeout(exit, 2000).unref();
 }
 
 function parentIsTsxWatch(): boolean {

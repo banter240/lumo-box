@@ -26,6 +26,9 @@ export const HOST_ONLY_PATHS: ReadonlySet<string> = new Set([
   "cli.log.filePath",
   "conversations.databasePath",
   "server.host",
+  "webapp.upstream",
+  "webapp.connectors.filesystem.roots",
+  "webapp.connectors.bash.executors",
 ]);
 
 export function isHostOnlyPath(path: string): boolean {
