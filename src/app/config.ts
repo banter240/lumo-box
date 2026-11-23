@@ -82,10 +82,28 @@ const customToolsModuleSchema = z.object({
   prompt: z.string().optional(),
 });
 
+// Per-mode instruction worlds: flat customTools.modules is the legacy world;
+// native requests read native.instructions.modules instead, so protocol text
+// never leaks between the modes.
+const customToolsInstructionsSchema = z.object({
+  modules: z.record(z.string(), customToolsModuleSchema).optional(),
+});
+
 const customToolsConfigSchema = z.object({
   enabled: z.boolean(),
   prefix: z.string(),
+  // legacy: tools are announced as prompt text and parsed back out of the
+  // reply. native: tools ride the request `tools` array as
+  // full function tools and the model answers with structured tool_calls
+  // (upstream clientTools support, WebClients chat-completions.ts).
+  mode: z.enum(["legacy", "native"]).default("native"),
   modules: z.record(z.string(), customToolsModuleSchema).optional(),
+  legacy: z
+    .object({ instructions: customToolsInstructionsSchema.optional() })
+    .optional(),
+  native: z
+    .object({ instructions: customToolsInstructionsSchema.optional() })
+    .optional(),
   recovery: z.object({
     bounceDanglingColon: z.boolean(),
     bounceNarration: z.boolean(),
@@ -203,6 +221,9 @@ export type ToolPolicy = z.infer<typeof toolPolicySchema>;
 
 const webappConfigSchema = z.object({
   enabled: z.boolean(),
+  // Discovery-only: logs the STRUCTURE of proxied chat requests (keys,
+  // tool names, role counts) to a JSONL file — never message content.
+  wireCapture: z.boolean().optional(),
   // Host-only in practice: changing it would tunnel the browser's Proton
   // session to a third party. Listed in HOST_ONLY_PATHS.
   upstream: z.string().url(),
@@ -558,6 +579,15 @@ export function getServerConfig(): ServerMergedConfig {
   if (configMode !== "server" || !config)
     throw new Error("Server configuration required. Run in server mode.");
   return config as ServerMergedConfig;
+}
+
+/** Server config when in server mode; undefined otherwise (CLI).
+ * Lets shared client code read server-only sections without crashing
+ * outside the server; callers degrade to sensible defaults. */
+export function tryGetServerConfig(): ServerMergedConfig | undefined {
+  return configMode === "server" && config
+    ? (config as ServerMergedConfig)
+    : undefined;
 }
 
 export function getCustomToolsConfig() {

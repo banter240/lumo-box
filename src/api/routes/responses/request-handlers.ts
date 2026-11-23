@@ -38,6 +38,7 @@ import {
 } from "../../error-handler.js";
 import { getMetrics } from "../../../app/metrics.js";
 import { resolveRequestTier } from "../../request-prep.js";
+import type { FunctionTool } from "../../../lumo-client/v2-body.js";
 
 // ── Output building ────────────────────────────────────────────────
 
@@ -185,6 +186,7 @@ export async function handleRequest(
   streaming: boolean,
   instructions: string | undefined,
   injectInstructionsInto: "first" | "last",
+  clientTools?: FunctionTool[],
 ): Promise<void> {
   const id = generateResponseId();
   const itemId = generateItemId();
@@ -300,6 +302,7 @@ export async function handleRequest(
           modelTier: tier,
           enableReasoning,
           onReasoning: surfaceThinking ? emitReasoning : undefined,
+          clientTools,
         },
       );
 
@@ -308,7 +311,16 @@ export async function handleRequest(
         reasoningItemId = reasoningItemId || generateItemId();
       }
       toolCallsForPersist = mapToolCallsForPersistence(
-        processor.toolCallsEmitted,
+        processor.toolCallsEmitted.length > 0
+          ? processor.toolCallsEmitted
+          : (result.clientToolCalls?.map((tc) => ({
+              id: generateCallId(tc.name),
+              type: "function" as const,
+              function: {
+                name: tc.name,
+                arguments: JSON.stringify(tc.arguments),
+              },
+            })) ?? []),
       );
       completionTokens = result.usage?.completion_tokens;
     } catch (error) {

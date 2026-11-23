@@ -17,6 +17,7 @@ import type { Request, Response as ExpressResponse } from "express";
 import { Router } from "express";
 import { Readable } from "stream";
 import { getWebappConfig } from "../../app/config.js";
+import { captureChatBody } from "./wire-capture.js";
 import { logger } from "../../app/logger.js";
 import { insertAfterHead } from "../../webapp/head-inject.js";
 import { BRIDGE_INJECT_PATH } from "../../webapp/bridge-constants.js";
@@ -180,8 +181,13 @@ function proxyHandler(upstream: string) {
       redirect: "manual",
     };
     if (hasBody) {
-      init.body = Readable.toWeb(req) as ReadableStream;
-      init.duplex = "half";
+      const captured = await captureChatBody(req.method, target.pathname, req);
+      if (captured) {
+        init.body = new Uint8Array(captured);
+      } else {
+        init.body = Readable.toWeb(req) as ReadableStream;
+        init.duplex = "half";
+      }
     }
 
     let upstreamRes: Response;

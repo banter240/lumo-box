@@ -37,7 +37,9 @@ import {
   buildChatCompletionsBody,
   LUMO_CHAT_ENDPOINT,
   type LumoCompletionTarget,
+  type FunctionTool,
 } from "./v2-body.js";
+import { decryptToolCallFrame } from "./tool-call-frame.js";
 import { V2StreamProcessor } from "./v2-stream.js";
 import { selectNativeTools } from "./native-tools.js";
 import {
@@ -55,6 +57,7 @@ import {
   getLogConfig,
   getConfigMode,
   getCustomToolsConfig,
+  tryGetServerConfig,
   getEnableWebSearch,
   getEnableImageTools,
   getServerConfig,
@@ -185,6 +188,7 @@ export class LumoClient {
       onChunk?: (content: string) => void;
       onReasoning?: (content: string) => void;
       suppressBounce: boolean;
+      expectedToolNames?: ReadonlySet<string>;
     },
   ): Promise<CompletionResult> {
     const reader = stream.getReader();
@@ -192,6 +196,7 @@ export class LumoClient {
     const processor = new V2StreamProcessor();
     const nativeToolProcessor = new NativeToolCallProcessor(
       opts.suppressBounce,
+      opts.expectedToolNames,
     );
 
     let content = "";
@@ -248,8 +253,14 @@ export class LumoClient {
             reasoning += text;
             opts.onReasoning?.(text);
           } else if (msg.target === "tool_call") {
-            // Complete tool call (custom-tool misroute path); emitted by finalize().
-            if (nativeToolProcessor.feedToolCall(msg.content)) {
+            // Complete tool call; emitted by finalize(). With U2L the scheduler
+            // encrypts client-tool arguments into ciphertext strings inside the
+            // frame; decryptToolCallFrame mirrors the upstream transform and
+            // passes non-encrypted frames through untouched.
+            const frame = await decryptToolCallFrame(msg.content, (text) =>
+              decrypt(text, true),
+            );
+            if (nativeToolProcessor.feedToolCall(frame)) {
               suppressChunks = true;
               abortEarly = true;
             }
@@ -257,6 +268,12 @@ export class LumoClient {
           break;
         }
         case "server_tool_call": {
+          // Client tools ride the delta.tool_calls channel (upstream executes
+          // them from the delta accumulator); the chat.tool_call announce/
+          // dispatch pair would feed the processor twice. Skip it.
+          if (opts.expectedToolNames?.has(msg.name)) {
+            break;
+          }
           // Native tool call (e.g. proton_info); normalize into the tool processor.
           const args =
             msg.arguments !== undefined
@@ -456,6 +473,8 @@ export class LumoClient {
       tier: LumoModelTier;
       enableReasoning: boolean;
       tools: ToolName[];
+      /** Native-mode client function tools riding the request tools array. */
+      clientTools?: FunctionTool[];
       enableEncryption: boolean;
       target: LumoCompletionTarget;
       onChunk?: (content: string) => void;
@@ -503,7 +522,7 @@ export class LumoClient {
       turns: processedTurns,
       tier: params.tier,
       enableReasoning: params.enableReasoning,
-      tools: params.tools,
+      tools: [...params.tools, ...(params.clientTools ?? [])],
       encryption,
       encrypted: params.enableEncryption,
       target: params.target,
@@ -517,10 +536,12 @@ export class LumoClient {
       Buffer.byteLength(JSON.stringify(body), "utf8") -
         imagePayloadChars(processedTurns),
     );
+    // Server-only knobs; outside the server (CLI) degrade to schema defaults.
+    const serverConfig = tryGetServerConfig();
     const estimatedPromptTokens = estimatePromptTokens(
       bytes,
-      getServerConfig().promptTokenEstimation,
-      getServerConfig().promptTokenEstimationFactor ?? 1.0,
+      serverConfig?.promptTokenEstimation ?? "auto",
+      serverConfig?.promptTokenEstimationFactor ?? 1.0,
     );
 
     // Human-like pacing; the caller classified the plan from the raw turns.
@@ -547,6 +568,9 @@ export class LumoClient {
           onChunk: params.onChunk,
           onReasoning: params.onReasoning,
           suppressBounce: params.suppressBounce,
+          expectedToolNames: new Set(
+            (params.clientTools ?? []).map((t) => t.function.name),
+          ),
         });
 
         if (params.target === "message")
@@ -627,25 +651,32 @@ export class LumoClient {
       onReasoning = this.defaultOptions?.onReasoning,
       coachAnnounceWithoutTool = this.defaultOptions
         ?.coachAnnounceWithoutTool ?? false,
+      clientTools = this.defaultOptions?.clientTools,
     } = options;
+
+    // Native mode turns off the legacy heuristics. These config sections are
+    // server-only; the CLI gets undefined and falls back to the defaults.
+    const serverConfig = tryGetServerConfig();
+    const nativeMode = serverConfig?.customTools.mode === "native";
+    const activeClientTools = nativeMode ? clientTools : undefined;
+    const coachAnnounce = coachAnnounceWithoutTool && !isBounce && !nativeMode;
 
     // Routing config: auto (default) defers to the caller's useNativeTools flag
     // (routes pass !ctx.hasCustomTools), always/never force the behavior.
-    const routingMode = getServerConfig().customTools.routing.nativeTools;
+    const routingMode = serverConfig?.customTools.routing.nativeTools ?? "auto";
     const useNativeTools =
       routingMode === "always"
         ? true
         : routingMode === "never"
           ? false
           : (options.useNativeTools ?? true);
-    const coachAnnounce = coachAnnounceWithoutTool && !isBounce;
     // Coach-announce holds back bounce-worthy openings (blank reply, dangling
     // colon, narrated tool call) so the client never sees them. Those calls
     // settle within the hold window; past it the reply can no longer bounce,
     // so the rest streams live instead of arriving as a lump. 0 disables the
     // hold entirely.
     const holdWindowChars =
-      getServerConfig().customTools.recovery.holdWindowChars;
+      serverConfig?.customTools.recovery.holdWindowChars ?? 0;
     const bufferedChunks: string[] = [];
     let holding = coachAnnounce && holdWindowChars > 0;
     const flushHeld = () => {
@@ -773,6 +804,7 @@ export class LumoClient {
       tier: modelTier,
       enableReasoning,
       tools,
+      clientTools: activeClientTools,
       enableEncryption,
       target: "message",
       onChunk: mainOnChunk,
@@ -892,6 +924,9 @@ export class LumoClient {
         ? main.native.failed
         : undefined,
       misrouted: main.native.misrouted,
+      clientToolCalls: main.native.clientToolCalls.length
+        ? main.native.clientToolCalls
+        : undefined,
     };
   }
 }

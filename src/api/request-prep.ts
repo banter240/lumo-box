@@ -24,12 +24,17 @@ import {
   resolveReasoning,
 } from "../lumo-client/model-tier.js";
 import type { LumoModelTier } from "../lumo-client/types.js";
-import { buildInstructions } from "./instructions.js";
+import type { FunctionTool } from "../lumo-client/v2-body.js";
+import {
+  buildInstructions,
+  buildNativeModuleInstructions,
+} from "./instructions.js";
 import {
   parseToolChoice,
   toolChoiceInstruction,
   toolsForChoice,
 } from "./tools/tool-choice.js";
+import { normalizeClientTools } from "./tools/normalize.js";
 import type { ConversationId } from "../conversations/types.js";
 import type { EndpointDependencies, OpenAITool } from "./types.js";
 import type { Turn } from "../lumo-client/index.js";
@@ -164,17 +169,46 @@ export type PreparedTools = {
   tools?: OpenAITool[];
   instructions: string;
   injectInto: "first" | "last";
+  /** Native mode: tools converted for the request tools array. */
+  clientTools?: FunctionTool[];
 };
 
 export function prepareToolsAndInstructions(
-  tools: OpenAITool[] | undefined,
+  toolsRaw: OpenAITool[] | undefined,
   rawChoice: unknown,
   clientInstructions?: string,
   extraInstructions?: string,
   compact = false,
 ): PreparedTools {
   const choice = parseToolChoice(rawChoice);
+  const tools = normalizeClientTools(toolsRaw);
   const effective = toolsForChoice(tools, choice);
+  const nativeMode = getCustomToolsConfig().mode === "native";
+
+  if (nativeMode && effective && effective.length > 0) {
+    // Structured tools ride the request; injected text is the client/system
+    // instructions plus native-mode module prompts (domain knowledge, never
+    // legacy protocol boilerplate).
+    return {
+      tools: effective,
+      instructions: appendInstructions(
+        clientInstructions,
+        buildNativeModuleInstructions(),
+        extraInstructions,
+      ),
+      injectInto: resolveInjectInto(0),
+      clientTools: effective.map((tool) => ({
+        type: "function",
+        function: {
+          name: tool.function.name,
+          description: tool.function.description ?? "",
+          parameters: tool.function.parameters as
+            Record<string, unknown> | undefined,
+        },
+      })),
+    };
+  }
+
   return {
     tools: effective,
     instructions: appendInstructions(

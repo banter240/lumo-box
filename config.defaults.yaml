@@ -339,6 +339,15 @@ server:
     # Set to "" to disable prefixing.
     prefix: "user:"
 
+    # Tool transport — the master switch for the two instruction worlds.
+    # native (default): tools ride the request as real function schemas;
+    # the model answers with structured tool_calls. No protocol prompt.
+    # legacy: tools are taught as a JSON-code-block protocol in the prompt
+    # and parsed back out of the reply.
+    # Each world has its own sections below; the config editor hides the
+    # inactive world's fields when this toggle changes.
+    mode: native
+
     # Instruction modules: optional blocks appended to forTools when enabled.
     # Use this to add/remove instruction packs (e.g., Home Assistant, MCP servers)
     # without editing the base forTools template.
@@ -359,6 +368,21 @@ server:
           - Call ha_get_skill_guide() first: it returns SKILL.md with reference files.
           - Most other custom tools are NOT listed directly: use ha_search_tools.
           - Execute discovered tools directly or via ha_call_read/write/delete_tool.
+
+    # Native-mode instruction modules (used when mode: native). Separate from
+    # the legacy modules above: native tool_calls carry the protocol in the
+    # schema, so prompts here hold domain/workflow knowledge only. A module
+    # without a native prompt delivers nothing — the legacy text never leaks.
+    native:
+      instructions:
+        modules:
+          homeAssistant:
+            enabled: false
+            prompt: |
+              # Home Assistant
+              - Call ha_get_skill_guide() first: it returns SKILL.md with reference files.
+              - Most other custom tools are NOT listed directly: use ha_search_tools.
+              - Execute discovered tools directly or via ha_call_read/write/delete_tool.
 
     # Reply recovery: bounce Lumo when it thinks but never emits a tool-call JSON block.
     recovery:

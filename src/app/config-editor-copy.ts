@@ -335,6 +335,17 @@ const COPY: Record<string, FieldCopy> = {
     hint: "Chars of a coached reply held back before streaming resumes. 0 streams everything live; bounce-worthy openings may reach the client first.",
     examples: sample("2000"),
   },
+  "server.customTools.mode": {
+    label: "Tool transport",
+    hint: "legacy = tool JSON in a prompt code block (proven). native = real function calling via the request tools array.",
+    more: "Legacy teaches the model the JSON-block protocol by injecting instructions and parses calls back out of the reply — battle-tested, works everywhere. Native sends the client tools as structured function tools on the chat request (upstream clientTools support) and receives structured tool_calls back: no protocol prompt, no heuristics. Requires the Lumo backend to accept client function tools; flip back to legacy if Proton changes the wire format.",
+    choices: ["native", "legacy"],
+  },
+  "server.customTools.native.instructions.modules": {
+    label: "Native instruction modules",
+    hint: "Per-module prompts for native mode: domain/workflow knowledge only.",
+    more: "Separate from the legacy module prompts: in native mode the tool schemas carry the calling convention, so prompts here hold workflow knowledge (e.g. call the skill guide first). A module without a native prompt delivers nothing in native mode — the legacy JSON-protocol text never leaks.",
+  },
   "server.customTools.routing.nativeTools": {
     label: "Native tool routing",
     hint: "auto = hide native tools when custom tools are active. Leave on auto.",
@@ -1003,7 +1014,7 @@ const COPY: Record<string, FieldCopy> = {
   "cli.localActions.enabled": {
     label: "Run local code blocks",
     hint: "Let the CLI run bash/read/edit/create blocks on this machine. Confirmations still apply.",
-    more: "Desktop tamer CLI only, not the API server. When on, fenced bash/python/read/edit/create in the model output can run on this machine. You still get a confirm prompt except for ```read if fileReads is on.",
+    more: "Interactive tamer CLI only, not the API server or web app — those use webapp.connectors. When on, fenced bash/python/read/edit/create in the model output can run on this machine. You still get a confirm prompt except for ```read if fileReads is on.",
   },
   "cli.localActions.fileReads.enabled": {
     label: "Allow ```read without confirm",
@@ -1119,12 +1130,51 @@ export const FIELD_DEPENDENCIES: Record<string, FieldDependency> = {
     parent: "server.customTools.enabled",
     showValues: [true],
   },
+  // Tool-transport worlds: the mode toggle gates each world's fields.
+  // Legacy settings appear only in legacy mode, native only in native mode.
   "server.customTools.modules.homeAssistant.enabled": {
-    parent: "server.customTools.enabled",
-    showValues: [true],
+    parent: "server.customTools.mode",
+    showValues: ["legacy"],
   },
   "server.customTools.modules.homeAssistant.prompt": {
     parent: "server.customTools.modules.homeAssistant.enabled",
+    showValues: [true],
+  },
+  "server.customTools.recovery.bounceDanglingColon": {
+    parent: "server.customTools.mode",
+    showValues: ["legacy"],
+  },
+  "server.customTools.recovery.bounceNarration": {
+    parent: "server.customTools.mode",
+    showValues: ["legacy"],
+  },
+  "server.customTools.recovery.bounceBlankReply": {
+    parent: "server.customTools.mode",
+    showValues: ["legacy"],
+  },
+  "server.customTools.recovery.danglingColonMaxLength": {
+    parent: "server.customTools.mode",
+    showValues: ["legacy"],
+  },
+  "server.customTools.recovery.danglingColonLastLineMaxLength": {
+    parent: "server.customTools.mode",
+    showValues: ["legacy"],
+  },
+  "server.customTools.recovery.holdWindowChars": {
+    parent: "server.customTools.mode",
+    showValues: ["legacy"],
+  },
+  "server.customTools.routing.nativeTools": {
+    parent: "server.customTools.mode",
+    showValues: ["legacy"],
+  },
+  "server.customTools.native.instructions.modules.homeAssistant.enabled": {
+    parent: "server.customTools.mode",
+    showValues: ["native"],
+  },
+  "server.customTools.native.instructions.modules.homeAssistant.prompt": {
+    parent:
+      "server.customTools.native.instructions.modules.homeAssistant.enabled",
     showValues: [true],
   },
   "webapp.connectors.filesystem.enabled": {

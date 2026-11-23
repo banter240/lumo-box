@@ -143,6 +143,7 @@ export function createResponsesRouter(deps: EndpointDependencies): Router {
         request.stream ?? false,
         instructions,
         injectInto,
+        prepared.prepared.clientTools,
       );
     } catch (error) {
       logger.error("Error processing response:");

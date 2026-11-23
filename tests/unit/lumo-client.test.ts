@@ -362,10 +362,18 @@ describe("LumoClient (Lumo 2.0 chat/completions)", () => {
       enableEncryption: false,
       coachAnnounceWithoutTool: true,
     };
+    // The hold window is a legacy-mode heuristic; restore it for this test.
+    const cfg = getServerConfig().customTools as any;
+    const prevMode = cfg.mode;
+    const prevHold = cfg.recovery.holdWindowChars;
+    cfg.mode = "legacy";
+    cfg.recovery.holdWindowChars = 2000;
     const emissions: string[] = [];
     await client.chatWithHistory([{ role: Role.User, content: "hi" }], (c) =>
       emissions.push(c),
     );
+    cfg.mode = prevMode;
+    cfg.recovery.holdWindowChars = prevHold;
     expect(emissions).toEqual(["Hello!"]);
   });
 

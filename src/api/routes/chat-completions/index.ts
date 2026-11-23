@@ -18,8 +18,12 @@ import {
 import { getMetrics } from "../../../app/metrics.js";
 import { ChatCompletionEventEmitter } from "./events.js";
 import type { Turn } from "../../../lumo-client/index.js";
+import type { FunctionTool } from "../../../lumo-client/v2-body.js";
 import type { ConversationId } from "../../../conversations/types.js";
-import { flattenAndTrackClientTools } from "../../tools/call-id.js";
+import {
+  flattenAndTrackClientTools,
+  generateCallId,
+} from "../../tools/call-id.js";
 import { createStreamingToolProcessor } from "../../tools/streaming-processor.js";
 import {
   extractClientToolNames,
@@ -205,6 +209,7 @@ export function createChatCompletionsRouter(
         instructions,
         injectInto,
         effectiveTools,
+        prepared.prepared.clientTools,
       );
     } catch (error) {
       logger.error("Error processing chat completion:");
@@ -227,6 +232,7 @@ async function handleChatRequest(
   instructions: string | undefined,
   injectInstructionsInto: "first" | "last",
   effectiveTools?: OpenAIChatRequest["tools"],
+  clientTools?: FunctionTool[],
 ): Promise<void> {
   const id = generateChatCompletionId();
   const created = nowEpoch();
@@ -299,6 +305,7 @@ async function handleChatRequest(
             surfaceThinking && emitter
               ? (text) => emitter.emitReasoningDelta(text)
               : undefined,
+          clientTools,
         },
       );
 
@@ -308,7 +315,14 @@ async function handleChatRequest(
       toolCalls =
         processor.toolCallsEmitted.length > 0
           ? processor.toolCallsEmitted
-          : undefined;
+          : result.clientToolCalls?.map((tc) => ({
+              id: generateCallId(tc.name),
+              type: "function" as const,
+              function: {
+                name: tc.name,
+                arguments: JSON.stringify(tc.arguments),
+              },
+            }));
       usage = toOpenAIChatUsage(result.usage);
     } catch (error) {
       logger.error({ error }, "Chat completion error");

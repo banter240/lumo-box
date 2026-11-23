@@ -2,177 +2,192 @@
  * Integration tests for /v1/chat/completions endpoint
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createTestServer, parseSSEEvents, type TestServer } from '../helpers/test-server.js';
-import { getCustomToolsConfig } from '../../src/app/config.js';
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import {
+  createTestServer,
+  parseSSEEvents,
+  type TestServer,
+} from "../helpers/test-server.js";
+import { getCustomToolsConfig } from "../../src/app/config.js";
 
 /** POST /v1/chat/completions with JSON body, returning the raw Response. */
-function postChat(ts: TestServer, body: Record<string, unknown>): Promise<Response> {
+function postChat(
+  ts: TestServer,
+  body: Record<string, unknown>,
+): Promise<Response> {
   return fetch(`${ts.baseUrl}/v1/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 }
 
-const userMessage = (content: string) => [{ role: 'user', content }];
+const userMessage = (content: string) => [{ role: "user", content }];
 
 let ts: TestServer;
 
 beforeAll(async () => {
-  ts = await createTestServer('success');
+  ts = await createTestServer("success");
 });
 
 afterAll(async () => {
   await ts.close();
 });
 
-describe('/v1/chat/completions', () => {
-  describe('non-streaming', () => {
-    it('returns chat.completion object', async () => {
+describe("/v1/chat/completions", () => {
+  describe("non-streaming", () => {
+    it("returns chat.completion object", async () => {
       const res = await postChat(ts, {
-        model: 'lumo',
-        messages: userMessage('Hello'),
+        model: "lumo",
+        messages: userMessage("Hello"),
         stream: false,
       });
 
       expect(res.status).toBe(200);
       const body = await res.json();
 
-      expect(body.object).toBe('chat.completion');
+      expect(body.object).toBe("chat.completion");
       expect(body.id).toMatch(/^chatcmpl-/);
       expect(body.choices).toHaveLength(1);
-      expect(body.choices[0].finish_reason).toBe('stop');
-      expect(body.choices[0].message.role).toBe('assistant');
+      expect(body.choices[0].finish_reason).toBe("stop");
+      expect(body.choices[0].message.role).toBe("assistant");
       expect(body.choices[0].message.content.length).toBeGreaterThan(0);
     });
 
-    it('response contains mock text', async () => {
+    it("response contains mock text", async () => {
       const res = await postChat(ts, {
-        model: 'lumo',
-        messages: userMessage('Tell me a joke'),
+        model: "lumo",
+        messages: userMessage("Tell me a joke"),
         stream: false,
       });
 
       const body = await res.json();
-      expect(body.choices[0].message.content).toContain('Mocked');
+      expect(body.choices[0].message.content).toContain("Mocked");
     });
 
-    it('returns OpenAI-style 400 for missing messages', async () => {
-      const res = await postChat(ts, { model: 'lumo', stream: false });
+    it("returns OpenAI-style 400 for missing messages", async () => {
+      const res = await postChat(ts, { model: "lumo", stream: false });
 
       expect(res.status).toBe(400);
       const body = await res.json();
-      expect(body.error.type).toBe('invalid_request_error');
-      expect(body.error.param).toBe('messages');
-      expect(body.error.code).toBe('missing_messages');
+      expect(body.error.type).toBe("invalid_request_error");
+      expect(body.error.param).toBe("messages");
+      expect(body.error.code).toBe("missing_messages");
     });
 
-    it('returns OpenAI-style 400 for messages without user role', async () => {
+    it("returns OpenAI-style 400 for messages without user role", async () => {
       const res = await postChat(ts, {
-        model: 'lumo',
-        messages: [{ role: 'system', content: 'You are helpful' }],
+        model: "lumo",
+        messages: [{ role: "system", content: "You are helpful" }],
         stream: false,
       });
 
       expect(res.status).toBe(400);
       const body = await res.json();
-      expect(body.error.type).toBe('invalid_request_error');
-      expect(body.error.param).toBe('messages');
-      expect(body.error.code).toBe('missing_user_message');
+      expect(body.error.type).toBe("invalid_request_error");
+      expect(body.error.param).toBe("messages");
+      expect(body.error.code).toBe("missing_user_message");
     });
 
-    it('returns 400 for an unsupported response_format', async () => {
+    it("returns 400 for an unsupported response_format", async () => {
       const res = await postChat(ts, {
-        model: 'lumo',
-        messages: userMessage('Hello'),
-        response_format: { type: 'xml' },
+        model: "lumo",
+        messages: userMessage("Hello"),
+        response_format: { type: "xml" },
       });
       expect(res.status).toBe(400);
       const body = await res.json();
-      expect(body.error.code).toBe('invalid_response_format');
+      expect(body.error.code).toBe("invalid_response_format");
     });
 
-    it('accepts json_schema and still returns a completion', async () => {
+    it("accepts json_schema and still returns a completion", async () => {
       const res = await postChat(ts, {
-        model: 'lumo',
-        messages: userMessage('Hello'),
+        model: "lumo",
+        messages: userMessage("Hello"),
         response_format: {
-          type: 'json_schema',
-          json_schema: { name: 'ping', schema: { type: 'object' } },
+          type: "json_schema",
+          json_schema: { name: "ping", schema: { type: "object" } },
         },
       });
       expect(res.status).toBe(200);
     });
   });
 
-  describe('streaming', () => {
-    it('returns SSE chunks ending with [DONE]', async () => {
+  describe("streaming", () => {
+    it("returns SSE chunks ending with [DONE]", async () => {
       const res = await postChat(ts, {
-        model: 'lumo',
-        messages: userMessage('Hello'),
+        model: "lumo",
+        messages: userMessage("Hello"),
         stream: true,
       });
 
       expect(res.status).toBe(200);
-      expect(res.headers.get('content-type')).toBe('text/event-stream');
+      expect(res.headers.get("content-type")).toBe("text/event-stream");
 
       const text = await res.text();
-      expect(text).toContain('data: [DONE]');
+      expect(text).toContain("data: [DONE]");
     });
 
-    it('chunks have chat.completion.chunk object type', async () => {
+    it("chunks have chat.completion.chunk object type", async () => {
       const res = await postChat(ts, {
-        model: 'lumo',
-        messages: userMessage('Hello'),
+        model: "lumo",
+        messages: userMessage("Hello"),
         stream: true,
       });
 
       const text = await res.text();
       const events = parseSSEEvents(text);
-      const jsonEvents = events.filter(e => typeof e.data === 'object');
+      const jsonEvents = events.filter((e) => typeof e.data === "object");
 
       expect(jsonEvents.length).toBeGreaterThan(0);
 
       for (const event of jsonEvents) {
-        expect((event.data as any).object).toBe('chat.completion.chunk');
+        expect((event.data as any).object).toBe("chat.completion.chunk");
       }
     });
 
-    it('final chunk has finish_reason stop', async () => {
+    it("final chunk has finish_reason stop", async () => {
       const res = await postChat(ts, {
-        model: 'lumo',
-        messages: userMessage('Hello'),
+        model: "lumo",
+        messages: userMessage("Hello"),
         stream: true,
       });
 
       const text = await res.text();
       const events = parseSSEEvents(text);
-      const jsonEvents = events.filter(e => typeof e.data === 'object');
+      const jsonEvents = events.filter((e) => typeof e.data === "object");
 
       // Last JSON event should have finish_reason: 'stop'
       const lastEvent = jsonEvents[jsonEvents.length - 1];
-      expect((lastEvent.data as any).choices[0].finish_reason).toBe('stop');
+      expect((lastEvent.data as any).choices[0].finish_reason).toBe("stop");
     });
   });
 
-  describe('misroutedToolCall scenario (bounce)', () => {
+  describe("misroutedToolCall scenario (bounce)", () => {
     let nativeTs: TestServer;
-    const dummyTools = [{ type: 'function', function: { name: 'GetLiveContext', parameters: {} } }];
+    const dummyTools = [
+      {
+        type: "function",
+        function: { name: "GetLiveContext", parameters: {} },
+      },
+    ];
 
     beforeAll(async () => {
-      nativeTs = await createTestServer('misroutedToolCall');
+      nativeTs = await createTestServer("misroutedToolCall");
       (getCustomToolsConfig() as any).enabled = true;
+      // These tests cover the legacy bounce heuristic, which native mode skips.
+      (getCustomToolsConfig() as any).mode = "legacy";
     });
     afterAll(async () => {
       (getCustomToolsConfig() as any).enabled = false;
+      (getCustomToolsConfig() as any).mode = "native";
       await nativeTs.close();
     });
 
-    it('non-streaming: bounces misrouted call and returns tool_calls from text detection', async () => {
+    it("non-streaming: bounces misrouted call and returns tool_calls from text detection", async () => {
       const res = await postChat(nativeTs, {
-        model: 'lumo',
-        messages: userMessage('Hello'),
+        model: "lumo",
+        messages: userMessage("Hello"),
         stream: false,
         tools: dummyTools,
       });
@@ -180,21 +195,21 @@ describe('/v1/chat/completions', () => {
       expect(res.status).toBe(200);
       const body = await res.json();
 
-      expect(body.object).toBe('chat.completion');
+      expect(body.object).toBe("chat.completion");
       expect(body.choices).toHaveLength(1);
 
       // Should have tool_calls for GetLiveContext (detected from bounce response text)
       const choice = body.choices[0];
-      expect(choice.finish_reason).toBe('tool_calls');
+      expect(choice.finish_reason).toBe("tool_calls");
       expect(choice.message.tool_calls).toBeDefined();
       expect(choice.message.tool_calls.length).toBeGreaterThanOrEqual(1);
-      expect(choice.message.tool_calls[0].function.name).toBe('GetLiveContext');
+      expect(choice.message.tool_calls[0].function.name).toBe("GetLiveContext");
     });
 
-    it('streaming: bounces misrouted call and emits tool call delta', async () => {
+    it("streaming: bounces misrouted call and emits tool call delta", async () => {
       const res = await postChat(nativeTs, {
-        model: 'lumo',
-        messages: userMessage('Hello'),
+        model: "lumo",
+        messages: userMessage("Hello"),
         stream: true,
         tools: dummyTools,
       });
@@ -202,41 +217,51 @@ describe('/v1/chat/completions', () => {
       expect(res.status).toBe(200);
       const text = await res.text();
       const events = parseSSEEvents(text);
-      const jsonEvents = events.filter(e => typeof e.data === 'object');
+      const jsonEvents = events.filter((e) => typeof e.data === "object");
 
       // Should have a tool_calls delta chunk (from bounce response text detection)
-      const toolCallChunk = jsonEvents.find(e => {
+      const toolCallChunk = jsonEvents.find((e) => {
         const delta = (e.data as any)?.choices?.[0]?.delta;
         return delta?.tool_calls?.length > 0;
       });
       expect(toolCallChunk).toBeDefined();
-      expect((toolCallChunk!.data as any).choices[0].delta.tool_calls[0].function.name).toBe('GetLiveContext');
+      expect(
+        (toolCallChunk!.data as any).choices[0].delta.tool_calls[0].function
+          .name,
+      ).toBe("GetLiveContext");
 
       // Final chunk should have finish_reason: 'tool_calls'
       const lastJsonEvent = jsonEvents[jsonEvents.length - 1];
-      expect((lastJsonEvent.data as any).choices[0].finish_reason).toBe('tool_calls');
+      expect((lastJsonEvent.data as any).choices[0].finish_reason).toBe(
+        "tool_calls",
+      );
 
       // Text content delta events should not contain the fallback text
       const contentDeltas = jsonEvents
-        .filter(e => (e.data as any)?.choices?.[0]?.delta?.content)
-        .map(e => (e.data as any).choices[0].delta.content);
-      const fullContent = contentDeltas.join('');
+        .filter((e) => (e.data as any)?.choices?.[0]?.delta?.content)
+        .map((e) => (e.data as any).choices[0].delta.content);
+      const fullContent = contentDeltas.join("");
       expect(fullContent).not.toContain("don't have access");
     });
   });
 
-  describe('historyToolEcho scenario', () => {
+  describe("historyToolEcho scenario", () => {
     let echoTs: TestServer;
-    const readTool = [{
-      type: 'function',
-      function: {
-        name: 'read',
-        parameters: { type: 'object', properties: { filePath: { type: 'string' } } },
+    const readTool = [
+      {
+        type: "function",
+        function: {
+          name: "read",
+          parameters: {
+            type: "object",
+            properties: { filePath: { type: "string" } },
+          },
+        },
       },
-    }];
+    ];
 
     beforeAll(async () => {
-      echoTs = await createTestServer('historyToolEcho');
+      echoTs = await createTestServer("historyToolEcho");
       (getCustomToolsConfig() as any).enabled = true;
     });
     afterAll(async () => {
@@ -244,10 +269,10 @@ describe('/v1/chat/completions', () => {
       await echoTs.close();
     });
 
-    it('non-streaming: Done read plus args JSON becomes a read tool call', async () => {
+    it("non-streaming: Done read plus args JSON becomes a read tool call", async () => {
       const res = await postChat(echoTs, {
-        model: 'lumo',
-        messages: userMessage('read the coordinator'),
+        model: "lumo",
+        messages: userMessage("read the coordinator"),
         stream: false,
         tools: readTool,
       });
@@ -255,11 +280,15 @@ describe('/v1/chat/completions', () => {
       expect(res.status).toBe(200);
       const body = await res.json();
       const choice = body.choices[0];
-      expect(choice.finish_reason).toBe('tool_calls');
-      expect(choice.message.tool_calls?.[0]?.function?.name).toBe('read');
+      expect(choice.finish_reason).toBe("tool_calls");
+      expect(choice.message.tool_calls?.[0]?.function?.name).toBe("read");
       const args = JSON.parse(choice.message.tool_calls[0].function.arguments);
-      expect(args).toEqual({ filePath: '/tmp/coordinator.py', offset: 770, limit: 50 });
-      expect(choice.message.content ?? '').not.toContain('Done read');
+      expect(args).toEqual({
+        filePath: "/tmp/coordinator.py",
+        offset: 770,
+        limit: 50,
+      });
+      expect(choice.message.content ?? "").not.toContain("Done read");
     });
   });
 });

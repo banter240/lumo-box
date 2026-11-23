@@ -17,6 +17,7 @@ export { Role } from "@lumo/types-api.js";
 
 export const TOOL_RESULT_PREFIX = "[Tool Result:";
 import type { ToolName } from "@lumo/lib/lumo-api-client/core/types.js";
+import type { FunctionTool } from "./v2-body.js";
 // Local-only types
 
 // API adapter interface
@@ -161,6 +162,10 @@ export interface LumoClientOptions {
    * Default true. Set false when custom tools handle transport (e.g. OpenCode)
    * to avoid confusing the model with two competing tool worlds. */
   useNativeTools?: boolean;
+  /** Native mode: client function tools (OpenAI shape) ride the request
+   * `tools` array; the model answers with structured tool_calls instead of
+   * JSON code blocks. Ignored when the config mode is legacy. */
+  clientTools?: FunctionTool[];
 }
 
 /** Result from a chat request. */
@@ -177,6 +182,9 @@ export interface ChatResult {
   nativeToolCallFailed?: boolean;
   /** Whether a misrouted custom tool was detected (routed through native SSE pipeline) */
   misrouted?: boolean;
+  /** Native mode: client-tool calls the model made via structured tool_calls,
+   * in stream order. Empty in legacy mode (those parse from message text). */
+  clientToolCalls?: Array<{ name: string; arguments: unknown }>;
   /**
    * Parsed native tool call (for bounce handling).
    * Only set when misrouted=true, used to build the bounce instruction.

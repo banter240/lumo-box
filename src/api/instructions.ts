@@ -6,11 +6,14 @@
  * - Instruction building with tool prefixing
  */
 
-import { logger } from '../app/logger.js';
-import { getServerInstructionsConfig, getCustomToolsConfig } from '../app/config.js';
-import { interpolateTemplate } from '../app/template.js';
-import { applyToolPrefix, applyToolNamePrefix } from './tools/prefix.js';
-import type { OpenAITool } from './types.js';
+import { logger } from "../app/logger.js";
+import {
+  getServerInstructionsConfig,
+  getCustomToolsConfig,
+} from "../app/config.js";
+import { interpolateTemplate } from "../app/template.js";
+import { applyToolPrefix, applyToolNamePrefix } from "./tools/prefix.js";
+import type { OpenAITool } from "./types.js";
 
 // ── Template validation ───────────────────────────────────────────────
 
@@ -19,9 +22,10 @@ import type { OpenAITool } from './types.js';
  * Each has a warning message explaining the consequence of omission.
  */
 const TEMPLATE_VARIABLE_WARNINGS: Record<string, string> = {
-  clientInstructions: 'Instructions provided by API client will not be forwarded',
-  tools: 'Tool definitions will not be included in instructions',
-  fallback: 'No fallback instructions when client provides no system message',
+  clientInstructions:
+    "Instructions provided by API client will not be forwarded",
+  tools: "Tool definitions will not be included in instructions",
+  fallback: "No fallback instructions when client provides no system message",
 };
 
 let templateValidated = false;
@@ -57,19 +61,25 @@ export interface ReplacePattern {
  * Apply replace patterns to text (case-insensitive regex).
  * Each pattern can have an optional replacement; if omitted, matches are stripped.
  */
-export function applyReplacePatterns(text: string, patterns: ReplacePattern[]): string {
+export function applyReplacePatterns(
+  text: string,
+  patterns: ReplacePattern[],
+): string {
   if (!patterns || patterns.length === 0) return text;
   let result = text;
   for (const { pattern, replacement } of patterns) {
     try {
-      const regex = new RegExp(pattern, 'gi');
-      result = result.replace(regex, replacement ?? '');
+      const regex = new RegExp(pattern, "gi");
+      result = result.replace(regex, replacement ?? "");
     } catch {
       // Invalid regex pattern - skip it (already warned at config load)
     }
   }
   // Clean up multiple consecutive newlines/spaces left by removals
-  return result.replace(/\n{3,}/g, '\n\n').replace(/  +/g, ' ').trim();
+  return result
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/  +/g, " ")
+    .trim();
 }
 
 // ── Replace patterns validation ───────────────────────────────────────
@@ -87,9 +97,12 @@ function validateReplacePatternsOnce(): void {
   const patterns = getServerInstructionsConfig().replacePatterns ?? [];
   for (const { pattern } of patterns) {
     try {
-      new RegExp(pattern, 'gi');
+      new RegExp(pattern, "gi");
     } catch (e) {
-      logger.warn({ error: e, pattern }, `Ignoring "${pattern}" in instructions.replacePatterns`);
+      logger.warn(
+        { error: e, pattern },
+        `Ignoring "${pattern}" in instructions.replacePatterns`,
+      );
     }
   }
 }
@@ -102,7 +115,7 @@ function validateReplacePatternsOnce(): void {
 function extractToolNames(tools?: OpenAITool[]): string[] {
   if (!tools) return [];
   return tools
-    .map(t => t.function?.name || (t as unknown as { name?: string }).name)
+    .map((t) => t.function?.name || (t as unknown as { name?: string }).name)
     .filter((n): n is string => Boolean(n));
 }
 
@@ -116,6 +129,29 @@ function extractToolNames(tools?: OpenAITool[]): string[] {
  * @param clientInstructions - Optional instructions from client (system/developer message)
  * @returns Formatted instruction string
  */
+/**
+ * Native-mode module prompts: delivered as plain instructions alongside the
+ * client's own text. Separate from the legacy module blocks so JSON-protocol
+ * text never leaks into a native request; a module without a native prompt
+ * delivers nothing.
+ */
+export function buildNativeModuleInstructions(
+  moduleSource?: Record<string, { enabled: boolean; prompt?: string }>,
+): string | undefined {
+  const modules =
+    moduleSource ?? getCustomToolsConfig().native?.instructions?.modules;
+  if (!modules) {
+    return undefined;
+  }
+  const enabled = Object.entries(modules)
+    .filter(([, mod]) => mod.enabled && mod.prompt && mod.prompt.trim())
+    .map(([name, mod]) => `\n\n# ${name}\n${mod.prompt!.trim()}`);
+  if (enabled.length === 0) {
+    return undefined;
+  }
+  return enabled.join("\n");
+}
+
 export function buildInstructions(
   tools?: OpenAITool[],
   clientInstructions?: string,
@@ -131,21 +167,20 @@ export function buildInstructions(
   const includeTools = toolsConfig.enabled && tools && tools.length > 0;
 
   // Full protocol on the first user turn; a short reminder after that.
-  let forToolsTemplate = compact ? instructionsConfig.forToolsCompact : instructionsConfig.forTools;
+  let forToolsTemplate = compact
+    ? instructionsConfig.forToolsCompact
+    : instructionsConfig.forTools;
 
   if (includeTools && toolsConfig.modules) {
     const enabledModules = Object.entries(toolsConfig.modules)
       .filter(([, mod]) => mod.enabled && mod.prompt && mod.prompt.trim())
       .map(([name, mod]) => `\n\n# ${name}\n${mod.prompt!.trim()}`);
     if (enabledModules.length > 0) {
-      forToolsTemplate += enabledModules.join('\n');
+      forToolsTemplate += enabledModules.join("\n");
     }
   }
 
-  const forTools = interpolateTemplate(
-    forToolsTemplate,
-    { prefix },
-  );
+  const forTools = interpolateTemplate(forToolsTemplate, { prefix });
 
   let toolsJson: string | undefined;
   if (includeTools && tools) {
@@ -156,10 +191,17 @@ export function buildInstructions(
   // Clean and prefix client instructions
   let cleanedClientInstructions: string | undefined;
   if (clientInstructions) {
-    cleanedClientInstructions = applyReplacePatterns(clientInstructions, replacePatterns);
+    cleanedClientInstructions = applyReplacePatterns(
+      clientInstructions,
+      replacePatterns,
+    );
     if (includeTools) {
       const toolNames = extractToolNames(tools);
-      cleanedClientInstructions = applyToolNamePrefix(cleanedClientInstructions, toolNames, prefix);
+      cleanedClientInstructions = applyToolNamePrefix(
+        cleanedClientInstructions,
+        toolNames,
+        prefix,
+      );
     }
   }
 

@@ -24,6 +24,11 @@ export const LUMO_CHAT_ENDPOINT = "ai/v1/chat/completions";
 /** Which completion is requested; a title is a separate targeted completion. */
 export type LumoCompletionTarget = "message" | "title";
 
+/** Tools advertised on the request: server-executed tools ride name-only,
+ * client-executed function tools carry full OpenAI schemas (upstream
+ * accepts the mixed array in one request). */
+export type BuildTool = string | FunctionTool;
+
 /** Map a tier to the wire `model` value. `auto` -> `lumo` (Proton routes). */
 export function resolveChatModel(tier: LumoModelTier): string {
   return tier === "auto" ? "lumo" : tier;
@@ -48,7 +53,7 @@ export interface BuildChatBodyParams {
   /** Thinking mode: true -> reasoning_effort:'high', false -> 'none'. */
   enableReasoning: boolean;
   /** Native tool names to enable (e.g. proton_info, web_search). */
-  tools?: ToolName[];
+  tools?: BuildTool[];
   /** Present when U2L encryption is on; folded into the `lumo` extension. */
   encryption?: { requestKeyEncB64: string; requestId: string };
   /** Whether `turns` carry encrypted content (sets message-level `encrypted`). */
@@ -136,15 +141,53 @@ function serializeTurn(turn: Turn, encrypted: boolean): ChatCompletionsMessage {
   };
 }
 
+/** Client-defined function tools (OpenAI shape), executed by the caller.
+ * Same wire shape as upstream ChatCompletionsFunctionTool. */
+export interface FunctionTool {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters?: Record<string, unknown>;
+  };
+}
+
+/** Server-executed tools ride name-only; client tools carry full schemas.
+ * Upstream accepts the mixed array in one request. */
+export type WireTool = { name: string } | FunctionTool;
+
 export interface ChatCompletionsBody {
   model: string;
   messages: ChatCompletionsMessage[];
   stream: true;
   stream_options: { include_usage: true };
   reasoning_effort: "high" | "none";
-  tools?: Array<{ name: string }>;
+  tools?: WireTool[];
   tool_choice?: "auto";
   lumo: LumoExtension;
+}
+
+const JSON_SCHEMA_DRAFT = "https://json-schema.org/draft/2020-12/schema";
+
+/** Defaults for client function tools, mirroring upstream normalizeFunctionTool. */
+function normalizeFunctionTool(tool: FunctionTool): FunctionTool {
+  const parameters = tool.function.parameters ?? {
+    type: "object",
+    properties: {},
+  };
+  return {
+    type: "function",
+    function: {
+      name: tool.function.name,
+      description: tool.function.description ?? "",
+      parameters: {
+        ...parameters,
+        type: (parameters.type as string) ?? "object",
+        $schema: (parameters.$schema as string) ?? JSON_SCHEMA_DRAFT,
+        properties: parameters.properties ?? {},
+      },
+    },
+  };
 }
 
 /** Build the POST body for `ai/v1/chat/completions`. */
@@ -174,7 +217,9 @@ export function buildChatCompletionsBody(
   };
 
   if (params.tools && params.tools.length > 0) {
-    body.tools = params.tools.map((name) => ({ name }));
+    body.tools = params.tools.map((tool) =>
+      typeof tool === "string" ? { name: tool } : normalizeFunctionTool(tool),
+    );
     body.tool_choice = "auto";
   }
 

@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import type { Response } from "express";
 import { getCustomToolsConfig } from "../../app/config.js";
+import type { FunctionTool } from "../../lumo-client/v2-body.js";
 import { shouldRequestTitle } from "../request-prep.js";
 import { getMetrics } from "../../app/metrics";
 import { logger } from "../../app/logger.js";
@@ -107,6 +108,7 @@ export async function runCompletionAndPersist(
     modelTier: LumoModelTier;
     enableReasoning: boolean;
     onReasoning?: (content: string) => void;
+    clientTools?: FunctionTool[];
   },
 ): Promise<ChatResult> {
   const result = await deps.queue.add(async () =>
@@ -119,6 +121,7 @@ export async function runCompletionAndPersist(
       onReasoning: options.onReasoning,
       coachAnnounceWithoutTool: ctx.hasCustomTools,
       useNativeTools: !ctx.hasCustomTools,
+      clientTools: options.clientTools,
     }),
   );
 

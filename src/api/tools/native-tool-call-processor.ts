@@ -12,17 +12,23 @@
  * - Tracks success/failure metrics
  */
 
-import { JsonBraceTracker } from './json-brace-tracker.js';
-import { stripToolPrefix } from './prefix.js';
-import { getCustomToolsConfig } from '../../app/config.js';
-import { getMetrics } from '../../app/metrics.js';
-import { logger } from '../../app/logger.js';
-import { contentForLog } from '../../app/log-content.js';
-import type { ParsedToolCall } from './types.js';
+import { JsonBraceTracker } from "./json-brace-tracker.js";
+import { stripToolPrefix } from "./prefix.js";
+import { getCustomToolsConfig } from "../../app/config.js";
+import { getMetrics } from "../../app/metrics.js";
+import { logger } from "../../app/logger.js";
+import { contentForLog } from "../../app/log-content.js";
+import type { ParsedToolCall } from "./types.js";
 
 const KNOWN_NATIVE_TOOLS = new Set([
-  'proton_info', 'web_search', 'weather', 'stock', 'cryptocurrency',
-  'generate_image', 'edit_image', 'describe_image',
+  "proton_info",
+  "web_search",
+  "weather",
+  "stock",
+  "cryptocurrency",
+  "generate_image",
+  "edit_image",
+  "describe_image",
 ]);
 
 // ── Internal helpers ─────────────────────────────────────────────────
@@ -38,7 +44,11 @@ const KNOWN_NATIVE_TOOLS = new Set([
 function parseToolCallJson(json: string): ParsedToolCall | null {
   try {
     const parsed = JSON.parse(json);
-    if (typeof parsed !== 'object' || parsed === null || typeof parsed.name !== 'string') {
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      typeof parsed.name !== "string"
+    ) {
       return null;
     }
 
@@ -47,13 +57,18 @@ function parseToolCallJson(json: string): ParsedToolCall | null {
 
     // Handle Lumo's internal format quirk: if arguments contains nested {arguments, name, parameters},
     // extract the actual parameters from that nested structure
-    if (typeof args === 'object' && args !== null && 'parameters' in args && typeof args.parameters === 'object') {
+    if (
+      typeof args === "object" &&
+      args !== null &&
+      "parameters" in args &&
+      typeof args.parameters === "object"
+    ) {
       args = args.parameters ?? {};
     }
 
     return {
       name: parsed.name,
-      arguments: typeof args === 'object' && args !== null ? args : {},
+      arguments: typeof args === "object" && args !== null ? args : {},
     };
   } catch {
     return null;
@@ -67,7 +82,9 @@ function parseToolCallJson(json: string): ParsedToolCall | null {
 function isErrorResult(json: string): boolean {
   try {
     const parsed = JSON.parse(json);
-    return typeof parsed === 'object' && parsed !== null && parsed.error === true;
+    return (
+      typeof parsed === "object" && parsed !== null && parsed.error === true
+    );
   } catch {
     return false;
   }
@@ -82,6 +99,9 @@ export interface NativeToolCallResult {
   failed: boolean;
   /** True if a misrouted custom tool was detected */
   misrouted: boolean;
+  /** Native mode: all client-tool calls from the stream. Empty in legacy mode
+   * (legacy parses JSON blocks from the message text instead). */
+  clientToolCalls: ParsedToolCall[];
 }
 
 /**
@@ -92,13 +112,17 @@ export class NativeToolCallProcessor {
   private toolCallTracker = new JsonBraceTracker();
   private toolResultTracker = new JsonBraceTracker();
   private firstToolCall: ParsedToolCall | null = null;
+  /** Native mode: every client-tool call in stream order (parallel calls allowed). */
+  private allClientToolCalls: ParsedToolCall[] = [];
   private firstToolResult: string | null = null;
   private failed = false;
   private _misrouted = false;
 
   constructor(
     /** When true, do not abort on a misrouted tool (title / bounce completions). */
-    private suppressBounce = false
+    private suppressBounce = false,
+    /** Native mode: client tools advertised on this request. */
+    private expectedToolNames: ReadonlySet<string> = new Set(),
   ) {}
 
   /** Feed tool_call SSE content. Returns true if should abort early. */
@@ -112,12 +136,28 @@ export class NativeToolCallProcessor {
         this.firstToolCall = toolCall;
       }
 
+      if (this.expectedToolNames.has(toolCall.name)) {
+        this.allClientToolCalls.push(toolCall);
+      }
+
       if (this.isMisrouted(toolCall)) {
-        const strippedName = stripToolPrefix(toolCall.name, getCustomToolsConfig().prefix);
+        const strippedName = stripToolPrefix(
+          toolCall.name,
+          getCustomToolsConfig().prefix,
+        );
         getMetrics()?.toolCallsTotal.inc({
-          type: 'custom', status: 'misrouted', tool_name: strippedName
+          type: "custom",
+          status: "misrouted",
+          tool_name: strippedName,
         });
-        logger.info({ tool: toolCall.name, suppressBounce: this.suppressBounce, args: contentForLog(toolCall.arguments) }, '[tools] Lumo used native pipeline (misrouted)');
+        logger.info(
+          {
+            tool: toolCall.name,
+            suppressBounce: this.suppressBounce,
+            args: contentForLog(toolCall.arguments),
+          },
+          "[tools] Lumo used native pipeline (misrouted)",
+        );
 
         // Only abort on first misroute when bounce handling is enabled.
         if (!this.suppressBounce && toolCall === this.firstToolCall) {
@@ -127,9 +167,14 @@ export class NativeToolCallProcessor {
       } else {
         // Native tool - no success/failed distinction (unreliable)
         getMetrics()?.toolCallsTotal.inc({
-          type: 'native', status: 'detected', tool_name: toolCall.name
+          type: "native",
+          status: "detected",
+          tool_name: toolCall.name,
         });
-        logger.info({ tool: toolCall.name, raw: contentForLog(json) }, '[tools] Lumo native SSE tool_call');
+        logger.info(
+          { tool: toolCall.name, raw: contentForLog(json) },
+          "[tools] Lumo native SSE tool_call",
+        );
       }
     }
     return false;
@@ -138,7 +183,7 @@ export class NativeToolCallProcessor {
   /** Feed tool_result SSE content. */
   feedToolResult(content: string): void {
     for (const json of this.toolResultTracker.feed(content)) {
-      logger.debug({ raw: contentForLog(json, 500) }, 'Native SSE tool_result');
+      logger.debug({ raw: contentForLog(json, 500) }, "Native SSE tool_result");
       // Store first tool result for persistence
       if (!this.firstToolResult) {
         this.firstToolResult = json;
@@ -161,10 +206,12 @@ export class NativeToolCallProcessor {
       toolResult: this.firstToolResult ?? undefined,
       failed: this.failed,
       misrouted: this._misrouted,
+      clientToolCalls: this.allClientToolCalls,
     };
   }
 
   private isMisrouted(toolCall: ParsedToolCall): boolean {
+    if (this.expectedToolNames.has(toolCall.name)) return false;
     return !KNOWN_NATIVE_TOOLS.has(toolCall.name);
   }
 }
